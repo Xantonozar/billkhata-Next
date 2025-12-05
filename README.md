@@ -142,4 +142,5 @@ billkhata-next/
 ## 🔒 License
 
 This project is proprietary and confidential.
-© 2024 BillKhata. All rights reserved.
+© 2025 BillKhata. All rights reserved.
+
