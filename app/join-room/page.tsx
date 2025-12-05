@@ -35,6 +35,19 @@ export default function JoinRoomPage() {
         }
     };
 
+    const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+        e.preventDefault();
+        const pastedData = e.clipboardData.getData('text').trim().toUpperCase();
+
+        // Check if pasted content is exactly 6 alphanumeric characters
+        if (/^[A-Z0-9]{6}$/.test(pastedData)) {
+            const newCodes = pastedData.split('');
+            setCodes(newCodes);
+            // Focus the last input after auto-fill
+            inputsRef.current[5]?.focus();
+        }
+    };
+
     const handleJoinRoom = async (e: React.FormEvent) => {
         e.preventDefault();
         const roomCode = codes.join('');
@@ -87,6 +100,7 @@ export default function JoinRoomPage() {
                                     value={code}
                                     onChange={(e) => handleInputChange(e, index)}
                                     onKeyDown={(e) => handleKeyDown(e, index)}
+                                    onPaste={handlePaste}
                                     className="w-12 h-14 text-center text-2xl font-bold bg-slate-100 dark:bg-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-white"
                                 />
                             ))}

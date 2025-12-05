@@ -86,27 +86,26 @@ const ManagerAllBillsView: React.FC<{ bills: Bill[] }> = ({ bills }) => {
                     />
                 </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
                 {filteredBills.map(bill => {
                     const paidCount = bill.shares.filter(s => s.status === 'Paid').length;
                     const totalCount = bill.shares.length;
 
                     return (
-                        <div key={bill.id} className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-5 flex flex-col justify-between transition-all hover:shadow-lg hover:scale-[1.02]">
-                            <div>
-                                <div className="flex items-center gap-3 mb-2">
-                                    {categoryIcons[bill.category] || <OtherIcon className="w-6 h-6 text-slate-500" />}
-                                    <h3 className="font-bold text-xl font-sans text-slate-800 dark:text-white">{bill.title}</h3>
+                        <div key={bill.id} className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-3 sm:p-5 flex flex-row items-center justify-between transition-all hover:shadow-lg hover:scale-[1.02]">
+                            <div className="flex-grow">
+                                <div className="flex items-center gap-2 sm:gap-3 mb-1">
+                                    <div className="scale-90 sm:scale-100">{categoryIcons[bill.category] || <OtherIcon className="w-6 h-6 text-slate-500" />}</div>
+                                    <h3 className="font-bold text-sm sm:text-xl font-sans text-slate-800 dark:text-white truncate">{bill.title}</h3>
                                 </div>
-                                <p className="text-2xl font-bold text-primary-600 font-numeric">৳{bill.totalAmount.toFixed(2)}</p>
-                                <p className="text-sm text-slate-500 dark:text-slate-400">Due: {bill.dueDate}</p>
-                                <p className="text-sm text-slate-500 dark:text-slate-400">Split: <span className="font-numeric">৳{(bill.totalAmount / totalCount).toFixed(2)}</span> per person</p>
+                                <p className="text-lg sm:text-2xl font-bold text-primary-600 font-numeric">৳{bill.totalAmount.toFixed(0)}</p>
+                                <p className="text-[10px] sm:text-sm text-slate-500 dark:text-slate-400">Due: <span className="hidden sm:inline">{bill.dueDate}</span><span className="sm:hidden">{new Date(bill.dueDate).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })}</span></p>
                             </div>
-                            <div className="mt-4 space-y-3">
-                                <PaymentProgress paid={paidCount} total={totalCount} />
-                                <div className="flex gap-2">
-                                    <button onClick={() => router.push(`/bills/${bill.id}`)} className="px-3 py-1 text-sm bg-slate-100 dark:bg-slate-700 rounded-md font-semibold hover:bg-slate-200 dark:hover:bg-slate-600 transition-all active:scale-95">View Details</button>
-                                </div>
+
+                            <div className="flex flex-col items-end gap-2 ml-2">
+                                <div className="hidden sm:block"><PaymentProgress paid={paidCount} total={totalCount} /></div>
+                                <div className="sm:hidden text-xs text-slate-500 font-numeric mb-1">{paidCount}/{totalCount} Paid</div>
+                                <button onClick={() => router.push(`/bills/${bill.id}`)} className="px-3 py-1.5 text-xs sm:text-sm bg-slate-100 dark:bg-slate-700 rounded-md font-semibold hover:bg-slate-200 dark:hover:bg-slate-600 transition-all active:scale-95">View</button>
                             </div>
                         </div>
                     );
@@ -141,46 +140,48 @@ const MemberAllBillsView: React.FC<{
     };
 
     return (
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
             {bills.map(bill => {
                 const dueDateInfo = getDueDateStatus(bill.dueDate);
                 const status = bill.myShare.status;
 
                 return (
-                    <div key={bill.id} className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-5 space-y-3 transition-all hover:shadow-lg">
-                        <div className="flex items-center gap-3">
-                            {categoryIcons[bill.category]}
-                            <h3 className="font-bold text-lg font-sans text-slate-800 dark:text-white">{bill.title}</h3>
+                    <div key={bill.id} className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-3 sm:p-5 flex flex-row items-center justify-between transition-all hover:shadow-lg">
+                        <div className="flex-grow space-y-1">
+                            <div className="flex items-center gap-2 sm:gap-3">
+                                <div className="scale-90 sm:scale-100">{categoryIcons[bill.category]}</div>
+                                <h3 className="font-bold text-sm sm:text-lg font-sans text-slate-800 dark:text-white truncate">{bill.title}</h3>
+                            </div>
+                            <p className="text-slate-600 dark:text-slate-300 text-xs sm:text-base">
+                                Share: <span className="font-bold text-base sm:text-lg text-slate-800 dark:text-white font-numeric">৳{bill.myShare.amount.toFixed(0)}</span>
+                            </p>
+                            <p className={`text-[10px] sm:text-sm ${dueDateInfo.isOverdue && status !== 'Paid' ? 'text-danger-600 font-semibold' : 'text-slate-500 dark:text-slate-400'}`}>
+                                Due: {new Date(bill.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                {status !== 'Paid' && <span className="block sm:inline sm:ml-1 text-[10px] sm:text-xs opacity-80">({dueDateInfo.text})</span>}
+                            </p>
                         </div>
-                        <p className="text-slate-600 dark:text-slate-300">
-                            Your Share: <span className="font-bold text-lg text-slate-800 dark:text-white font-numeric">৳{bill.myShare.amount.toFixed(2)}</span>
-                        </p>
-                        <p className={`text-sm ${dueDateInfo.isOverdue && status !== 'Paid' ? 'text-danger-600 font-semibold' : 'text-slate-500 dark:text-slate-400'}`}>
-                            Due Date: {new Date(bill.dueDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
-                            {status !== 'Paid' && ` (${dueDateInfo.text})`}
-                        </p>
 
-                        <div className="flex justify-between items-center border-t border-slate-200 dark:border-slate-700 pt-3">
-                            <div>
+                        <div className="flex flex-col items-end gap-2 ml-3">
+                            <div className="w-full sm:w-auto flex justify-end">
                                 {status === 'Unpaid' || status === 'Overdue' ? (
                                     <button
                                         onClick={() => setConfirmingPayment(bill)}
-                                        className="px-4 py-2 text-white font-semibold rounded-md bg-gradient-success hover:shadow-lg transition-all active:scale-[0.98]"
+                                        className="px-3 py-1.5 text-xs sm:text-base text-white font-semibold rounded-md bg-gradient-success hover:shadow-lg transition-all active:scale-[0.98]"
                                     >
-                                        Pay Now
+                                        Pay
                                     </button>
                                 ) : status === 'Pending Approval' ? (
                                     <div>
-                                        <p className="text-sm text-warning-600 dark:text-warning-400">Status: <span className="font-semibold">⏳ Waiting for Approval</span></p>
+                                        <p className="text-xs sm:text-sm text-warning-600 dark:text-warning-400 text-right"><span className="font-semibold">⏳ Wait</span></p>
                                     </div>
                                 ) : (
                                     <div>
-                                        <p className="text-sm text-success-600 dark:text-success-400">Paid ✅</p>
+                                        <p className="text-xs sm:text-sm text-success-600 dark:text-success-400 text-right">✅ Paid</p>
                                     </div>
                                 )}
                             </div>
-                            <button onClick={() => router.push(`/bills/${bill.id}`)} className="text-sm font-semibold text-primary-600 hover:underline">
-                                View Details →
+                            <button onClick={() => router.push(`/bills/${bill.id}`)} className="text-xs sm:text-sm font-semibold text-primary-600 hover:underline text-right">
+                                View
                             </button>
                         </div>
                     </div>
@@ -259,17 +260,17 @@ export default function AllBillsPage() {
     return (
         <>
             <AppLayout>
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                     <div className="flex justify-between items-center">
-                        <h1 className="text-3xl font-bold text-slate-900 dark:text-white font-sans">
+                        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white font-sans">
                             {user.role === Role.Manager ? 'Bills' : 'My Bills'}
                         </h1>
                         {user.role === Role.Manager && (
                             <button
                                 onClick={() => setIsAddModalOpen(true)}
-                                className="flex items-center gap-2 px-4 py-2 text-white font-semibold rounded-lg bg-gradient-success hover:shadow-lg transition-all active:scale-[0.98]">
+                                className="flex items-center gap-2 px-3 py-2 sm:px-4 text-white font-semibold rounded-lg bg-gradient-success hover:shadow-lg transition-all active:scale-[0.98]">
                                 <PlusIcon className="w-5 h-5" />
-                                Add New Bill
+                                <span className="hidden sm:inline">Add New Bill</span><span className="inline sm:hidden">Add</span>
                             </button>
                         )}
                     </div>

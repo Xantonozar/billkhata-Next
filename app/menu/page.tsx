@@ -247,9 +247,9 @@ export default function MenuPage() {
     return (
         <AppLayout>
             <div className="space-y-6 animate-fade-in">
-                <div className="flex items-center gap-4">
-                    <MenuBookIcon className="w-8 h-8 text-primary-500" />
-                    <h1 className="text-3xl font-bold text-slate-900 dark:text-white">This Week's Menu</h1>
+                <div className="flex items-center gap-3 sm:gap-4">
+                    <MenuBookIcon className="w-6 h-6 sm:w-8 sm:h-8 text-primary-500" />
+                    <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">This Week's Menu</h1>
                 </div>
 
                 {loading ? (
@@ -260,43 +260,88 @@ export default function MenuPage() {
                         </div>
                     </div>
                 ) : (
-                    <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-4 overflow-x-auto">
-                        <table className="w-full min-w-max text-sm text-left">
-                            <thead className="border-b dark:border-slate-700">
-                                <tr>
-                                    <th className="p-3 text-slate-900 dark:text-white font-semibold">Day</th>
-                                    <th className="p-3 text-slate-900 dark:text-white font-semibold">Breakfast</th>
-                                    <th className="p-3 text-slate-900 dark:text-white font-semibold">Lunch</th>
-                                    <th className="p-3 text-slate-900 dark:text-white font-semibold">Dinner</th>
-                                    {user?.role === Role.Manager && <th className="p-3 text-center text-slate-900 dark:text-white font-semibold">Edit</th>}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {weeklyMenu.map(item => (
-                                    <tr key={item.day} className="border-b dark:border-slate-700 last:border-b-0 hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                                        <td className="p-3 font-semibold text-slate-800 dark:text-slate-100">{item.day}</td>
-                                        <td className="p-3 text-slate-600 dark:text-slate-300">{item.breakfast || '-'}</td>
-                                        <td className="p-3 text-slate-600 dark:text-slate-300">{item.lunch || '-'}</td>
-                                        <td className="p-3 text-slate-600 dark:text-slate-300">{item.dinner || '-'}</td>
+                    <>
+                        {/* Mobile Card View */}
+                        <div className="block lg:hidden space-y-4">
+                            {weeklyMenu.map(item => (
+                                <div key={item.day} className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-4">
+                                    <div className="flex justify-between items-center mb-3 pb-2 border-b dark:border-slate-700">
+                                        <h3 className="text-lg font-bold text-slate-800 dark:text-white">{item.day}</h3>
                                         {user?.role === Role.Manager && (
-                                            <td className="p-3 text-center">
-                                                <button onClick={() => setEditingDay(item.day)} className="p-1 rounded-md hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
-                                                    <PencilIcon className="w-5 h-5 text-primary-500" />
-                                                </button>
-                                            </td>
+                                            <button
+                                                onClick={() => setEditingDay(item.day)}
+                                                className="text-sm font-semibold text-primary-600 dark:text-primary-400 flex items-center gap-1 bg-primary-50 dark:bg-primary-900/20 px-2 py-1 rounded"
+                                            >
+                                                <PencilIcon className="w-4 h-4" /> Edit
+                                            </button>
                                         )}
+                                    </div>
+                                    <div className="space-y-3">
+                                        <div className="flex items-start gap-3">
+                                            <span className="text-xl">🍳</span>
+                                            <div>
+                                                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Breakfast</p>
+                                                <p className="text-slate-700 dark:text-slate-300">{item.breakfast || <span className="text-slate-400 italic">Not set</span>}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-start gap-3">
+                                            <span className="text-xl">🍛</span>
+                                            <div>
+                                                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Lunch</p>
+                                                <p className="text-slate-700 dark:text-slate-300">{item.lunch || <span className="text-slate-400 italic">Not set</span>}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-start gap-3">
+                                            <span className="text-xl">🌙</span>
+                                            <div>
+                                                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Dinner</p>
+                                                <p className="text-slate-700 dark:text-slate-300">{item.dinner || <span className="text-slate-400 italic">Not set</span>}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Desktop Table View */}
+                        <div className="hidden lg:block bg-white dark:bg-slate-800 rounded-xl shadow-md p-4 overflow-x-auto">
+                            <table className="w-full min-w-max text-sm text-left">
+                                <thead className="border-b dark:border-slate-700">
+                                    <tr>
+                                        <th className="p-3 text-slate-900 dark:text-white font-semibold">Day</th>
+                                        <th className="p-3 text-slate-900 dark:text-white font-semibold">Breakfast</th>
+                                        <th className="p-3 text-slate-900 dark:text-white font-semibold">Lunch</th>
+                                        <th className="p-3 text-slate-900 dark:text-white font-semibold">Dinner</th>
+                                        {user?.role === Role.Manager && <th className="p-3 text-center text-slate-900 dark:text-white font-semibold">Edit</th>}
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                        {user?.role === Role.Manager && (
-                            <div className="mt-4 pt-4 border-t dark:border-slate-700 text-right">
-                                <button onClick={() => setEditingDay('Permanent')} className="px-4 py-2 text-sm font-semibold bg-primary-100 text-primary-600 dark:bg-primary-500/20 dark:text-primary-400 rounded-md hover:bg-primary-200 dark:hover:bg-primary-500/30 transition-colors">
-                                    Edit Permanent Menu
-                                </button>
-                            </div>
-                        )}
-                    </div>
+                                </thead>
+                                <tbody>
+                                    {weeklyMenu.map(item => (
+                                        <tr key={item.day} className="border-b dark:border-slate-700 last:border-b-0 hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                                            <td className="p-3 font-semibold text-slate-800 dark:text-slate-100">{item.day}</td>
+                                            <td className="p-3 text-slate-600 dark:text-slate-300">{item.breakfast || '-'}</td>
+                                            <td className="p-3 text-slate-600 dark:text-slate-300">{item.lunch || '-'}</td>
+                                            <td className="p-3 text-slate-600 dark:text-slate-300">{item.dinner || '-'}</td>
+                                            {user?.role === Role.Manager && (
+                                                <td className="p-3 text-center">
+                                                    <button onClick={() => setEditingDay(item.day)} className="p-1 rounded-md hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
+                                                        <PencilIcon className="w-5 h-5 text-primary-500" />
+                                                    </button>
+                                                </td>
+                                            )}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                            {user?.role === Role.Manager && (
+                                <div className="mt-4 pt-4 border-t dark:border-slate-700 text-right">
+                                    <button onClick={() => setEditingDay('Permanent')} className="px-4 py-2 text-sm font-semibold bg-primary-100 text-primary-600 dark:bg-primary-500/20 dark:text-primary-400 rounded-md hover:bg-primary-200 dark:hover:bg-primary-500/30 transition-colors">
+                                        Edit Permanent Menu
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </>
                 )}
             </div>
 

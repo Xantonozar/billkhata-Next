@@ -18,9 +18,18 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ room
             return NextResponse.json({ message: 'Not authorized to view this room\'s bills' }, { status: 403 });
         }
 
+        const { searchParams } = new URL(req.url);
+        const page = parseInt(searchParams.get('page') || '1');
+        const limit = parseInt(searchParams.get('limit') || '20');
+        const skip = (page - 1) * limit;
+
         const bills = await Bill.find({ khataId: roomId })
+            .select('title category totalAmount dueDate description imageUrl createdBy shares')
             .populate('createdBy', 'name')
-            .sort({ dueDate: -1 });
+            .sort({ dueDate: -1 })
+            .skip(skip)
+            .limit(limit)
+            .lean();
 
         // Convert to frontend format
         const formattedBills = bills.map((bill: any) => ({

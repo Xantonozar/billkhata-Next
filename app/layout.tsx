@@ -92,12 +92,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className="dark" style={{ colorScheme: 'dark' }}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body
+        suppressHydrationWarning
         className={`${inter.variable} ${poppins.variable} ${rubik.variable} antialiased`}
       >
         <Providers>{children}</Providers>

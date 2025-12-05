@@ -224,13 +224,13 @@ export default function PaymentDashboardPage() {
         <>
             <AppLayout>
                 <div className="space-y-8 animate-fade-in">
-                    <div className="flex flex-wrap justify-between items-center gap-4">
-                        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Payment Dashboard</h1>
-                        <div className="flex items-center gap-2">
+                    <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">Payment Dashboard</h1>
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
                             <select
                                 value={selectedMonth.toISOString()}
                                 onChange={e => setSelectedMonth(new Date(e.target.value))}
-                                className="px-4 py-2 text-sm font-semibold bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm text-slate-900 dark:text-white"
+                                className="px-4 py-2 text-sm font-semibold bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm text-slate-900 dark:text-white w-full sm:w-auto"
                             >
                                 {monthOptions.map(month => (
                                     <option key={month.toISOString()} value={month.toISOString()}>
@@ -238,7 +238,7 @@ export default function PaymentDashboardPage() {
                                     </option>
                                 ))}
                             </select>
-                            <button className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-primary-600 text-white rounded-md shadow-sm hover:bg-primary-700">
+                            <button className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold bg-primary-600 text-white rounded-md shadow-sm hover:bg-primary-700 w-full sm:w-auto">
                                 <ExportIcon className="w-4 h-4" />
                                 Export
                             </button>
@@ -254,70 +254,138 @@ export default function PaymentDashboardPage() {
                     </div>
 
                     {/* Member-wise Bill Status */}
-                    <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md overflow-x-auto">
-                        <h3 className="p-5 text-lg font-semibold text-slate-800 dark:text-white">Member-wise Bill Status</h3>
-                        <table className="w-full text-sm text-left">
-                            <thead className="bg-slate-50 dark:bg-slate-700/50 text-xs text-slate-600 dark:text-slate-300 uppercase">
-                                <tr>
-                                    <th className="px-6 py-3">Member</th>
-                                    <th className="px-6 py-3 text-right">Total Due</th>
-                                    <th className="px-6 py-3 text-right">Paid</th>
-                                    <th className="px-6 py-3 text-right">Pending</th>
-                                    <th className="px-6 py-3">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-                                {currentData.memberSummaryData.map((member: any) => (
-                                    <tr key={member.name} className="hover:bg-slate-50 dark:hover:bg-slate-700/30">
-                                        <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">{member.name}</td>
-                                        <td className="px-6 py-4 text-right text-slate-700 dark:text-slate-300">{member.totalDue}</td>
-                                        <td className="px-6 py-4 text-right text-green-600 dark:text-green-400 font-semibold">{member.paid}</td>
-                                        <td className="px-6 py-4 text-right text-red-600 dark:text-red-400 font-semibold">{member.pending}</td>
-                                        <td className="px-6 py-4 font-medium text-slate-700 dark:text-slate-300">{member.status}</td>
+                    <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md overflow-hidden">
+                        <h3 className="p-5 text-lg font-semibold text-slate-800 dark:text-white border-b border-slate-100 dark:border-slate-700">Member-wise Bill Status</h3>
+
+                        {/* Mobile Card View */}
+                        <div className="block lg:hidden divide-y divide-slate-100 dark:divide-slate-700">
+                            {currentData.memberSummaryData.map((member: any) => (
+                                <div key={member.name} className="p-4 space-y-2">
+                                    <div className="flex justify-between items-center">
+                                        <p className="font-medium text-slate-900 dark:text-white text-lg">{member.name}</p>
+                                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{member.status}</span>
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-2 text-sm">
+                                        <div className="bg-slate-50 dark:bg-slate-900/50 p-2 rounded">
+                                            <p className="text-xs text-slate-500">Total Due</p>
+                                            <p className="font-bold text-slate-700 dark:text-slate-300">{member.totalDue}</p>
+                                        </div>
+                                        <div className="bg-green-50 dark:bg-green-900/10 p-2 rounded">
+                                            <p className="text-xs text-green-600 dark:text-green-400">Paid</p>
+                                            <p className="font-bold text-green-700 dark:text-green-400">{member.paid}</p>
+                                        </div>
+                                        <div className="bg-red-50 dark:bg-red-900/10 p-2 rounded">
+                                            <p className="text-xs text-red-600 dark:text-red-400">Pending</p>
+                                            <p className="font-bold text-red-700 dark:text-red-400">{member.pending}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Desktop Table View */}
+                        <div className="hidden lg:block overflow-x-auto">
+                            <table className="w-full text-sm text-left">
+                                <thead className="bg-slate-50 dark:bg-slate-700/50 text-xs text-slate-600 dark:text-slate-300 uppercase">
+                                    <tr>
+                                        <th className="px-6 py-3">Member</th>
+                                        <th className="px-6 py-3 text-right">Total Due</th>
+                                        <th className="px-6 py-3 text-right">Paid</th>
+                                        <th className="px-6 py-3 text-right">Pending</th>
+                                        <th className="px-6 py-3">Status</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                                    {currentData.memberSummaryData.map((member: any) => (
+                                        <tr key={member.name} className="hover:bg-slate-50 dark:hover:bg-slate-700/30">
+                                            <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">{member.name}</td>
+                                            <td className="px-6 py-4 text-right text-slate-700 dark:text-slate-300">{member.totalDue}</td>
+                                            <td className="px-6 py-4 text-right text-green-600 dark:text-green-400 font-semibold">{member.paid}</td>
+                                            <td className="px-6 py-4 text-right text-red-600 dark:text-red-400 font-semibold">{member.pending}</td>
+                                            <td className="px-6 py-4 font-medium text-slate-700 dark:text-slate-300">{member.status}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
                     {/* Bill Details */}
-                    <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md overflow-x-auto">
-                        <h3 className="p-5 text-lg font-semibold text-slate-800 dark:text-white">Bill Details</h3>
-                        <p className="px-5 pb-3 text-xs text-slate-500 dark:text-slate-400">Legend: ✅ Paid | ⏳ Pending</p>
-                        <table className="w-full text-sm text-center">
-                            <thead className="bg-slate-50 dark:bg-slate-700/50 text-xs text-slate-600 dark:text-slate-300 uppercase">
-                                <tr>
-                                    <th className="px-4 py-3 text-left">Bill</th>
-                                    <th className="px-4 py-3">Amount</th>
-                                    <th className="px-4 py-3">Split</th>
-                                    <th className="px-4 py-3">Due Date</th>
-                                    {members.map(m => (
-                                        <th key={m.id} className="px-4 py-3">{m.name.split(' ')[0]}</th>
-                                    ))}
-                                    <th className="px-4 py-3">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-                                {currentData.billDetailsData.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={5 + members.length} className="px-4 py-8 text-center text-slate-500 dark:text-slate-400">No bills found for this month</td>
-                                    </tr>
-                                ) : (
-                                    currentData.billDetailsData.map((bill: any) => (
-                                        <tr key={bill.bill} className="hover:bg-slate-50 dark:hover:bg-slate-700/30">
-                                            <td className="px-4 py-3 text-left font-medium text-slate-900 dark:text-white">{bill.bill}</td>
-                                            <td className="px-4 py-3 text-slate-700 dark:text-slate-300">৳{bill.amount.toLocaleString()}</td>
-                                            <td className="px-4 py-3 text-slate-700 dark:text-slate-300">৳{bill.split.toLocaleString()}</td>
-                                            <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{bill.dueDate}</td>
+                    <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md overflow-hidden">
+                        <h3 className="p-5 text-lg font-semibold text-slate-800 dark:text-white border-b border-slate-100 dark:border-slate-700">Bill Details</h3>
+                        <p className="px-5 py-3 text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/30">Legend: ✅ Paid | ⏳ Pending</p>
+
+                        {/* Mobile Card View */}
+                        <div className="block lg:hidden divide-y divide-slate-100 dark:divide-slate-700">
+                            {currentData.billDetailsData.length === 0 ? (
+                                <p className="px-5 py-4 text-center text-slate-500">No bills found</p>
+                            ) : (
+                                currentData.billDetailsData.map((bill: any) => (
+                                    <div key={bill.bill} className="p-4 space-y-3">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <h4 className="font-bold text-slate-900 dark:text-white">{bill.bill}</h4>
+                                                <p className="text-xs text-slate-500">Due: {bill.dueDate}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="font-bold text-slate-700 dark:text-slate-300">৳{bill.amount.toLocaleString()}</p>
+                                                <p className="text-xs text-slate-500">Split: ৳{bill.split.toLocaleString()}</p>
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-2 text-xs">
                                             {bill.statuses.map((status: string, index: number) => (
-                                                <td key={index} className="px-4 py-3">{status}</td>
+                                                <div key={index} className="flex justify-between items-center bg-slate-50 dark:bg-slate-900/50 p-2 rounded">
+                                                    <span className="text-slate-600 dark:text-slate-400 truncate max-w-[80px]">{members[index]?.name.split(' ')[0]}</span>
+                                                    <span>{status}</span>
+                                                </div>
                                             ))}
-                                            <td className="px-4 py-3 font-semibold text-slate-700 dark:text-slate-300">{bill.progress}</td>
+                                        </div>
+                                        <div className="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-slate-700/50">
+                                            <span className="text-xs font-medium text-slate-500">Progress</span>
+                                            <span className="text-sm font-bold text-primary-600 dark:text-primary-400">{bill.progress}</span>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+
+                        {/* Desktop Table View */}
+                        <div className="hidden lg:block overflow-x-auto">
+                            <table className="w-full text-sm text-center">
+                                <thead className="bg-slate-50 dark:bg-slate-700/50 text-xs text-slate-600 dark:text-slate-300 uppercase">
+                                    <tr>
+                                        <th className="px-4 py-3 text-left">Bill</th>
+                                        <th className="px-4 py-3">Amount</th>
+                                        <th className="px-4 py-3">Split</th>
+                                        <th className="px-4 py-3">Due Date</th>
+                                        {members.map(m => (
+                                            <th key={m.id} className="px-4 py-3">{m.name.split(' ')[0]}</th>
+                                        ))}
+                                        <th className="px-4 py-3">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                                    {currentData.billDetailsData.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={5 + members.length} className="px-4 py-8 text-center text-slate-500 dark:text-slate-400">No bills found for this month</td>
                                         </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
+                                    ) : (
+                                        currentData.billDetailsData.map((bill: any) => (
+                                            <tr key={bill.bill} className="hover:bg-slate-50 dark:hover:bg-slate-700/30">
+                                                <td className="px-4 py-3 text-left font-medium text-slate-900 dark:text-white">{bill.bill}</td>
+                                                <td className="px-4 py-3 text-slate-700 dark:text-slate-300">৳{bill.amount.toLocaleString()}</td>
+                                                <td className="px-4 py-3 text-slate-700 dark:text-slate-300">৳{bill.split.toLocaleString()}</td>
+                                                <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{bill.dueDate}</td>
+                                                {bill.statuses.map((status: string, index: number) => (
+                                                    <td key={index} className="px-4 py-3">{status}</td>
+                                                ))}
+                                                <td className="px-4 py-3 font-semibold text-slate-700 dark:text-slate-300">{bill.progress}</td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
                     {/* Payment Punctuality */}

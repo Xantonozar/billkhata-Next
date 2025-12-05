@@ -402,22 +402,22 @@ export default function ReportsAnalyticsPage() {
                 <div className="space-y-8 animate-fade-in pb-12">
                     {/* Header */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div className="flex items-center gap-4">
-                            <div className="p-3 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl shadow-lg border border-indigo-200 dark:border-indigo-700/50">
-                                <span className="text-3xl">📈</span>
+                        <div className="flex items-center gap-3 sm:gap-4">
+                            <div className="p-2 sm:p-3 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl shadow-lg border border-indigo-200 dark:border-indigo-700/50">
+                                <span className="text-2xl sm:text-3xl">📈</span>
                             </div>
                             <div>
-                                <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Reports & Analytics</h1>
-                                <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Deep dive into your financial data</p>
+                                <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Reports & Analytics</h1>
+                                <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mt-1">Deep dive into your financial data</p>
                             </div>
                         </div>
-                        <div className="flex items-center flex-wrap gap-2">
-                            <div className="bg-white dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700 flex shadow-sm">
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center flex-wrap gap-2 sm:gap-3">
+                            <div className="bg-white dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700 flex shadow-sm w-full sm:w-auto">
                                 {['This Month', 'Last 30 Days'].map(range => (
                                     <button
                                         key={range}
                                         onClick={() => setActiveDateRange(range)}
-                                        className={`px-4 py-2 text-sm font-semibold rounded-md transition-all ${activeDateRange === range
+                                        className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold rounded-md transition-all ${activeDateRange === range
                                             ? 'bg-primary-500 text-white shadow-md'
                                             : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
                                             }`}
@@ -426,37 +426,37 @@ export default function ReportsAnalyticsPage() {
                                     </button>
                                 ))}
                             </div>
-                            <button className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-slate-700 dark:text-slate-200">
+                            <button className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-slate-700 dark:text-slate-200 w-full sm:w-auto">
                                 <ExportIcon className="w-4 h-4" />Export
                             </button>
                         </div>
                     </div>
 
                     {/* Summary Cards */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                         <SummaryCard
-                            icon={<CurrencyRupeeIcon className="w-6 h-6 text-red-600 dark:text-red-400" />}
+                            icon={<CurrencyRupeeIcon className="w-5 h-5 sm:w-6 sm:h-6 text-red-600 dark:text-red-400" />}
                             title="Total Expenses"
                             value={`৳${reportData.totalExpenses.toLocaleString()}`}
                             subtitle={activeDateRange}
                             colorClass="bg-red-100 dark:bg-red-900/20"
                         />
                         <SummaryCard
-                            icon={<MealIcon className="w-6 h-6 text-orange-600 dark:text-orange-400" />}
+                            icon={<MealIcon className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600 dark:text-orange-400" />}
                             title="Avg Meal Cost"
                             value={`৳${reportData.avgMealCost.toFixed(2)}`}
                             subtitle="Per Meal"
                             colorClass="bg-orange-100 dark:bg-orange-900/20"
                         />
                         <SummaryCard
-                            icon={<BanknotesIcon className="w-6 h-6 text-green-600 dark:text-green-400" />}
+                            icon={<BanknotesIcon className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" />}
                             title="Total Deposits"
                             value={`৳${reportData.totalDeposits.toLocaleString()}`}
                             subtitle="Collected"
                             colorClass="bg-green-100 dark:bg-green-900/20"
                         />
                         <SummaryCard
-                            icon={<TrendingUpIcon className="w-6 h-6 text-blue-600 dark:text-blue-400" />}
+                            icon={<TrendingUpIcon className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400" />}
                             title="Fund Health"
                             value={`৳${reportData.fundHealth.toLocaleString()}`}
                             subtitle={reportData.fundHealth >= 0 ? 'Surplus' : 'Deficit'}
@@ -494,27 +494,27 @@ export default function ReportsAnalyticsPage() {
                     </div>
 
                     {/* Stats Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-700/50 flex items-center justify-between">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+                        <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-700/50 flex items-center justify-between">
                             <div>
-                                <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Total Bills</p>
-                                <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{bills.length}</p>
+                                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">Total Bills</p>
+                                <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-1">{bills.length}</p>
                             </div>
-                            <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-xl">📄</div>
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-lg sm:text-xl">📄</div>
                         </div>
-                        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-700/50 flex items-center justify-between">
+                        <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-700/50 flex items-center justify-between">
                             <div>
-                                <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Total Meals Served</p>
-                                <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{meals.reduce((acc, m) => acc + (m.totalMeals || 0), 0)}</p>
+                                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">Total Meals Served</p>
+                                <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-1">{meals.reduce((acc, m) => acc + (m.totalMeals || 0), 0)}</p>
                             </div>
-                            <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-xl">🍛</div>
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-lg sm:text-xl">🍛</div>
                         </div>
-                        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-700/50 flex items-center justify-between">
+                        <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-700/50 flex items-center justify-between">
                             <div>
-                                <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Active Members</p>
-                                <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{members.length}</p>
+                                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">Active Members</p>
+                                <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-1">{members.length}</p>
                             </div>
-                            <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-xl">👥</div>
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-lg sm:text-xl">👥</div>
                         </div>
                     </div>
                 </div>

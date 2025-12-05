@@ -208,22 +208,22 @@ export default function RoomMembersPage() {
             <AppLayout>
                 <div className="space-y-6 animate-fade-in">
                     <div className="flex flex-wrap justify-between items-center gap-4">
-                        <div className="flex items-center gap-4">
-                            <UsersIcon className="w-8 h-8 text-primary" />
-                            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Room Members ({members.length})</h1>
+                        <div className="flex items-center gap-3 sm:gap-4">
+                            <UsersIcon className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
+                            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Room Members ({members.length})</h1>
                         </div>
                     </div>
 
                     {user?.role === Role.Manager && (
-                        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 flex flex-wrap items-center justify-between gap-3">
-                            <div className="font-semibold">
+                        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+                            <div className="font-semibold flex flex-col sm:flex-row items-center gap-2">
                                 <span>🔑 Room Code: </span>
                                 <span className="font-mono text-lg bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-md">{user.khataId}</span>
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 w-full sm:w-auto">
                                 <button
                                     onClick={handleCopyRoomCode}
-                                    className="flex items-center gap-1.5 px-3 py-1 text-sm bg-gray-200 dark:bg-gray-600 rounded-md font-semibold hover:bg-gray-300 dark:hover:bg-gray-500"
+                                    className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm bg-gray-200 dark:bg-gray-600 rounded-md font-semibold hover:bg-gray-300 dark:hover:bg-gray-500"
                                 >
                                     {copied ? <CheckCircleIcon className="w-4 h-4 text-green-600" /> : <ClipboardIcon className="w-4 h-4" />}
                                     {copied ? 'Copied!' : 'Copy'}
@@ -243,7 +243,7 @@ export default function RoomMembersPage() {
                             </p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                             {members.map(member => (
                                 <MemberCard key={member.id} member={member} onHistoryClick={() => setViewingMember(member)} />
                             ))}

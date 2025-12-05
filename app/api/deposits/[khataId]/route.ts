@@ -17,10 +17,26 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ khat
             return NextResponse.json({ message: 'Access denied' }, { status: 403 });
         }
 
-        const deposits = await Deposit.find({ khataId })
+        const { searchParams } = new URL(req.url);
+        const page = parseInt(searchParams.get('page') || '1');
+        const limit = parseInt(searchParams.get('limit') || '20');
+        const skip = (page - 1) * limit;
+
+        const status = searchParams.get('status');
+
+        const query: any = { khataId };
+        if (status) {
+            query.status = status;
+        }
+
+        const deposits = await Deposit.find(query)
+            .select('amount paymentMethod transactionId screenshotUrl status createdAt userId approvedBy')
             .sort({ createdAt: -1 })
             .populate('userId', 'name email')
-            .populate('approvedBy', 'name');
+            .populate('approvedBy', 'name')
+            .skip(skip)
+            .limit(limit)
+            .lean();
 
         return NextResponse.json(deposits);
 
@@ -57,7 +73,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ kha
         // Notify manager about new deposit
         try {
             const Room = await import('@/models/Room').then(mod => mod.default);
-            const room = await Room.findOne({ khataId });
+            const room = await Room.findOne({ khataId }).select('manager').lean();
 
             if (room) {
                 const Notification = await import('@/models/Notification').then(mod => mod.default);

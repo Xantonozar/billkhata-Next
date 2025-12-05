@@ -17,32 +17,58 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ khat
             return NextResponse.json({ message: 'Access denied' }, { status: 403 });
         }
 
-        const totalMealsStats = await Meal.aggregate([
-            { $match: { khataId } },
-            { $group: { _id: null, total: { $sum: '$totalMeals' } } }
-        ]);
-        const totalMeals = totalMealsStats.length > 0 ? totalMealsStats[0].total : 0;
+        const { searchParams } = new URL(req.url);
+        const startDateParam = searchParams.get('startDate');
+        const endDateParam = searchParams.get('endDate');
 
-        const userMealsStats = await Meal.aggregate([
-            { $match: { khataId } },
+        let start: Date;
+        let end: Date;
+
+        if (startDateParam && endDateParam) {
+            start = new Date(startDateParam);
+            end = new Date(endDateParam);
+        } else {
+            const now = new Date();
+            start = new Date(now.getFullYear(), now.getMonth(), 1);
+            end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+        }
+
+        const [result] = await Meal.aggregate([
             {
-                $group: {
-                    _id: '$userId',
-                    userName: { $first: '$userName' },
-                    totalMeals: { $sum: '$totalMeals' },
-                    breakfast: { $sum: { $cond: ['$breakfast', 1, 0] } },
-                    lunch: { $sum: { $cond: ['$lunch', 1, 0] } },
-                    dinner: { $sum: { $cond: ['$dinner', 1, 0] } }
+                $match: {
+                    khataId,
+                    date: { $gte: start, $lte: end }
                 }
             },
-            { $sort: { userName: 1 } }
+            {
+                $facet: {
+                    totalMealsStats: [
+                        { $group: { _id: null, total: { $sum: '$totalMeals' } } }
+                    ],
+                    userMealsStats: [
+                        {
+                            $group: {
+                                _id: '$userId',
+                                userName: { $first: '$userName' },
+                                totalMeals: { $sum: '$totalMeals' },
+                                breakfast: { $sum: { $cond: ['$breakfast', 1, 0] } },
+                                lunch: { $sum: { $cond: ['$lunch', 1, 0] } },
+                                dinner: { $sum: { $cond: ['$dinner', 1, 0] } }
+                            }
+                        },
+                        { $sort: { userName: 1 } }
+                    ],
+                    currentUserStats: [
+                        { $match: { userId: user._id } },
+                        { $group: { _id: null, total: { $sum: '$totalMeals' } } }
+                    ]
+                }
+            }
         ]);
 
-        const currentUserStats = await Meal.aggregate([
-            { $match: { khataId, userId: user._id } },
-            { $group: { _id: null, total: { $sum: '$totalMeals' } } }
-        ]);
-        const currentUserMeals = currentUserStats.length > 0 ? currentUserStats[0].total : 0;
+        const totalMeals = result.totalMealsStats[0]?.total || 0;
+        const userMealsStats = result.userMealsStats;
+        const currentUserMeals = result.currentUserStats[0]?.total || 0;
 
         return NextResponse.json({
             totalMeals,

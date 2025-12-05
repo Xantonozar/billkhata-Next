@@ -31,19 +31,19 @@ const MealQuantitySelector: React.FC<{
     onChange: (value: number) => void;
     disabled: boolean;
 }> = ({ meal, label, icon, value, onChange, disabled }) => (
-    <div className="flex items-center justify-between">
-        <label className="font-medium text-gray-700 dark:text-gray-300">{icon} {label}</label>
-        <div className="flex items-center gap-3">
+    <div className="flex items-center justify-between py-1">
+        <label className="font-medium text-gray-700 dark:text-gray-300 text-sm sm:text-base">{icon} {label}</label>
+        <div className="flex items-center gap-3 sm:gap-4">
             <button
                 onClick={() => onChange(Math.max(0, value - 0.5))}
                 disabled={disabled}
-                className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 font-bold disabled:opacity-50"
+                className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 font-bold text-lg sm:text-xl disabled:opacity-50 flex items-center justify-center transition-colors"
             >−</button>
-            <span className="w-12 text-center font-bold text-xl">{value}</span>
+            <span className="w-8 sm:w-12 text-center font-bold text-lg sm:text-xl text-gray-900 dark:text-white">{value}</span>
             <button
                 onClick={() => onChange(value + 0.5)}
                 disabled={disabled}
-                className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 font-bold disabled:opacity-50"
+                className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 font-bold text-lg sm:text-xl disabled:opacity-50 flex items-center justify-center transition-colors"
             >+</button>
         </div>
     </div>
@@ -123,13 +123,13 @@ const MemberMealView: React.FC<{
             </div>
 
             {/* Sticky Bottom Bar */}
-            <div className="fixed bottom-0 left-0 right-0 bg-gray-700 dark:bg-gray-900 text-white p-4 shadow-lg z-40">
+            <div className="fixed bottom-0 left-0 right-0 bg-gray-700 dark:bg-gray-900 text-white p-4 shadow-lg z-40 pb-6 sm:pb-4">
                 <div className="max-w-4xl mx-auto text-center space-y-2">
-                    <p className="text-lg font-semibold">Total Today: {totalQty} quantities</p>
+                    <p className="text-base sm:text-lg font-semibold">Total Today: {totalQty} quantities</p>
                     <button
                         onClick={onSaveChanges}
                         disabled={isFinalized}
-                        className="w-full max-w-md mx-auto py-2.5 bg-white text-gray-900 font-semibold rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        className="w-full max-w-md mx-auto py-3 sm:py-2.5 bg-white text-gray-900 font-bold rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
                     >
                         Save Changes
                     </button>
@@ -170,20 +170,34 @@ const ManagerMealView: React.FC<{
                     {memberList.map(member => {
                         const total = member.meals.breakfast + member.meals.lunch + member.meals.dinner;
                         return (
-                            <div key={member.id} className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                                <p className="font-bold text-gray-800 dark:text-white">{member.name}</p>
-                                <div className="text-sm mt-1 text-gray-600 dark:text-gray-300">
-                                    <p>🌅 B: {member.meals.breakfast}, 🌞 L: {member.meals.lunch}, 🌙 D: {member.meals.dinner}</p>
-                                </div>
-                                <div className="border-t border-gray-200 dark:border-gray-600 my-2"></div>
-                                <div className="flex justify-between items-center">
-                                    <p className="text-sm font-semibold">Total: {total}</p>
+                            <div key={member.id} className="p-3 sm:p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                                <div className="flex justify-between items-start mb-2">
+                                    <p className="font-bold text-gray-800 dark:text-white text-base sm:text-lg">{member.name}</p>
                                     <button
                                         onClick={() => setIsEditingMember(member.name)}
-                                        className="text-xs font-semibold text-primary hover:underline"
+                                        className="text-xs sm:text-sm font-semibold text-primary hover:underline px-2 py-1 bg-white dark:bg-gray-600 rounded shadow-sm"
                                     >
                                         Edit
                                     </button>
+                                </div>
+                                <div className="text-xs sm:text-sm mt-1 text-gray-600 dark:text-gray-300 grid grid-cols-3 gap-2">
+                                    <div className="bg-white dark:bg-gray-600 p-2 rounded text-center">
+                                        <div className="font-bold">{member.meals.breakfast}</div>
+                                        <div className="text-[10px] uppercase text-gray-400 dark:text-gray-400">Brk</div>
+                                    </div>
+                                    <div className="bg-white dark:bg-gray-600 p-2 rounded text-center">
+                                        <div className="font-bold">{member.meals.lunch}</div>
+                                        <div className="text-[10px] uppercase text-gray-400 dark:text-gray-400">Lun</div>
+                                    </div>
+                                    <div className="bg-white dark:bg-gray-600 p-2 rounded text-center">
+                                        <div className="font-bold">{member.meals.dinner}</div>
+                                        <div className="text-[10px] uppercase text-gray-400 dark:text-gray-400">Din</div>
+                                    </div>
+                                </div>
+                                <div className="border-t border-gray-200 dark:border-gray-600 my-2"></div>
+                                <div className="flex justify-between items-center">
+                                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">Total Quantities</p>
+                                    <p className="font-bold text-lg text-primary-600 dark:text-primary-400">{total}</p>
                                 </div>
                             </div>
                         );
@@ -349,9 +363,9 @@ export default function MealManagementPage() {
         <>
             <AppLayout>
                 <div className="space-y-6 animate-fade-in">
-                    <div className="flex items-center gap-4">
-                        <MealIcon className="w-8 h-8 text-primary" />
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Meal Management</h1>
+                    <div className="flex items-center gap-3 sm:gap-4">
+                        <MealIcon className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
+                        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Meal Management</h1>
                     </div>
 
                     {user.role === Role.Manager ? (

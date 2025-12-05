@@ -35,10 +35,10 @@ export default function LandingPage() {
       </header>
 
       {/* Hero Section */}
-      <main className="py-20 px-6 md:px-12">
+      <main className="py-12 md:py-20 px-6 md:px-12">
         <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center">
           <div className="text-center md:text-left">
-            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+            <h1 className="text-3xl sm:text-4xl md:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white">
               Split Bills,
               <br />
               <span className="text-primary-500">Share Meals,</span>
@@ -49,12 +49,14 @@ export default function LandingPage() {
               The ultimate app for managing shared living expenses. From rent and utilities to daily meals, BillKhata keeps everything fair and transparent.
             </p>
             <div className="mt-8 flex gap-4 justify-center md:justify-start">
-              <Link href="/signup" className="px-8 py-3 font-semibold rounded-md bg-primary-500 text-white hover:bg-primary-600 transition-transform hover:scale-105 shadow-lg inline-block">
-                Create Your Khata
+              <Link href="/signup" className="px-5 md:px-8 py-3 font-semibold rounded-md bg-primary-500 text-white hover:bg-primary-600 transition-transform hover:scale-105 shadow-lg inline-block">
+                <span className="md:hidden">Create Khata</span>
+                <span className="hidden md:inline">Create Your Khata</span>
               </Link>
-              <button className="px-8 py-3 font-semibold rounded-md bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600 transition-transform hover:scale-105">
-                See Demo
-              </button>
+              <Link href="/demo" className="px-5 md:px-8 py-3 font-semibold rounded-md bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600 transition-transform hover:scale-105 inline-block">
+                <span className="md:hidden">Demo</span>
+                <span className="hidden md:inline">See Demo</span>
+              </Link>
             </div>
           </div>
           <div className="hidden md:block relative z-10">
@@ -65,7 +67,7 @@ export default function LandingPage() {
       </main>
 
       {/* Features Section */}
-      <section className="py-24 bg-white dark:bg-slate-800/50">
+      <section className="py-16 md:py-24 bg-white dark:bg-slate-800/50">
         <div className="max-w-7xl mx-auto px-6 md:px-12 text-center">
           <h2 className="text-3xl font-bold mb-4">Everything you need in one place</h2>
           <p className="text-lg text-slate-600 dark:text-slate-400 mb-12 max-w-3xl mx-auto">BillKhata is packed with features to make shared living easier, more transparent, and conflict-free.</p>
@@ -90,7 +92,7 @@ export default function LandingPage() {
       </section>
 
       {/* How It Works Section */}
-      <section className="py-24">
+      <section className="py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-6 md:px-12 text-center">
           <h2 className="text-3xl font-bold mb-12">Get Started in 4 Simple Steps</h2>
           <div className="grid md:grid-cols-4 gap-8 relative">

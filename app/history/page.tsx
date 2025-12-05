@@ -231,21 +231,21 @@ export default function HistoryPage() {
                 <div className="space-y-8 animate-fade-in pb-12">
                     {/* Header */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div className="flex items-center gap-4">
-                            <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700/50">
-                                <span className="text-3xl">📊</span>
+                        <div className="flex items-center gap-3 sm:gap-4">
+                            <div className="p-2 sm:p-3 bg-slate-100 dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700/50">
+                                <span className="text-2xl sm:text-3xl">📊</span>
                             </div>
                             <div>
-                                <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">History & Reports</h1>
-                                <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Financial overview and member insights</p>
+                                <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">History & Reports</h1>
+                                <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mt-1">Financial overview and member insights</p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                            <div className="relative group">
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                            <div className="relative group flex-1 sm:flex-none">
                                 <select
                                     value={selectedMonth.toISOString()}
                                     onChange={(e) => setSelectedMonth(new Date(e.target.value))}
-                                    className="appearance-none pl-4 pr-10 py-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/50 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all cursor-pointer shadow-lg"
+                                    className="w-full appearance-none pl-4 pr-10 py-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/50 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all cursor-pointer shadow-lg text-sm sm:text-base"
                                 >
                                     {monthOptions.map(month => (
                                         <option key={month.toISOString()} value={month.toISOString()}>
@@ -257,29 +257,29 @@ export default function HistoryPage() {
                                     ▼
                                 </div>
                             </div>
-                            <button className="px-5 py-2.5 bg-primary-600 hover:bg-primary-500 text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-primary-500/20 flex items-center gap-2 active:scale-95">
+                            <button className="flex-1 sm:flex-none justify-center px-5 py-2.5 bg-primary-600 hover:bg-primary-500 text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-primary-500/20 flex items-center gap-2 active:scale-95 text-sm sm:text-base">
                                 <span>📥</span> Export
                             </button>
                         </div>
                     </div>
 
                     {/* Filters */}
-                    <div className="flex flex-wrap gap-3 bg-slate-100 dark:bg-slate-800/50 p-2 rounded-2xl border border-slate-200 dark:border-slate-700/30 backdrop-blur-sm w-fit">
+                    <div className="flex flex-col sm:flex-row flex-wrap gap-3 bg-slate-100 dark:bg-slate-800/50 p-2 rounded-2xl border border-slate-200 dark:border-slate-700/30 backdrop-blur-sm w-full sm:w-fit">
                         <select
                             value={selectedMember}
                             onChange={(e) => setSelectedMember(e.target.value)}
-                            className="px-4 py-2 bg-white dark:bg-slate-800 border-0 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/50 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer min-w-[150px]"
+                            className="px-4 py-2 bg-white dark:bg-slate-800 border-0 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/50 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer w-full sm:min-w-[150px] text-sm sm:text-base"
                         >
                             <option value="all">All Members</option>
                             {members.map(member => (
                                 <option key={member.id} value={member.id}>{member.name}</option>
                             ))}
                         </select>
-                        <div className="w-px bg-slate-300 dark:bg-slate-700 my-1"></div>
+                        <div className="hidden sm:block w-px bg-slate-300 dark:bg-slate-700 my-1"></div>
                         <select
                             value={selectedCostType}
                             onChange={(e) => setSelectedCostType(e.target.value)}
-                            className="px-4 py-2 bg-white dark:bg-slate-800 border-0 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/50 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer min-w-[150px]"
+                            className="px-4 py-2 bg-white dark:bg-slate-800 border-0 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/50 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer w-full sm:min-w-[150px] text-sm sm:text-base"
                         >
                             <option value="all">All Costs</option>
                             <option value="bills">Bills Only</option>
@@ -289,84 +289,84 @@ export default function HistoryPage() {
                     </div>
 
                     {/* Monthly Summary Card */}
-                    <div className="bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700/50 p-8 relative overflow-hidden group">
+                    <div className="bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700/50 p-4 sm:p-8 relative overflow-hidden group">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/5 dark:bg-primary-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-primary-500/10 transition-colors duration-500"></div>
 
-                        <div className="flex items-center justify-between mb-8 relative z-10">
-                            <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                                <span className="w-1 h-6 bg-primary-500 rounded-full"></span>
+                        <div className="flex items-center justify-between mb-6 sm:mb-8 relative z-10">
+                            <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                <span className="w-1 h-5 sm:h-6 bg-primary-500 rounded-full"></span>
                                 {getMonthYearString()} Summary
                             </h2>
-                            <div className="px-3 py-1 bg-slate-200 dark:bg-slate-700/50 rounded-full border border-slate-300 dark:border-slate-600/50 text-xs font-medium text-slate-600 dark:text-slate-400">
+                            <div className="px-3 py-1 bg-slate-200 dark:bg-slate-700/50 rounded-full border border-slate-300 dark:border-slate-600/50 text-[10px] sm:text-xs font-medium text-slate-600 dark:text-slate-400">
                                 Real-time Data
                             </div>
                         </div>
 
-                        <div className="space-y-8 relative z-10">
+                        <div className="space-y-6 sm:space-y-8 relative z-10">
                             {/* Row 1 */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8">
                                 <div className="flex justify-between items-center p-4 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700/30 hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
                                     <div className="flex flex-col">
                                         <span className="text-slate-500 dark:text-slate-400 text-sm font-medium">Total Bills</span>
-                                        <span className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{formatCurrency(monthlySummary.totalBills)}</span>
+                                        <span className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-1">{formatCurrency(monthlySummary.totalBills)}</span>
                                     </div>
                                     <span className="text-2xl opacity-50">📄</span>
                                 </div>
                                 <div className="flex justify-between items-center p-4 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700/30 hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
                                     <div className="flex flex-col">
                                         <span className="text-slate-500 dark:text-slate-400 text-sm font-medium">Total Paid</span>
-                                        <span className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">{formatCurrency(monthlySummary.totalPaid)}</span>
+                                        <span className="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400 mt-1">{formatCurrency(monthlySummary.totalPaid)}</span>
                                     </div>
                                     <span className="text-2xl opacity-50">✅</span>
                                 </div>
                                 <div className="flex justify-between items-center p-4 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700/30 hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
                                     <div className="flex flex-col">
                                         <span className="text-slate-500 dark:text-slate-400 text-sm font-medium">Total Pending</span>
-                                        <span className="text-2xl font-bold text-red-600 dark:text-red-400 mt-1">{formatCurrency(monthlySummary.totalPending)}</span>
+                                        <span className="text-xl sm:text-2xl font-bold text-red-600 dark:text-red-400 mt-1">{formatCurrency(monthlySummary.totalPending)}</span>
                                     </div>
                                     <span className="text-2xl opacity-50">⏳</span>
                                 </div>
                             </div>
 
                             {/* Row 2 */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 border-t border-slate-200 dark:border-slate-700/50 pt-8">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8 border-t border-slate-200 dark:border-slate-700/50 pt-6 sm:pt-8">
                                 <div className="flex justify-between items-center group/item">
-                                    <p className="text-slate-500 dark:text-slate-400 group-hover/item:text-slate-600 dark:group-hover/item:text-slate-300 transition-colors">Total Deposits:</p>
-                                    <p className="text-xl font-bold text-slate-900 dark:text-white">{formatCurrency(monthlySummary.totalDeposits)}</p>
+                                    <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 group-hover/item:text-slate-600 dark:group-hover/item:text-slate-300 transition-colors">Total Deposits:</p>
+                                    <p className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">{formatCurrency(monthlySummary.totalDeposits)}</p>
                                 </div>
                                 <div className="flex justify-between items-center group/item">
-                                    <p className="text-slate-500 dark:text-slate-400 group-hover/item:text-slate-600 dark:group-hover/item:text-slate-300 transition-colors">Total Meal Cost:</p>
-                                    <p className="text-xl font-bold text-slate-900 dark:text-white">{formatCurrency(monthlySummary.totalMealCost)}</p>
+                                    <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 group-hover/item:text-slate-600 dark:group-hover/item:text-slate-300 transition-colors">Total Meal Cost:</p>
+                                    <p className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">{formatCurrency(monthlySummary.totalMealCost)}</p>
                                 </div>
                                 <div className="flex justify-between items-center group/item">
-                                    <p className="text-slate-500 dark:text-slate-400 group-hover/item:text-slate-600 dark:group-hover/item:text-slate-300 transition-colors">Total Due:</p>
-                                    <p className={`text-xl font-bold ${monthlySummary.totalDue < 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                                    <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 group-hover/item:text-slate-600 dark:group-hover/item:text-slate-300 transition-colors">Total Due:</p>
+                                    <p className={`text-lg sm:text-xl font-bold ${monthlySummary.totalDue < 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
                                         {formatCurrency(monthlySummary.totalDue)}
                                     </p>
                                 </div>
                             </div>
 
                             {/* Row 3 */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 border-t border-slate-200 dark:border-slate-700/50 pt-8">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8 border-t border-slate-200 dark:border-slate-700/50 pt-6 sm:pt-8">
                                 <div className="flex justify-between items-center group/item">
-                                    <p className="text-slate-500 dark:text-slate-400 group-hover/item:text-slate-600 dark:group-hover/item:text-slate-300 transition-colors">Total Meals:</p>
-                                    <p className="text-xl font-bold text-slate-900 dark:text-white">{monthlySummary.totalMeals}</p>
+                                    <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 group-hover/item:text-slate-600 dark:group-hover/item:text-slate-300 transition-colors">Total Meals:</p>
+                                    <p className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">{monthlySummary.totalMeals}</p>
                                 </div>
                                 <div className="flex justify-between items-center group/item">
-                                    <p className="text-slate-500 dark:text-slate-400 group-hover/item:text-slate-600 dark:group-hover/item:text-slate-300 transition-colors">Meal Rate:</p>
-                                    <p className="text-xl font-bold text-primary-600 dark:text-primary-400">{formatCurrency(monthlySummary.mealRate)}</p>
+                                    <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 group-hover/item:text-slate-600 dark:group-hover/item:text-slate-300 transition-colors">Meal Rate:</p>
+                                    <p className="text-lg sm:text-xl font-bold text-primary-600 dark:text-primary-400">{formatCurrency(monthlySummary.mealRate)}</p>
                                 </div>
                                 <div className="flex justify-between items-center group/item">
-                                    <p className="text-slate-500 dark:text-slate-400 group-hover/item:text-slate-600 dark:group-hover/item:text-slate-300 transition-colors">Max Meal Taker:</p>
-                                    <p className="text-xl font-bold text-slate-900 dark:text-white">{monthlySummary.maxMealTaker}</p>
+                                    <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 group-hover/item:text-slate-600 dark:group-hover/item:text-slate-300 transition-colors">Max Meal Taker:</p>
+                                    <p className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">{monthlySummary.maxMealTaker}</p>
                                 </div>
                             </div>
 
                             {/* Row 4 */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 border-t border-slate-200 dark:border-slate-700/50 pt-8">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8 border-t border-slate-200 dark:border-slate-700/50 pt-6 sm:pt-8">
                                 <div className="flex justify-between items-center group/item">
-                                    <p className="text-slate-500 dark:text-slate-400 group-hover/item:text-slate-600 dark:group-hover/item:text-slate-300 transition-colors">Min Meal Taker:</p>
-                                    <p className="text-xl font-bold text-slate-900 dark:text-white">{monthlySummary.minMealTaker}</p>
+                                    <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 group-hover/item:text-slate-600 dark:group-hover/item:text-slate-300 transition-colors">Min Meal Taker:</p>
+                                    <p className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">{monthlySummary.minMealTaker}</p>
                                 </div>
                                 <div className="hidden md:block"></div>
                                 <div className="hidden md:block"></div>
@@ -374,16 +374,76 @@ export default function HistoryPage() {
                         </div>
                     </div>
 
-                    {/* Member Breakdown Table */}
+                    {/* Member Breakdown Results */}
                     <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700/50 overflow-hidden">
-                        <div className="p-6 border-b border-slate-200 dark:border-slate-700/50 flex items-center justify-between">
-                            <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                                <span className="w-1 h-6 bg-primary-500 rounded-full"></span>
+                        <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-slate-700/50 flex items-center justify-between">
+                            <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                <span className="w-1 h-5 sm:h-6 bg-primary-500 rounded-full"></span>
                                 Member Breakdown
                             </h2>
-                            <span className="text-sm text-slate-500 dark:text-slate-400">{filteredBreakdown.length} Members</span>
+                            <span className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">{filteredBreakdown.length} Members</span>
                         </div>
-                        <div className="overflow-x-auto">
+
+                        {/* Mobile Card View */}
+                        <div className="block lg:hidden">
+                            {filteredBreakdown.length === 0 ? (
+                                <div className="p-8 text-center text-slate-500 dark:text-slate-500">
+                                    <div className="flex flex-col items-center gap-2">
+                                        <span className="text-3xl opacity-50">📭</span>
+                                        <p>No data available for this period</p>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="divide-y divide-slate-200 dark:divide-slate-700">
+                                    {filteredBreakdown.map((member) => (
+                                        <div key={member.memberId} className="p-4 space-y-3">
+                                            <div className="flex items-center gap-3 mb-2">
+                                                <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-sm font-bold text-primary-600 dark:text-primary-400 border border-slate-300 dark:border-slate-600">
+                                                    {member.memberName.charAt(0)}
+                                                </div>
+                                                <span className="font-bold text-slate-900 dark:text-white text-lg">
+                                                    {member.memberName}
+                                                </span>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-3 text-sm">
+                                                <div className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg">
+                                                    <p className="text-slate-500 dark:text-slate-400 text-xs">Bills Due</p>
+                                                    <p className="font-semibold text-slate-900 dark:text-white">{formatCurrency(member.billsDue)}</p>
+                                                </div>
+                                                <div className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg">
+                                                    <p className="text-slate-500 dark:text-slate-400 text-xs">Paid</p>
+                                                    <p className="font-bold text-green-600 dark:text-green-400">{formatCurrency(member.paid)}</p>
+                                                </div>
+                                                <div className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg">
+                                                    <p className="text-slate-500 dark:text-slate-400 text-xs">Pending</p>
+                                                    <p className="font-bold text-red-600 dark:text-red-400">{formatCurrency(member.pending)}</p>
+                                                </div>
+                                                <div className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg">
+                                                    <p className="text-slate-500 dark:text-slate-400 text-xs">Deposits</p>
+                                                    <p className="font-semibold text-slate-900 dark:text-white">{formatCurrency(member.deposits)}</p>
+                                                </div>
+                                            </div>
+
+                                            <div className={`p-3 rounded-lg flex justify-between items-center ${member.refundOrDue < 0
+                                                    ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400'
+                                                    : 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
+                                                }`}>
+                                                <span className="font-medium text-xs uppercase tracking-wide">
+                                                    {member.refundOrDue < 0 ? 'Due' : 'Refund'}
+                                                </span>
+                                                <span className="font-bold text-lg">
+                                                    {formatCurrency(Math.abs(member.refundOrDue))}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Desktop Table View */}
+                        <div className="hidden lg:block overflow-x-auto">
                             <table className="w-full">
                                 <thead className="bg-slate-50 dark:bg-slate-900/50">
                                     <tr>

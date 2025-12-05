@@ -45,7 +45,7 @@ export default function LoginPage() {
             </div>
 
             {/* Right Panel (Form) */}
-            <div className="w-full lg:w-3/5 flex items-center justify-center p-6 sm:p-12">
+            <div className="w-full lg:w-3/5 flex items-center justify-center p-4 sm:p-12">
                 <div className="max-w-md w-full">
                     <div className="lg:hidden text-center mb-8">
                         <h1 className="text-center text-4xl font-bold text-primary-600">BillKhata</h1>
@@ -53,7 +53,7 @@ export default function LoginPage() {
                     <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
                         Log in to your account
                     </h2>
-                    <div className="bg-white dark:bg-slate-800 p-8 mt-8 rounded-lg shadow-lg">
+                    <div className="bg-white dark:bg-slate-800 p-6 sm:p-8 mt-8 rounded-lg shadow-lg">
                         <form className="space-y-6" onSubmit={handleSubmit}>
                             <div>
                                 <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-300">

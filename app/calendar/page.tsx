@@ -262,11 +262,11 @@ export default function CalendarPage() {
             days.push(
                 <div
                     key={day}
-                    className="border-r border-b border-slate-200 dark:border-slate-700 p-2 min-h-[80px] cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
+                    className="border-r border-b border-slate-200 dark:border-slate-700 p-1 sm:p-2 min-h-[60px] sm:min-h-[80px] cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors flex flex-col items-center sm:items-start"
                     onClick={() => setSelectedDate(new Date(year, month, day))}
                 >
-                    <span className={`font-semibold ${isToday ? 'bg-primary-500 text-white rounded-full w-6 h-6 flex items-center justify-center' : 'text-slate-700 dark:text-slate-300'}`}>{day}</span>
-                    {displayCount !== undefined && displayCount > 0 && <div className="text-sm mt-1 text-slate-600 dark:text-slate-400">🍽️{displayCount}</div>}
+                    <span className={`font-semibold text-xs sm:text-base ${isToday ? 'bg-primary-500 text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center' : 'text-slate-700 dark:text-slate-300'}`}>{day}</span>
+                    {displayCount !== undefined && displayCount > 0 && <div className="text-xs mt-1 text-slate-600 dark:text-slate-400">🍽️{displayCount}</div>}
                 </div>
             );
         }
@@ -278,16 +278,16 @@ export default function CalendarPage() {
     return (
         <AppLayout>
             <div className="space-y-4 animate-fade-in">
-                <div className="flex items-center gap-4">
-                    <CalendarIcon className="w-8 h-8 text-primary-500" />
-                    <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Meal Calendar</h1>
+                <div className="flex items-center gap-3 sm:gap-4">
+                    <CalendarIcon className="w-6 h-6 sm:w-8 sm:h-8 text-primary-500" />
+                    <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">Meal Calendar</h1>
                 </div>
 
                 <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-4">
                     <div className="flex justify-between items-center mb-4">
-                        <button onClick={handlePrevMonth} className="px-3 py-1 font-semibold rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300">{"< Prev"}</button>
-                        <h2 className="text-xl font-bold text-slate-900 dark:text-white">{currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</h2>
-                        <button onClick={handleNextMonth} className="px-3 py-1 font-semibold rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300">{"Next >"}</button>
+                        <button onClick={handlePrevMonth} className="px-2 sm:px-3 py-1 text-sm sm:text-base font-semibold rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300">{"< Prev"}</button>
+                        <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white text-center">{currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</h2>
+                        <button onClick={handleNextMonth} className="px-2 sm:px-3 py-1 text-sm sm:text-base font-semibold rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300">{"Next >"}</button>
                     </div>
 
                     {loading ? (
@@ -295,7 +295,7 @@ export default function CalendarPage() {
                     ) : (
                         <div className="grid grid-cols-7 text-center font-semibold text-sm text-slate-600 dark:text-slate-300 border-t border-l border-slate-200 dark:border-slate-700">
                             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                                <div key={day} className="py-2 border-r border-b border-slate-200 dark:border-slate-700">{day}</div>
+                                <div key={day} className="py-2 border-r border-b border-slate-200 dark:border-slate-700 text-xs sm:text-sm">{day.slice(0, 3)}</div>
                             ))}
                             {calendarGrid}
                         </div>

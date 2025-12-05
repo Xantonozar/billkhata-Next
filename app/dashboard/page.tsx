@@ -18,14 +18,14 @@ const initialTodaysMenu: TodaysMenu = {
 };
 
 const StatCard: React.FC<{ title: string; value: string; subtitle: string, isLoading?: boolean }> = ({ title, value, subtitle, isLoading }) => (
-    <div className="bg-white dark:bg-slate-800 p-5 rounded-xl shadow-md transition-all duration-300 hover:scale-[1.02] hover:shadow-lg">
-        <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400">{title}</h3>
+    <div className="bg-white dark:bg-slate-800 p-3 sm:p-5 rounded-xl shadow-md transition-all duration-300 hover:scale-[1.02] hover:shadow-lg">
+        <h3 className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400 truncate">{title}</h3>
         {isLoading ? (
-            <div className="mt-2 h-8 w-3/4 rounded bg-slate-200 dark:bg-slate-700 animate-pulse"></div>
+            <div className="mt-2 h-6 sm:h-8 w-3/4 rounded bg-slate-200 dark:bg-slate-700 animate-pulse"></div>
         ) : (
-            <p className="text-3xl font-bold text-slate-800 dark:text-white mt-1">{value}</p>
+            <p className="text-xl sm:text-3xl font-bold text-slate-800 dark:text-white mt-1 truncate">{value}</p>
         )}
-        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{subtitle}</p>
+        <p className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500 mt-1 truncate">{subtitle}</p>
     </div>
 );
 
@@ -40,9 +40,9 @@ const PriorityActionCard: React.FC<{ title: string; details: string; onView?: ()
 );
 
 const QuickActionButton: React.FC<{ icon: React.ReactNode; label: string, onClick: () => void }> = ({ icon, label, onClick }) => (
-    <button onClick={onClick} className="flex flex-col items-center justify-center p-4 bg-slate-100 dark:bg-slate-700/50 rounded-xl shadow-sm space-y-2 transition-all hover:bg-slate-200 dark:hover:bg-slate-700 hover:scale-[1.02] active:scale-[0.98]">
-        {icon}
-        <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{label}</span>
+    <button onClick={onClick} className="flex flex-col items-center justify-center p-2 sm:p-4 bg-slate-100 dark:bg-slate-700/50 rounded-xl shadow-sm space-y-1 sm:space-y-2 transition-all hover:bg-slate-200 dark:hover:bg-slate-700 hover:scale-[1.02] active:scale-[0.98]">
+        <div className="scale-75 sm:scale-100 transform origin-center">{icon}</div>
+        <span className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 text-center leading-tight">{label}</span>
     </button>
 );
 
@@ -71,70 +71,52 @@ const ManagerDashboard: React.FC = () => {
 
         if (user?.khataId) {
             setLoadingStats(true);
-            Promise.all([
-                api.getBillsForRoom(user.khataId),
-                api.getPendingApprovals(user.khataId),
-                api.getFundStatus(user.khataId),
-                api.getMembersForRoom(user.khataId),
-                api.getExpenses(user.khataId),
-                api.getDeposits(user.khataId),
-                api.getMenu(user.khataId)
-            ]).then(([bills, joinRequests, fundStatus, members, expenses, deposits, menuItems]) => {
-                const now = new Date();
-                const currentMonth = now.getMonth();
-                const currentYear = now.getFullYear();
-
-                const currentMonthBills = bills.filter(bill => {
-                    const dueDate = new Date(bill.dueDate);
-                    return dueDate.getMonth() === currentMonth && dueDate.getFullYear() === currentYear;
-                });
-
-                const totalAmount = currentMonthBills.reduce((sum, bill) => sum + bill.totalAmount, 0);
-
-                const pendingExpenses = expenses.filter(e => e.status === 'Pending');
-                const pendingDeposits = deposits.filter(d => d.status === 'Pending');
-
-                const totalPendingCount = joinRequests.length + pendingExpenses.length + pendingDeposits.length;
-
+            api.getDashboardStats().then((data) => {
                 setStats({
-                    totalBillsAmount: totalAmount,
-                    pendingApprovals: totalPendingCount,
-                    fundBalance: fundStatus.balance,
-                    activeMembers: members.length,
-                    totalBillsCount: currentMonthBills.length
+                    totalBillsAmount: data.totalBillsAmount,
+                    pendingApprovals: data.pendingApprovals,
+                    fundBalance: data.fundBalance,
+                    activeMembers: data.activeMembers,
+                    totalBillsCount: data.totalBillsCount
                 });
 
                 const actions = [];
-                if (joinRequests.length > 0) {
+                // Process priority actions from backend data
+                if (data.pendingJoinRequestsCount > 0) {
                     actions.push({
-                        title: `👤 ${joinRequests.length} Join Request${joinRequests.length > 1 ? 's' : ''}`,
-                        details: joinRequests.map((r: any) => r.name).join(', '),
+                        title: `👤 ${data.pendingJoinRequestsCount} Join Request${data.pendingJoinRequestsCount > 1 ? 's' : ''}`,
+                        details: 'Click to review',
                         page: '/members'
                     });
                 }
-                if (pendingExpenses.length > 0) {
+
+                if (data.priorityActions?.expenses?.length > 0) {
+                    const count = data.priorityActions.expenses.length;
+                    const total = data.priorityActions.expenses.reduce((sum: number, e: any) => sum + e.amount, 0);
                     actions.push({
-                        title: `🛒 ${pendingExpenses.length} Shopping Approval${pendingExpenses.length > 1 ? 's' : ''}`,
-                        details: `Total: ৳${pendingExpenses.reduce((sum: number, e: any) => sum + e.amount, 0)}`,
+                        title: `🛒 ${count} Shopping Approval${count > 1 ? 's' : ''}`,
+                        details: `Total: ৳${total}`,
                         page: '/shopping'
                     });
                 }
-                if (pendingDeposits.length > 0) {
+
+                if (data.priorityActions?.deposits?.length > 0) {
+                    const count = data.priorityActions.deposits.length;
+                    const total = data.priorityActions.deposits.reduce((sum: number, d: any) => sum + d.amount, 0);
                     actions.push({
-                        title: `💵 ${pendingDeposits.length} Deposit Approval${pendingDeposits.length > 1 ? 's' : ''}`,
-                        details: `Total: ৳${pendingDeposits.reduce((sum: number, d: any) => sum + d.amount, 0)}`,
+                        title: `💵 ${count} Deposit Approval${count > 1 ? 's' : ''}`,
+                        details: `Total: ৳${total}`,
                         page: '/shopping'
                     });
                 }
+
                 setPriorityActions(actions);
 
-                const todayStr = today.toLocaleDateString('en-US', { weekday: 'long' });
-                const todayMenu = menuItems.find((item: any) => item.day === todayStr);
-                if (todayMenu) {
+                if (data.todaysMenu) {
                     setMenu({
-                        breakfast: todayMenu.breakfast || 'Not set',
-                        lunch: todayMenu.lunch || 'Not set',
-                        dinner: todayMenu.dinner || 'Not set'
+                        breakfast: data.todaysMenu.breakfast || 'Not set',
+                        lunch: data.todaysMenu.lunch || 'Not set',
+                        dinner: data.todaysMenu.dinner || 'Not set'
                     });
                 }
 
@@ -226,11 +208,11 @@ const ManagerDashboard: React.FC = () => {
                 <p className="text-slate-500 dark:text-slate-400 text-base">{currentDate}</p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard title="💰 Total Bills" value={`৳${stats.totalBillsAmount.toLocaleString()}`} subtitle={`${stats.totalBillsCount} bills this month`} isLoading={loadingStats} />
-                <StatCard title="🔔 Pending Approvals" value={`${stats.pendingApprovals} items`} subtitle="Need your action" isLoading={loadingStats} />
-                <StatCard title="💵 Meal Fund Balance" value={`+৳${stats.fundBalance.toLocaleString()}`} subtitle="Healthy balance" isLoading={loadingStats} />
-                <StatCard title="👥 Active Members" value={`${stats.activeMembers} members`} subtitle="in your room" isLoading={loadingStats} />
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+                <StatCard title="💰 Total Bills" value={`৳${stats.totalBillsAmount.toLocaleString()}`} subtitle={`${stats.totalBillsCount} bills`} isLoading={loadingStats} />
+                <StatCard title="🔔 Approvals" value={`${stats.pendingApprovals} items`} subtitle="Pending action" isLoading={loadingStats} />
+                <StatCard title="💵 Fund" value={`+৳${stats.fundBalance.toLocaleString()}`} subtitle="Current balance" isLoading={loadingStats} />
+                <StatCard title="👥 Members" value={`${stats.activeMembers}`} subtitle="Active users" isLoading={loadingStats} />
             </div>
 
             <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-md">
@@ -272,13 +254,13 @@ const ManagerDashboard: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-md">
-                    <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-4">Quick Actions</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                        <QuickActionButton icon={<PlusIcon className="w-8 h-8 text-primary-500" />} label="Add Bill" onClick={() => router.push('/bills')} />
-                        <QuickActionButton icon={<MealIcon className="w-8 h-8 text-green-600" />} label="Finalize Meals" onClick={() => router.push('/meals')} />
-                        <QuickActionButton icon={<UsersIcon className="w-8 h-8 text-yellow-600" />} label="Members" onClick={() => router.push('/members')} />
-                        <QuickActionButton icon={<ChartBarIcon className="w-8 h-8 text-indigo-500" />} label="Reports" onClick={() => router.push('/reports')} />
+                <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-xl shadow-md">
+                    <h3 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-white mb-3 sm:mb-4">Quick Actions</h3>
+                    <div className="grid grid-cols-4 gap-2 sm:gap-4">
+                        <QuickActionButton icon={<PlusIcon className="w-8 h-8 text-primary-500" />} label="Bill" onClick={() => router.push('/bills')} />
+                        <QuickActionButton icon={<MealIcon className="w-8 h-8 text-green-600" />} label="Meal" onClick={() => router.push('/meals')} />
+                        <QuickActionButton icon={<UsersIcon className="w-8 h-8 text-yellow-600" />} label="User" onClick={() => router.push('/members')} />
+                        <QuickActionButton icon={<ChartBarIcon className="w-8 h-8 text-indigo-500" />} label="Rpt" onClick={() => router.push('/reports')} />
                     </div>
                 </div>
             </div>
@@ -290,8 +272,8 @@ const MemberDashboard: React.FC = () => {
     const router = useRouter();
     const { user } = useAuth();
     const { notifications } = useNotifications();
+    const [dashboardData, setDashboardData] = useState<any>(null);
     const [menu, setMenu] = useState(initialTodaysMenu);
-    const [bills, setBills] = useState<Bill[]>([]);
     const [loading, setLoading] = useState(true);
     const [totalMealCount, setTotalMealCount] = useState(0);
     const [refundAmount, setRefundAmount] = useState(0);
@@ -304,82 +286,50 @@ const MemberDashboard: React.FC = () => {
         if (user?.khataId) {
             setLoading(true);
 
-            Promise.all([
-                api.getBillsForRoom(user.khataId),
-                api.getMealSummary(user.khataId),
-                api.getDeposits(user.khataId),
-                api.getExpenses(user.khataId),
-                api.getMenu(user.khataId),
-                api.getMeals(user.khataId)
-            ]).then(([billsData, mealSummary, deposits, expenses, menuItems, allMeals]) => {
-                setBills(billsData);
+            api.getDashboardStats().then((data) => {
+                // Set formatted bills for the useMemo hook or use data directly?
+                // The existing UI uses useMemo to calculate billsDueAmount etc from 'bills' state.
+                // However, the new API returns pre-calculated stats.
+                // To minimize substantial UI rewrites, I should probably directly set the stats state 
+                // BUT MemberDashboard component uses `bills` state in a `useMemo`.
+                // I need to adapt the component to use the pre-calculated `data.billsDueAmount` etc.
 
-                if (mealSummary && user.id) {
-                    setTotalMealCount(mealSummary.currentUserMeals || 0);
-                }
+                // Let's store the data in a new state or override existing states
+                setTotalMealCount(data.totalMealCount);
+                setRefundAmount(data.refundAmount);
 
-                const approvedDeposits = deposits.filter((d: any) => d.userId === user.id && d.status === 'Approved');
-                const totalDeposits = approvedDeposits.reduce((sum: number, d: any) => sum + d.amount, 0);
+                // For bills, the backend now returns aggregates. 
+                // I'll update the component logic to use these values instead of calculating them.
+                // But `bills` state is used for `nextBillDue` logic.
+                // The API returns `nextBillDue`.
 
-                const approvedExpenses = expenses.filter((e: any) => e.status === 'Approved');
-                const totalShopping = approvedExpenses.reduce((sum: number, e: any) => sum + e.amount, 0);
+                // Store the raw response to be used by the render
+                // But I can't easily change the hook logic without rewriting the component body.
+                // Hack: Set 'bills' to empty array to avoid errors, and add new state for stats.
+                // Better: Rewrite the component to not use the useMemo for stats and use the API data directly.
+                // See next tool call for component body update.
 
-                const totalMeals = allMeals.reduce((sum: number, m: any) => sum + (m.totalMeals || 0), 0);
-                const mealRate = totalMeals > 0 ? totalShopping / totalMeals : 0;
+                setDashboardData(data); // I'll need to add this state
 
-                const myMeals = mealSummary?.currentUserMeals || 0;
-                const myMealCost = myMeals * mealRate;
-
-                setRefundAmount(totalDeposits - myMealCost);
-
-                const todayStr = today.toLocaleDateString('en-US', { weekday: 'long' });
-                const todayMenu = menuItems.find((item: any) => item.day === todayStr);
-                if (todayMenu) {
+                if (data.todaysMenu) {
                     setMenu({
-                        breakfast: todayMenu.breakfast || 'Not set',
-                        lunch: todayMenu.lunch || 'Not set',
-                        dinner: todayMenu.dinner || 'Not set'
+                        breakfast: data.todaysMenu.breakfast || 'Not set',
+                        lunch: data.todaysMenu.lunch || 'Not set',
+                        dinner: data.todaysMenu.dinner || 'Not set'
                     });
                 }
-
-                // No need to build activities array - using notifications instead
-
             }).finally(() => setLoading(false));
         } else {
             setLoading(false);
         }
     }, [user]);
 
-    const { billsDueAmount, billsDueCount, nextBillDue } = useMemo(() => {
-        if (!user) return { billsDueAmount: 0, billsDueCount: 0, nextBillDue: null };
 
-        const now = new Date();
-        const currentMonth = now.getMonth();
-        const currentYear = now.getFullYear();
 
-        const currentMonthBills = bills.filter(bill => {
-            const dueDate = new Date(bill.dueDate);
-            return dueDate.getMonth() === currentMonth && dueDate.getFullYear() === currentYear;
-        });
-
-        const myBillShares = currentMonthBills.flatMap(bill => {
-            const shares = bill.shares || [];
-            return shares
-                .filter(share => share.userId === user.id && (share.status === 'Unpaid' || share.status === 'Overdue'))
-                .map(share => ({ ...bill, myShare: share }));
-        });
-
-        const billsDueAmount = myBillShares.reduce((total, bill) => total + bill.myShare.amount, 0);
-        const billsDueCount = myBillShares.length;
-
-        const upcomingBills = myBillShares
-            .filter(bill => new Date(bill.dueDate) >= now)
-            .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
-
-        const nextBillDue = upcomingBills.length > 0 ? upcomingBills[0] : null;
-
-        return { billsDueAmount, billsDueCount, nextBillDue };
-    }, [bills, user]);
+    // Remove useMemo logic as data comes pre-calculated
+    const billsDueAmount = dashboardData?.billsDueAmount || 0;
+    const billsDueCount = dashboardData?.billsDueCount || 0;
+    const nextBillDue = dashboardData?.nextBillDue;
 
     const nextBillDueText = nextBillDue
         ? `${nextBillDue.title} - ${new Date(nextBillDue.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
@@ -402,15 +352,16 @@ const MemberDashboard: React.FC = () => {
                 <p className="text-slate-500 dark:text-slate-400 text-base">{currentDate}</p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <StatCard title="💰 Bills Due" value={`৳${billsDueAmount.toFixed(2)}`} subtitle={`${billsDueCount} bills pending`} />
-                <StatCard title="🍽️ Your Meals" value={`${totalMealCount} quantities`} subtitle="This month" />
+            <div className="grid grid-cols-2 sm:grid-cols-2 gap-3 sm:gap-6">
+                <StatCard title="💰 Bills Due" value={`৳${billsDueAmount.toFixed(0)}`} subtitle={`${billsDueCount} pending`} isLoading={loading} />
+                <StatCard title="🍽️ Meals" value={`${totalMealCount}`} subtitle="This month" isLoading={loading} />
                 <StatCard
-                    title="💵 Refund Available"
+                    title="💵 Refund"
                     value={`${refundAmount >= 0 ? '+' : ''}৳${refundAmount.toFixed(0)}`}
-                    subtitle="After meal cost"
+                    subtitle="Available"
+                    isLoading={loading}
                 />
-                <StatCard title="📅 Next Bill Due" value={nextBillDueText} subtitle={daysLeftText} />
+                <StatCard title="📅 Next Bill" value={nextBillDueText} subtitle={daysLeftText} isLoading={loading} />
             </div>
 
             <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-md">
@@ -437,11 +388,11 @@ const MemberDashboard: React.FC = () => {
 
             <div>
                 <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-4">Quick Actions</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <QuickActionButton icon={<MealIcon className="w-8 h-8 text-primary-500" />} label="Log Meal" onClick={() => router.push('/meals')} />
-                    <QuickActionButton icon={<BillsIcon className="w-8 h-8 text-green-600" />} label="Pay Bill" onClick={() => router.push('/bills')} />
-                    <QuickActionButton icon={<PlusIcon className="w-8 h-8 text-yellow-600" />} label="Deposit" onClick={() => router.push('/shopping')} />
-                    <QuickActionButton icon={<ChartBarIcon className="w-8 h-8 text-indigo-500" />} label="History" onClick={() => router.push('/history')} />
+                <div className="grid grid-cols-4 gap-2 sm:gap-4">
+                    <QuickActionButton icon={<MealIcon className="w-8 h-8 text-primary-500" />} label="Meal" onClick={() => router.push('/meals')} />
+                    <QuickActionButton icon={<BillsIcon className="w-8 h-8 text-green-600" />} label="Pay" onClick={() => router.push('/bills')} />
+                    <QuickActionButton icon={<PlusIcon className="w-8 h-8 text-yellow-600" />} label="Add" onClick={() => router.push('/shopping')} />
+                    <QuickActionButton icon={<ChartBarIcon className="w-8 h-8 text-indigo-500" />} label="Hist" onClick={() => router.push('/history')} />
                 </div>
             </div>
 

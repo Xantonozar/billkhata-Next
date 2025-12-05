@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
         }
 
         // Verify room exists
-        const room = await Room.findOne({ khataId: user.khataId });
+        const room = await Room.findOne({ khataId: user.khataId }).select('manager').lean();
         if (!room) {
             return NextResponse.json({ message: 'Room not found' }, { status: 404 });
         }
