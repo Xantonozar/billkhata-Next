@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import { NextRequest } from 'next/server';
 import User from '@/models/User';
 import connectDB from '@/lib/db';
+import { globalCache } from '@/lib/cache';
 
 export const generateToken = (id: string) => {
     if (!process.env.JWT_SECRET) {
@@ -29,7 +30,20 @@ export const getSession = async (req: NextRequest) => {
             }
 
             const decoded: any = jwt.verify(token, process.env.JWT_SECRET);
-            const user = await User.findById(decoded.id).select('-password');
+
+            // Try to get user from cache first
+            const cacheKey = `user:${decoded.id}`;
+            const cachedUser = globalCache.get(cacheKey);
+            if (cachedUser) {
+                return cachedUser;
+            }
+
+            const user = await User.findById(decoded.id).select('-password').lean(); // Use lean for performance
+
+            if (user) {
+                globalCache.set(cacheKey, user, 30); // Cache for 30 seconds
+            }
+
             return user;
         } catch (error) {
             console.error('Auth error:', error);

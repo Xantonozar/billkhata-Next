@@ -96,6 +96,17 @@ const api = {
         }
     },
 
+    // Dashboard
+    getDashboardStats: async (): Promise<any> => {
+        try {
+            const response = await axiosInstance.get('/dashboard/stats');
+            return response.data;
+        } catch (error) {
+            console.error('Get dashboard stats error:', error);
+            throw error;
+        }
+    },
+
     // Room management
     createRoom: async (name: string, khataId: string): Promise<boolean> => {
         try {
@@ -385,9 +396,9 @@ const api = {
     },
 
     // Deposits
-    getDeposits: async (khataId: string): Promise<any[]> => {
+    getDeposits: async (khataId: string, params: { status?: string, page?: number, limit?: number } = {}): Promise<any[]> => {
         try {
-            const response = await axiosInstance.get(`/deposits/${khataId}`);
+            const response = await axiosInstance.get(`/deposits/${khataId}`, { params });
             return response.data;
         } catch (error) {
             console.error('Get deposits error:', error);
@@ -431,9 +442,9 @@ const api = {
     },
 
     // Expenses
-    getExpenses: async (khataId: string): Promise<any[]> => {
+    getExpenses: async (khataId: string, params: { status?: string, page?: number, limit?: number } = {}): Promise<any[]> => {
         try {
-            const response = await axiosInstance.get(`/expenses/${khataId}`);
+            const response = await axiosInstance.get(`/expenses/${khataId}`, { params });
             return response.data;
         } catch (error) {
             console.error('Get expenses error:', error);

@@ -12,15 +12,13 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [theme, setTheme] = useState<Theme>('light'); // Default to light to avoid hydration mismatch initially
+    const [theme, setTheme] = useState<Theme>('dark');
 
     useEffect(() => {
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme === 'dark' || savedTheme === 'light') {
-            setTheme(savedTheme);
-        } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            setTheme('dark');
-        }
+        // Enforce dark mode regardless of saved preference or system setting
+        setTheme('dark');
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
     }, []);
 
     useEffect(() => {
@@ -34,7 +32,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }, [theme]);
 
     const toggleTheme = () => {
-        setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
+        // Toggle is locked to dark mode
+        setTheme('dark');
     };
 
     return (
