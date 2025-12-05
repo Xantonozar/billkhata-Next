@@ -62,6 +62,10 @@ const billSchema = new mongoose.Schema({
     timestamps: true
 });
 
+// Add compound indexes for faster queries
+billSchema.index({ khataId: 1, dueDate: -1 });
+billSchema.index({ khataId: 1, category: 1, dueDate: -1 });
+
 const Bill = mongoose.models.Bill || mongoose.model('Bill', billSchema);
 
 export default Bill;

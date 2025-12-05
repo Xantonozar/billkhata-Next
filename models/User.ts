@@ -60,6 +60,10 @@ userSchema.methods.toJSON = function () {
     return obj;
 };
 
+// Add indexes for faster queries (email index already exists via unique: true)
+userSchema.index({ khataId: 1 });
+userSchema.index({ khataId: 1, roomStatus: 1 });
+
 const User = mongoose.models.User || mongoose.model('User', userSchema);
 
 export default User;

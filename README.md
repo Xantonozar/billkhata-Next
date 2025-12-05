@@ -1,36 +1,100 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BillKhata - Shared Living Expense Manager
 
-## Getting Started
+A comprehensive application for managing shared living expenses, bills, meals, and finances among roommates.
 
-First, run the development server:
+## Quick Start
+
+### 1. Install Dependencies
+
+```bash
+npm install
+```
+
+### 2. Set Up Environment Variables
+
+Create a `.env` file in the root directory:
+
+```env
+# Database
+MONGODB_URI=your_mongodb_connection_string
+
+# JWT Secret (minimum 32 characters)
+JWT_SECRET=your_secure_jwt_secret
+
+# API Base URL
+NEXT_PUBLIC_API_URL=http://localhost:3000/api
+```
+
+### 3. Run Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment Variables Explained
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `MONGODB_URI` | MongoDB connection string | `mongodb+srv://user:pass@cluster.mongodb.net/billkhata` |
+| `JWT_SECRET` | Secret key for JWT token encryption | Generate with: `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"` |
+| `NEXT_PUBLIC_API_URL` | API base URL for client-side requests | Local: `http://localhost:3000/api`<br/>Production: `https://yourdomain.com/api` |
 
-## Learn More
+## Deployment
 
-To learn more about Next.js, take a look at the following resources:
+### Deploy to Vercel
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Push code to GitHub
+2. Import project to [Vercel](https://vercel.com/new)
+3. Add environment variables in Vercel dashboard
+4. **Important:** Set `NEXT_PUBLIC_API_URL` to your production domain (e.g., `https://your-app.vercel.app/api`)
+5. Deploy
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+For detailed deployment instructions, see `deployment_guide.md`.
 
-## Deploy on Vercel
+## Features
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- 💰 **Bill Splitting** - Manage rent, utilities, and shared expenses
+- 🍽️ **Meal Tracking** - Daily meal logging with automatic cost calculation
+- 💵 **Deposits & Expenses** - Track fund contributions and spending
+- 👥 **Member Management** - Role-based access (Manager/Member)
+- 📊 **Analytics** - Detailed reports and payment history
+- 🔔 **Notifications** - Real-time updates for all activities
+- 🌙 **Dark Mode** - Optimized for day and night use
+- 📱 **Mobile Responsive** - Works perfectly on all devices
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Tech Stack
+
+- **Framework:** Next.js 16 (Turbopack)
+- **Database:** MongoDB with Mongoose
+- **Authentication:** JWT
+- **Styling:** Tailwind CSS
+- **Language:** TypeScript
+
+## Project Structure
+
+```
+billkhata-next/
+├── app/                    # Next.js app directory (pages & API routes)
+├── components/             # Reusable React components
+├── contexts/              # React context providers (Auth, Notifications)
+├── models/                # Mongoose database models
+├── services/              # API service layer
+├── lib/                   # Utility functions (auth, db connection)
+├── public/                # Static assets
+└── types/                 # TypeScript type definitions
+```
+
+## Scripts
+
+```bash
+npm run dev          # Start development server
+npm run build        # Build for production
+npm start            # Start production server
+npm run lint         # Run ESLint
+```
+
+## License
+
+All rights reserved © 2024 BillKhata
