@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Poppins, Rubik } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
+// 👇 Add this
+import { Analytics } from "@vercel/analytics/react";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -34,59 +36,71 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: {
     default: "BillKhata - Shared Living Expense Manager",
-    template: "%s | BillKhata"
+    template: "%s | BillKhata",
   },
-  description: "The ultimate app for managing shared living expenses. Split bills, track meals, and manage finances with roommates easily and transparently.",
-  keywords: ["bill splitting", "roommate expenses", "meal tracker", "finance manager", "shared living", "hostel management", "mess manager"],
+  description:
+    "The ultimate app for managing shared living expenses. Split bills, track meals, and manage finances with roommates easily and transparently.",
+  keywords: [
+    "bill splitting",
+    "roommate expenses",
+    "meal tracker",
+    "finance manager",
+    "shared living",
+    "hostel management",
+    "mess manager",
+  ],
   authors: [{ name: "BillKhata Team" }],
   creator: "BillKhata",
   publisher: "BillKhata",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'https://billkhata.com'),
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") ||
+      "https://billkhata.com"
+  ),
   alternates: {
-    canonical: '/',
+    canonical: "/",
   },
   openGraph: {
     title: "BillKhata - Split Bills, Share Meals, Stay Friends",
-    description: "Manage shared living expenses, bills, meals, and finances among roommates. The easiest way to keep your shared finances transparent.",
-    url: 'https://billkhata.com',
-    siteName: 'BillKhata',
+    description:
+      "Manage shared living expenses, bills, meals, and finances among roommates. The easiest way to keep your shared finances transparent.",
+    url: "https://billkhata.com",
+    siteName: "BillKhata",
     images: [
       {
-        url: '/og-image.png', // We will generate this next
+        url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: 'BillKhata Dashboard Preview',
+        alt: "BillKhata Dashboard Preview",
       },
     ],
-    locale: 'en_US',
-    type: 'website',
+    locale: "en_US",
+    type: "website",
   },
   twitter: {
-    card: 'summary_large_image',
+    card: "summary_large_image",
     title: "BillKhata - Shared Living Expense Manager",
-    description: "Split bills, track meals, and manage finances with roommates easily.",
-    creator: '@billkhata',
-    images: ['/og-image.png'], // We will generate this next
+    description:
+      "Split bills, track meals, and manage finances with roommates easily.",
+    creator: "@billkhata",
+    images: ["/og-image.png"],
   },
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "BillKhata"
+    title: "BillKhata",
   },
   icons: {
     icon: [
       { url: "/icon.png" },
       { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" }
+      { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
     ],
-    apple: [
-      { url: "/icons/icon-152x152.png", sizes: "152x152", type: "image/png" }
-    ]
+    apple: [{ url: "/icons/icon-152x152.png", sizes: "152x152", type: "image/png" }],
   },
   verification: {
-    google: 'i1xPv3xUSFmawFqPGNYjokyGB8SG5A5WWjjUtZ1c2a0',
-  }
+    google: "i1xPv3xUSFmawFqPGNYjokyGB8SG5A5WWjjUtZ1c2a0",
+  },
 };
 
 export default function RootLayout({
@@ -95,16 +109,28 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className="dark" style={{ colorScheme: 'dark' }}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className="dark"
+      style={{ colorScheme: "dark" }}
+    >
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
       </head>
       <body
         suppressHydrationWarning
         className={`${inter.variable} ${poppins.variable} ${rubik.variable} antialiased`}
       >
         <Providers>{children}</Providers>
+
+        {/* 👇 Add Analytics component before closing body */}
+        <Analytics />
       </body>
     </html>
   );
