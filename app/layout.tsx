@@ -2,8 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Poppins, Rubik } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
-// 👇 Add this
-import { Analytics } from "@vercel/analytics/react";
+import { Analytics } from "@vercel/analytics/next";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -128,8 +127,6 @@ export default function RootLayout({
         className={`${inter.variable} ${poppins.variable} ${rubik.variable} antialiased`}
       >
         <Providers>{children}</Providers>
-
-        {/* 👇 Add Analytics component before closing body */}
         <Analytics />
       </body>
     </html>
