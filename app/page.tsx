@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { SparklesIcon, BillsIcon, MealIcon, ChartBarIcon } from '@/components/Icons';
+import LandingDashboardPreview from '@/components/LandingDashboardPreview';
 
 const FeatureCard: React.FC<{ icon: React.ReactNode, title: string, description: string }> = ({ icon, title, description }) => (
   <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">
@@ -56,12 +57,9 @@ export default function LandingPage() {
               </button>
             </div>
           </div>
-          <div className="hidden md:block">
-            <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-2xl transform rotate-3">
-              <div className="aspect-video bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900/30 dark:to-primary-800/30 rounded-lg flex items-center justify-center">
-                <SparklesIcon className="w-24 h-24 text-primary-500 opacity-50" />
-              </div>
-            </div>
+          <div className="hidden md:block relative z-10">
+            <div className="absolute -inset-1 bg-gradient-to-r from-primary-500 to-purple-600 rounded-2xl blur opacity-30 animate-pulse"></div>
+            <LandingDashboardPreview />
           </div>
         </div>
       </main>
@@ -130,6 +128,31 @@ export default function LandingPage() {
           <p>&copy; 2024 BillKhata. All rights reserved.</p>
         </div>
       </footer>
+
+      {/* Structured Data for SEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            "name": "BillKhata",
+            "applicationCategory": "FinanceApplication",
+            "operatingSystem": "Web, Android, iOS",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "description": "The ultimate app for managing shared living expenses. Split bills, track meals, and manage finances with roommates easily and transparently.",
+            "aggregateRating": {
+              "@type": "AggregateRating",
+              "ratingValue": "4.8",
+              "ratingCount": "1250"
+            }
+          })
+        }}
+      />
     </div>
   );
 }

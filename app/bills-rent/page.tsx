@@ -1,14 +1,15 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/services/api';
 import type { Bill } from '@/types';
 import { Role } from '@/types';
 import { HomeIcon, ArrowLeftIcon, PlusIcon } from '@/components/Icons';
 import { useNotifications } from '@/contexts/NotificationContext';
-import AddBillModal from '@/components/modals/AddBillModal';
-import EditSharedBillModal from '@/components/modals/EditSharedBillModal';
+// Lazy load modals for better performance
+const AddBillModal = lazy(() => import('@/components/modals/AddBillModal'));
+const EditSharedBillModal = lazy(() => import('@/components/modals/EditSharedBillModal'));
 import AppLayout from '@/components/AppLayout';
 import ToastContainer from '@/components/ToastContainer';
 import { useRouter } from 'next/navigation';
