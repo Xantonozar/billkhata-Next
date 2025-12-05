@@ -83,6 +83,9 @@ export const metadata: Metadata = {
     apple: [
       { url: "/icons/icon-152x152.png", sizes: "152x152", type: "image/png" }
     ]
+  },
+  verification: {
+    google: 'QBFRoxeqp96QT2fGFj6OVFAAbzG58zq1W_gyTo3JxY4',
   }
 };
 
