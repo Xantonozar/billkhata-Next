@@ -31,9 +31,9 @@ export const getSession = async (req: NextRequest) => {
 
             const decoded: any = jwt.verify(token, process.env.JWT_SECRET);
 
-            // Try to get user from cache first
+            // Try to get user from cache first (fast path)
             const cacheKey = `user:${decoded.id}`;
-            const cachedUser = globalCache.get(cacheKey);
+            const cachedUser = globalCache.getValue(cacheKey);
             if (cachedUser) {
                 return cachedUser;
             }
@@ -41,7 +41,7 @@ export const getSession = async (req: NextRequest) => {
             const user = await User.findById(decoded.id).select('-password').lean(); // Use lean for performance
 
             if (user) {
-                globalCache.set(cacheKey, user, 30); // Cache for 30 seconds
+                globalCache.set(cacheKey, user, 60); // Cache for 60 seconds
             }
 
             return user;

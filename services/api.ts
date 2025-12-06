@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { User, Bill, PaymentStatus } from '../types';
+import type { User, Bill, PaymentStatus, MealHistory } from '../types';
 import { Role } from '../types';
 
 // Create axios instance
@@ -96,6 +96,16 @@ const api = {
         }
     },
 
+    updateProfile: async (data: Partial<User>): Promise<User | null> => {
+        try {
+            const response = await axiosInstance.put('/auth/me', data);
+            return response.data;
+        } catch (error: any) {
+            console.error('Update profile error:', error.response?.data?.message || error.message);
+            throw new Error(error.response?.data?.message || 'Failed to update profile');
+        }
+    },
+
     // Dashboard
     getDashboardStats: async (): Promise<any> => {
         try {
@@ -157,6 +167,18 @@ const api = {
             return false;
         }
     },
+
+    getRoomDetails: async (roomId: string): Promise<any> => {
+        try {
+            const response = await axiosInstance.get(`/rooms/${roomId}/details`);
+            return response.data;
+        } catch (error) {
+            console.error('Get room details error:', error);
+            return null;
+        }
+    },
+
+
 
     // Bills
     getBillsForRoom: async (roomId: string): Promise<Bill[]> => {
@@ -242,6 +264,15 @@ const api = {
         try {
             const response = await axiosInstance.get(`/rooms/${roomId}/pending`);
             return response.data.length || 0;
+        } catch (error) {
+            return 0;
+        }
+    },
+
+    getPendingCounts: async (roomId: string): Promise<number> => {
+        try {
+            const response = await axiosInstance.get(`/rooms/${roomId}/pending-counts`);
+            return response.data.total || 0;
         } catch (error) {
             return 0;
         }
@@ -534,6 +565,99 @@ const api = {
         } catch (error) {
             console.error('Delete notification error:', error);
             return false;
+        }
+    },
+
+    // Analytics
+    getAnalytics: async (khataId: string, range: string): Promise<any> => {
+        try {
+            const response = await axiosInstance.get(`/analytics/${khataId}?range=${range}`);
+            return response.data;
+        } catch (error) {
+            console.error('Get analytics error:', error);
+            return null;
+        }
+    },
+
+    // Staff
+    getStaff: async (khataId: string): Promise<any[]> => {
+        try {
+            const response = await axiosInstance.get(`/staff/${khataId}`);
+            return response.data;
+        } catch (error) {
+            console.error('Get staff error:', error);
+            return [];
+        }
+    },
+
+    addStaff: async (khataId: string, staffData: { name: string; designation: string; phone: string }): Promise<any> => {
+        try {
+            const response = await axiosInstance.post(`/staff/${khataId}`, staffData);
+            return response.data;
+        } catch (error: any) {
+            console.error('Add staff error:', error.response?.data?.message || error.message);
+            throw error;
+        }
+    },
+
+    updateStaff: async (khataId: string, staffId: string, staffData: any): Promise<any> => {
+        try {
+            const response = await axiosInstance.put(`/staff/${khataId}/${staffId}`, staffData);
+            return response.data;
+        } catch (error) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const err = error as any;
+            console.error('Update staff error:', err.response?.data?.message || err.message);
+            throw error;
+        }
+    },
+
+    deleteStaff: async (khataId: string, staffId: string): Promise<boolean> => {
+        try {
+            await axiosInstance.delete(`/staff/${khataId}/${staffId}`);
+            return true;
+        } catch (error) {
+            console.error('Delete staff error:', error);
+            return false;
+        }
+    },
+
+    // Meal History
+    getMealHistory: async (khataId: string, userId?: string, startDate?: string, endDate?: string): Promise<MealHistory[]> => {
+        try {
+            const params: Record<string, string> = {};
+            if (userId) params.userId = userId;
+            if (startDate) params.startDate = startDate;
+            if (endDate) params.endDate = endDate;
+
+            const response = await axiosInstance.get(`/meals/${khataId}/history`, { params });
+            return response.data;
+        } catch (error) {
+            console.error('Get meal history error:', error);
+            return [];
+        }
+    },
+
+
+
+    // Upload
+    uploadImage: async (file: File): Promise<string | null> => {
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const response = await axiosInstance.post('/upload', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+
+            return response.data.url;
+        } catch (error) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const err = error as any;
+            console.error('Upload image error:', err.response?.data?.message || err.message);
+            return null;
         }
     }
 };

@@ -58,6 +58,7 @@ const depositSchema = new mongoose.Schema({
 // Compound index for efficient queries
 depositSchema.index({ khataId: 1, status: 1 });
 depositSchema.index({ khataId: 1, userId: 1 });
+depositSchema.index({ khataId: 1, createdAt: -1, status: 1 });
 
 const Deposit = mongoose.models.Deposit || mongoose.model('Deposit', depositSchema);
 

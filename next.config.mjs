@@ -3,6 +3,28 @@ import withPWA from 'next-pwa';
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     reactStrictMode: true,
+    reactCompiler: true,
+    // Image optimization
+    images: {
+        formats: ['image/avif', 'image/webp'],
+        remotePatterns: [
+            { protocol: 'https', hostname: 'res.cloudinary.com' },
+            { protocol: 'https', hostname: '*.cloudinary.com' },
+        ],
+        minimumCacheTTL: 60 * 60 * 24, // 24 hours
+    },
+    // Compression
+    compress: true,
+    // Reduce bundle size by removing console in production
+    compiler: {
+        removeConsole: process.env.NODE_ENV === 'production',
+    },
+    // Experimental features for better performance
+    experimental: {
+        optimizePackageImports: ['@/components/Icons', 'lodash', 'date-fns'],
+    },
+    // Turbopack config (required for Next.js 16 to silence webpack migration warning)
+    turbopack: {},
 };
 
 export default withPWA({

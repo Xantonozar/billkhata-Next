@@ -24,23 +24,28 @@ const mealSchema = new mongoose.Schema({
         type: Number,
         default: 0,
         min: 0,
-        max: 2
+        max: 20
     },
     lunch: {
         type: Number,
         default: 0,
         min: 0,
-        max: 2
+        max: 20
     },
     dinner: {
         type: Number,
         default: 0,
         min: 0,
-        max: 2
+        max: 20
     },
     totalMeals: {
         type: Number,
         default: 0
+    },
+    status: {
+        type: String,
+        enum: ['Pending', 'Approved', 'Rejected'],
+        default: 'Pending'
     }
 }, {
     timestamps: true

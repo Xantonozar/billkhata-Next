@@ -91,7 +91,30 @@ export const AddDepositModal: React.FC<{ onClose: () => void, onSubmit: () => vo
     const [amount, setAmount] = useState('1500');
     const [method, setMethod] = useState('bKash');
     const [transactionId, setTransactionId] = useState('');
+    const [screenshotUrl, setScreenshotUrl] = useState('');
+    const [isUploading, setIsUploading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+    const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            setIsUploading(true);
+            try {
+                const url = await api.uploadImage(file);
+                if (url) {
+                    setScreenshotUrl(url);
+                    addToast({ type: 'success', title: 'Uploaded', message: 'Screenshot uploaded successfully' });
+                } else {
+                    addToast({ type: 'error', title: 'Error', message: 'Failed to upload screenshot' });
+                }
+            } catch (error) {
+                addToast({ type: 'error', title: 'Error', message: 'Upload failed' });
+            } finally {
+                setIsUploading(false);
+            }
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -107,7 +130,7 @@ export const AddDepositModal: React.FC<{ onClose: () => void, onSubmit: () => vo
                 amount: parseFloat(amount),
                 paymentMethod: method,
                 transactionId,
-                screenshotUrl: '' // TODO: implement file upload
+                screenshotUrl
             });
 
             addToast({ type: 'success', title: 'Deposit Submitted', message: 'Your deposit is now pending manager approval.' });
@@ -156,10 +179,13 @@ export const AddDepositModal: React.FC<{ onClose: () => void, onSubmit: () => vo
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Upload Screenshot (optional):</label>
+                        <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleUpload} />
                         <div className="flex gap-2 mt-1">
-                            <button type="button" className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm bg-slate-100 dark:bg-slate-700 rounded-md hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300"><CameraIcon className="w-5 h-5" />Take Photo</button>
-                            <button type="button" className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm bg-slate-100 dark:bg-slate-700 rounded-md hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300"><FolderIcon className="w-5 h-5" />Gallery</button>
+                            <button type="button" onClick={() => fileInputRef.current?.click()} className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm bg-slate-100 dark:bg-slate-700 rounded-md hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 border-2 border-dashed border-slate-300 dark:border-slate-600">
+                                {isUploading ? 'Uploading...' : (screenshotUrl ? 'Change Screenshot' : 'Upload Screenshot')}
+                            </button>
                         </div>
+                        {screenshotUrl && <p className="text-xs text-green-600 mt-1">Screenshot attached</p>}
                     </div>
                     <button
                         type="submit"
@@ -180,7 +206,30 @@ export const AddExpenseModal: React.FC<{ onClose: () => void; onSubmit: () => vo
     const [amount, setAmount] = useState('');
     const [items, setItems] = useState('');
     const [notes, setNotes] = useState('');
+    const [receiptUrl, setReceiptUrl] = useState('');
+    const [isUploading, setIsUploading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+    const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            setIsUploading(true);
+            try {
+                const url = await api.uploadImage(file);
+                if (url) {
+                    setReceiptUrl(url);
+                    addToast({ type: 'success', title: 'Uploaded', message: 'Receipt uploaded successfully' });
+                } else {
+                    addToast({ type: 'error', title: 'Error', message: 'Failed to upload receipt' });
+                }
+            } catch (error) {
+                addToast({ type: 'error', title: 'Error', message: 'Upload failed' });
+            } finally {
+                setIsUploading(false);
+            }
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -196,7 +245,7 @@ export const AddExpenseModal: React.FC<{ onClose: () => void; onSubmit: () => vo
                 amount: parseFloat(amount),
                 items,
                 notes,
-                receiptUrl: '' // TODO: implement file upload
+                receiptUrl
             });
 
             addToast({ type: 'success', title: 'Expense Submitted', message: 'Your shopping expense is now pending manager approval.' });
@@ -234,10 +283,13 @@ export const AddExpenseModal: React.FC<{ onClose: () => void; onSubmit: () => vo
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Upload Receipt (optional):</label>
+                        <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleUpload} />
                         <div className="flex gap-2 mt-1">
-                            <button type="button" className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm bg-slate-100 dark:bg-slate-700 rounded-md hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300"><CameraIcon className="w-5 h-5" />Take Photo</button>
-                            <button type="button" className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm bg-slate-100 dark:bg-slate-700 rounded-md hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300"><FolderIcon className="w-5 h-5" />Gallery</button>
+                            <button type="button" onClick={() => fileInputRef.current?.click()} className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm bg-slate-100 dark:bg-slate-700 rounded-md hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 border-2 border-dashed border-slate-300 dark:border-slate-600">
+                                {isUploading ? 'Uploading...' : (receiptUrl ? 'Change Receipt' : 'Upload Receipt')}
+                            </button>
                         </div>
+                        {receiptUrl && <p className="text-xs text-green-600 mt-1">Receipt attached</p>}
                     </div>
                     <button
                         type="submit"

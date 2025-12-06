@@ -9,7 +9,7 @@ import {
     UserCircleIcon, LogoutIcon, DashboardIcon, BillsIcon, MenuIcon, XIcon,
     MealIcon, ShoppingCartIcon, UsersIcon, ChartBarIcon, CogIcon,
     SparklesIcon, ChevronDownIcon, HomeIcon, ElectricityIcon, WaterIcon, GasIcon, WifiIcon, MaidIcon, OtherIcon, ListBulletIcon, CreditCardIcon, ClipboardCheckIcon, ArchiveBoxIcon, BellIcon, CalendarIcon,
-    MenuBookIcon
+    MenuBookIcon, BriefcaseIcon
 } from './Icons';
 import { Role } from '@/types';
 import NotificationsPanel from './NotificationsPanel';
@@ -103,23 +103,26 @@ const SidebarContent: React.FC = () => {
                 <BillsNavGroup />
                 <NavLink href="/meals" icon={<MealIcon />}>Meal Management</NavLink>
                 <NavLink href="/shopping" icon={<ShoppingCartIcon />}>Shopping</NavLink>
+                <NavLink href="/staff" icon={<BriefcaseIcon />}>Services</NavLink>
                 <NavLink href="/calendar" icon={<CalendarIcon />}>Calendar</NavLink>
                 <NavLink href="/menu" icon={<MenuBookIcon />}>Menu</NavLink>
                 <NavLink href="/members" icon={<UsersIcon />}>Room Members</NavLink>
                 <NavLink href="/history" icon={<ArchiveBoxIcon />}>History</NavLink>
                 {user?.role === Role.Manager && (
-                    <>
-                        <NavLink href="/payment-dashboard" icon={<CreditCardIcon />}>Payment Dashboard</NavLink>
-                        <NavLink href="/reports-analytics" icon={<ChartBarIcon />}>Reports & Analytics</NavLink>
-                    </>
+                    <NavLink href="/payment-dashboard" icon={<CreditCardIcon />}>Payment Dashboard</NavLink>
                 )}
+                <NavLink href="/reports-analytics" icon={<ChartBarIcon />}>Reports & Analytics</NavLink>
                 <NavLink href="/settings" icon={<CogIcon />}>Settings</NavLink>
             </nav>
             {user && (
                 <div className="px-4 py-3 border-t border-slate-200 dark:border-slate-700">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3 transition-transform duration-200 hover:scale-105">
-                            <UserCircleIcon className="w-10 h-10 text-slate-500" />
+                            {user.avatarUrl ? (
+                                <img src={user.avatarUrl} alt={user.name} className="w-10 h-10 rounded-full object-cover" />
+                            ) : (
+                                <UserCircleIcon className="w-10 h-10 text-slate-500" />
+                            )}
                             <div className="flex-grow">
                                 <p className="font-semibold text-sm text-slate-800 dark:text-white">{user.name}</p>
                                 <p className="text-xs text-slate-500 dark:text-slate-400">{user.role}</p>

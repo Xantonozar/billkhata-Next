@@ -14,15 +14,8 @@ export const usePendingCount = (khataId: string | undefined, isManager: boolean)
             }
 
             try {
-                const [deposits, expenses] = await Promise.all([
-                    api.getDeposits(khataId),
-                    api.getExpenses(khataId)
-                ]);
-
-                const pendingDeposits = deposits.filter((d: any) => d.status === 'Pending').length;
-                const pendingExpenses = expenses.filter((e: any) => e.status === 'Pending').length;
-
-                setCount(pendingDeposits + pendingExpenses);
+                const total = await api.getPendingCounts(khataId);
+                setCount(total);
             } catch (error) {
                 console.error('Error fetching pending count:', error);
                 setCount(0);

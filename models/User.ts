@@ -33,6 +33,18 @@ const userSchema = new mongoose.Schema({
     khataId: {
         type: String,
         default: null
+    },
+    avatarUrl: {
+        type: String,
+        default: null
+    },
+    whatsapp: {
+        type: String,
+        default: null
+    },
+    facebook: {
+        type: String,
+        default: null
     }
 }, {
     timestamps: true

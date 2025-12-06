@@ -16,6 +16,9 @@ export interface User {
     role: Role;
     roomStatus: RoomStatus;
     khataId?: string;
+    avatarUrl?: string;
+    whatsapp?: string;
+    facebook?: string;
 }
 
 export type PaymentStatus = 'Unpaid' | 'Pending Approval' | 'Paid' | 'Overdue';
@@ -61,4 +64,20 @@ export interface Menu {
     breakfast: string;
     lunch: string;
     dinner: string;
+}
+
+export interface MealHistory {
+    _id: string;
+    date: string;
+    createdAt: string;
+    breakfast: number;
+    lunch: number;
+    dinner: number;
+    changedByUserId?: {
+        name: string;
+        role: string;
+    };
+    targetUserId?: {
+        name: string;
+    };
 }

@@ -50,23 +50,16 @@ const AddBillModal: React.FC<AddBillModalProps> = ({ onClose, onBillAdded, prese
         fetchMembers();
     }, [user?.khataId]);
 
-    const getInitialDateForMonth = (monthString?: string) => {
-        if (monthString) {
-            try {
-                const [monthStr, yearStr] = monthString.split(' ');
-                const year = parseInt(yearStr, 10);
-                const monthIndex = new Date(Date.parse(monthStr + " 1, 2012")).getMonth();
-                const defaultDate = new Date(year, monthIndex, 1);
-                return defaultDate.toISOString().split('T')[0];
-            } catch (e) {
-                return new Date().toISOString().split('T')[0];
-            }
-        }
-        return new Date().toISOString().split('T')[0];
+    // Helper to always get tomorrow's date
+    const getTomorrowDate = () => {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        return tomorrow.toISOString().split('T')[0];
     };
 
     const [currentMonth, setCurrentMonth] = useState(selectedMonth || (availableMonths ? availableMonths[0] : ''));
-    const [dueDate, setDueDate] = useState(getInitialDateForMonth(selectedMonth));
+    // Always initialize due date to tomorrow, ignoring selectedMonth context
+    const [dueDate, setDueDate] = useState(getTomorrowDate());
 
     const handleMonthChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const newMonth = e.target.value;
