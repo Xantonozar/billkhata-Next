@@ -2,8 +2,8 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Role } from '@/types';
-import { MealIcon, XIcon } from '@/components/Icons';
+import { Role, MealHistory } from '@/types';
+import { MealIcon, XIcon, ChevronRightIcon } from '@/components/Icons';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { api } from '@/services/api';
 import AppLayout from '@/components/AppLayout';
@@ -49,19 +49,108 @@ const MealQuantitySelector: React.FC<{
     </div>
 );
 
+
+
+const HistoryList: React.FC<{
+    khataId: string;
+    userId?: string;
+}> = ({ khataId, userId }) => {
+    const [history, setHistory] = useState<MealHistory[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchHistory = async () => {
+            try {
+                setLoading(true);
+                const data = await api.getMealHistory(khataId, userId);
+                setHistory(data);
+            } catch (error) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                console.error('Failed to fetch history', error as any);
+            } finally {
+                setLoading(false);
+            }
+        };
+        if (khataId) {
+            fetchHistory();
+        }
+    }, [khataId, userId]);
+
+    if (loading) return <div className="text-center py-4 text-slate-500 text-xs">Loading history...</div>;
+    if (history.length === 0) return <div className="text-center py-4 text-slate-500 text-xs">No history found.</div>;
+
+    return (
+        <div className="mt-8 bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+            <h4 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
+                🕒 {userId ? 'Meal History' : 'Room Activity Log'}
+            </h4>
+            <div className="space-y-4 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
+                {history.map((record: MealHistory) => (
+                    <div key={record._id} className="bg-slate-50 dark:bg-slate-700/50 p-4 rounded-xl border border-slate-100 dark:border-slate-700 text-sm hover:shadow-sm transition-shadow">
+                        <div className="flex justify-between items-start mb-2">
+                            <div>
+                                <span className="font-bold text-slate-800 dark:text-white block">
+                                    {new Date(record.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+                                </span>
+                                {!userId && record.targetUserId && (
+                                    <span className="text-xs font-semibold text-primary-600 dark:text-primary-400">
+                                        Member: {record.targetUserId.name}
+                                    </span>
+                                )}
+                            </div>
+                            <span className="text-[10px] text-slate-400 bg-white dark:bg-slate-800 px-2 py-1 rounded-full border border-slate-100 dark:border-slate-700">
+                                {new Date(record.createdAt).toLocaleString(undefined, { hour: 'numeric', minute: 'numeric', hour12: true, month: 'short', day: 'numeric' })}
+                            </span>
+                        </div>
+
+                        <div className="flex gap-2 mb-3">
+                            <div className="flex-1 bg-white dark:bg-slate-800 rounded-lg p-2 text-center border border-slate-100 dark:border-slate-600">
+                                <span className="text-xs text-slate-500 block">Breakfast</span>
+                                <span className="font-bold text-slate-900 dark:text-white">{record.breakfast}</span>
+                            </div>
+                            <div className="flex-1 bg-white dark:bg-slate-800 rounded-lg p-2 text-center border border-slate-100 dark:border-slate-600">
+                                <span className="text-xs text-slate-500 block">Lunch</span>
+                                <span className="font-bold text-slate-900 dark:text-white">{record.lunch}</span>
+                            </div>
+                            <div className="flex-1 bg-white dark:bg-slate-800 rounded-lg p-2 text-center border border-slate-100 dark:border-slate-600">
+                                <span className="text-xs text-slate-500 block">Dinner</span>
+                                <span className="font-bold text-slate-900 dark:text-white">{record.dinner}</span>
+                            </div>
+                        </div>
+
+                        <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-end gap-1.5 pt-2 border-t border-slate-100 dark:border-slate-700/50">
+                            <span>Updated by</span>
+                            <span className={`font-semibold px-2 py-0.5 rounded ${record.changedByUserId?.role === 'Manager'
+                                ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+                                : 'bg-slate-100 text-slate-700 dark:bg-slate-600 dark:text-slate-300'
+                                }`}>
+                                {record.changedByUserId?.role === 'Manager' ? 'Manager' : (record.changedByUserId?.name || 'Unknown')}
+                            </span>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
 const ManagerEditModal: React.FC<{
-    memberName: string;
-    memberList: MemberMealData[];
+    member: MemberMealData;
     onClose: () => void;
     onSubmit: (edit: { memberName: string; newMeals: MealSet }) => void;
     isFinalized: boolean;
-}> = ({ memberName, memberList, onClose, onSubmit, isFinalized }) => {
-    const originalMemberData = useMemo(() => memberList.find(m => m.name === memberName), [memberName, memberList]);
-    const originalMeals = useMemo(() => originalMemberData?.meals || { breakfast: 0, lunch: 0, dinner: 0 }, [originalMemberData]);
+    khataId: string;
+}> = ({ member, onClose, onSubmit, isFinalized, khataId }) => {
+    const originalMeals = useMemo(() => member.meals || { breakfast: 0, lunch: 0, dinner: 0 }, [member]);
     const [meals, setMeals] = useState<MealSet>(originalMeals);
 
+    // Sync state when props change - Fixes stale data issue
+    useEffect(() => {
+        setMeals(originalMeals);
+    }, [originalMeals]);
+
     const handleSubmit = () => {
-        onSubmit({ memberName, newMeals: meals });
+        onSubmit({ memberName: member.name, newMeals: meals });
         onClose();
     };
 
@@ -69,7 +158,7 @@ const ManagerEditModal: React.FC<{
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 animate-fade-in p-4">
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
                 <div className="flex justify-between items-center">
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">Edit Meal - {memberName}</h3>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">Edit Meal - {member.name}</h3>
                     <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"><XIcon className="w-5 h-5" /></button>
                 </div>
                 <div className="border-t my-4 border-gray-200 dark:border-gray-700"></div>
@@ -85,6 +174,8 @@ const ManagerEditModal: React.FC<{
                     <button onClick={onClose} className="flex-1 py-2.5 bg-gray-200 dark:bg-gray-600 font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors">Cancel</button>
                     <button onClick={handleSubmit} className="flex-1 py-2.5 bg-primary text-white font-semibold rounded-lg hover:bg-primary-600 transition-colors">Save Changes</button>
                 </div>
+
+                <HistoryList khataId={khataId} userId={member.id} />
             </div>
         </div>
     );
@@ -95,11 +186,16 @@ const MemberMealView: React.FC<{
     meals: MealSet;
     setMeals: React.Dispatch<React.SetStateAction<MealSet>>;
     onSaveChanges: () => void;
-}> = ({ isFinalized, meals, setMeals, onSaveChanges }) => {
+    saving: boolean;
+    khataId: string;
+    userId: string;
+    userName: string;
+}> = ({ isFinalized, meals, setMeals, onSaveChanges, saving, khataId, userId, userName }) => {
     const totalQty = meals.breakfast + meals.lunch + meals.dinner;
 
     return (
-        <div className="space-y-6 pb-32">
+        <div className="space-y-6">
+            {/* Meal Input Card */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
                 <h3 className="text-lg font-semibold mb-4">Today's Meal Count</h3>
                 {isFinalized ? (
@@ -115,26 +211,48 @@ const MemberMealView: React.FC<{
                     </div>
                 ) : (
                     <div className="space-y-3">
-                        <MealQuantitySelector meal="breakfast" icon="🌅" label="Breakfast" value={meals.breakfast} onChange={(v) => setMeals(prev => ({ ...prev, breakfast: v }))} disabled={false} />
-                        <MealQuantitySelector meal="lunch" icon="🌞" label="Lunch" value={meals.lunch} onChange={(v) => setMeals(prev => ({ ...prev, lunch: v }))} disabled={false} />
-                        <MealQuantitySelector meal="dinner" icon="🌙" label="Dinner" value={meals.dinner} onChange={(v) => setMeals(prev => ({ ...prev, dinner: v }))} disabled={false} />
+                        <MealQuantitySelector meal="breakfast" icon="🌅" label="Breakfast" value={meals.breakfast} onChange={(v) => setMeals(prev => ({ ...prev, breakfast: v }))} disabled={saving} />
+                        <MealQuantitySelector meal="lunch" icon="🌞" label="Lunch" value={meals.lunch} onChange={(v) => setMeals(prev => ({ ...prev, lunch: v }))} disabled={saving} />
+                        <MealQuantitySelector meal="dinner" icon="🌙" label="Dinner" value={meals.dinner} onChange={(v) => setMeals(prev => ({ ...prev, dinner: v }))} disabled={saving} />
                     </div>
                 )}
-            </div>
 
-            {/* Sticky Bottom Bar */}
-            <div className="fixed bottom-0 left-0 right-0 bg-gray-700 dark:bg-gray-900 text-white p-4 shadow-lg z-40 pb-6 sm:pb-4">
-                <div className="max-w-4xl mx-auto text-center space-y-2">
-                    <p className="text-base sm:text-lg font-semibold">Total Today: {totalQty} quantities</p>
-                    <button
-                        onClick={onSaveChanges}
-                        disabled={isFinalized}
-                        className="w-full max-w-md mx-auto py-3 sm:py-2.5 bg-white text-gray-900 font-bold rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
-                    >
-                        Save Changes
-                    </button>
+                {/* Inline Save Section */}
+                <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
+                    <div className="flex items-center justify-between gap-4">
+                        <div className="flex flex-col">
+                            <span className="text-sm text-slate-500 dark:text-slate-400">
+                                <span className="sm:hidden">Meals</span>
+                                <span className="hidden sm:inline">Total Meals</span>
+                            </span>
+                            <span className="text-2xl font-bold text-primary-600 dark:text-primary-400">{totalQty}</span>
+                        </div>
+                        <button
+                            onClick={onSaveChanges}
+                            disabled={isFinalized || saving}
+                            className={`px-8 py-3 bg-gradient-to-r from-primary-600 to-primary-500 text-white font-bold rounded-xl shadow-lg shadow-primary-500/30 active:scale-95 transition-all flex items-center gap-2 ${saving || isFinalized ? 'opacity-70 cursor-not-allowed' : 'hover:shadow-primary-500/50'}`}
+                        >
+                            {saving ? (
+                                <>
+                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                    <span>Saving...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <span>
+                                        <span className="sm:hidden">Save</span>
+                                        <span className="hidden sm:inline">Save Changes</span>
+                                    </span>
+                                    <ChevronRightIcon className="w-5 h-5" />
+                                </>
+                            )}
+                        </button>
+                    </div>
                 </div>
             </div>
+
+            {/* History Section - Below Save Button */}
+            <HistoryList khataId={khataId} userId={userId} />
         </div>
     );
 };
@@ -144,8 +262,10 @@ const ManagerMealView: React.FC<{
     onFinalize: () => void;
     setIsEditingMember: (name: string | null) => void;
     memberList: MemberMealData[];
-}> = ({ isFinalized, onFinalize, setIsEditingMember, memberList }) => {
+    khataId: string;
+}> = ({ isFinalized, onFinalize, setIsEditingMember, memberList, khataId }) => {
     const totalQuantities = memberList.reduce((acc, m) => acc + m.meals.breakfast + m.meals.lunch + m.meals.dinner, 0);
+    const [viewHistoryFor, setViewHistoryFor] = useState<{ id: string; name: string } | null>(null);
 
     return (
         <div className="space-y-6">
@@ -173,6 +293,12 @@ const ManagerMealView: React.FC<{
                             <div key={member.id} className="p-3 sm:p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                                 <div className="flex justify-between items-start mb-2">
                                     <p className="font-bold text-gray-800 dark:text-white text-base sm:text-lg">{member.name}</p>
+                                    <button
+                                        onClick={() => setViewHistoryFor({ id: member.id, name: member.name })}
+                                        className="text-xs sm:text-sm font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 px-2 py-1 flex items-center gap-1"
+                                    >
+                                        🕒 History
+                                    </button>
                                     <button
                                         onClick={() => setIsEditingMember(member.name)}
                                         className="text-xs sm:text-sm font-semibold text-primary hover:underline px-2 py-1 bg-white dark:bg-gray-600 rounded shadow-sm"
@@ -208,6 +334,25 @@ const ManagerMealView: React.FC<{
                     <p>Total Today: {totalQuantities} quantities</p>
                 </div>
             </div>
+
+            {/* Global History List for Managers */}
+            <HistoryList khataId={khataId} />
+            {viewHistoryFor && (
+                <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 animate-fade-in p-4" onClick={() => setViewHistoryFor(null)}>
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 w-full max-w-lg max-h-[80vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-xl font-bold text-gray-900 dark:text-white">Meal History - {viewHistoryFor.name}</h3>
+                            <button onClick={() => setViewHistoryFor(null)} className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"><XIcon className="w-5 h-5" /></button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto min-h-0">
+                            <HistoryList khataId={khataId} userId={viewHistoryFor.id} />
+                        </div>
+                        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 text-right">
+                            <button onClick={() => setViewHistoryFor(null)} className="px-4 py-2 bg-gray-200 dark:bg-gray-600 font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors text-sm">Close</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
@@ -234,14 +379,29 @@ export default function MealManagementPage() {
                 today.setHours(0, 0, 0, 0);
                 const todayStr = today.toISOString();
 
-                const meals = await api.getMeals(user.khataId, todayStr, todayStr);
+                // Create end of day for robust querying
+                const endOfDay = new Date(today);
+                endOfDay.setHours(23, 59, 59, 999);
+                const endOfDayStr = endOfDay.toISOString();
+
+                console.log('Fetching meals for date range:', { start: todayStr, end: endOfDayStr });
+
+                const meals = await api.getMeals(user.khataId, todayStr, endOfDayStr);
+
+                // Debug log
+                console.log('Fetched meals:', meals);
+
                 const finalizationStatus = await api.getFinalizationStatus(user.khataId, todayStr);
                 setIsFinalized(finalizationStatus.isFinalized);
 
                 if (user.role === Role.Manager) {
                     const members = await api.getMembersForRoom(user.khataId);
                     const mealList = members.map(member => {
-                        const memberMeal = meals.find(m => m.userId === member.id);
+                        // Note: userId may be populated as an object { _id, name } or a plain string
+                        const memberMeal = meals.find(m => {
+                            const mealUserId = typeof m.userId === 'object' ? m.userId._id : m.userId;
+                            return mealUserId === member.id;
+                        });
                         return {
                             id: member.id,
                             name: member.name,
@@ -254,11 +414,16 @@ export default function MealManagementPage() {
                     });
                     setManagerMealList(mealList);
                 } else {
-                    const myMeal = meals.find(m => m.userId === user.id);
+                    // Note: userId may be populated as an object { _id, name } or a plain string
+                    const myMeal = meals.find(m => {
+                        const mealUserId = typeof m.userId === 'object' ? m.userId._id : m.userId;
+                        return mealUserId === user.id;
+                    });
+                    console.log('Found user meal:', myMeal);
                     setMemberMeals(myMeal ? {
-                        breakfast: myMeal.breakfast,
-                        lunch: myMeal.lunch,
-                        dinner: myMeal.dinner
+                        breakfast: myMeal.breakfast ?? 0,
+                        lunch: myMeal.lunch ?? 0,
+                        dinner: myMeal.dinner ?? 0
                     } : { breakfast: 0, lunch: 0, dinner: 0 });
                 }
             } catch (error) {
@@ -326,10 +491,13 @@ export default function MealManagementPage() {
         setIsEditingMember(null);
     };
 
+    const [saving, setSaving] = useState(false);
+
     const handleSaveChanges = async () => {
         if (!user?.khataId) return;
 
         try {
+            setSaving(true);
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
@@ -344,6 +512,8 @@ export default function MealManagementPage() {
         } catch (error) {
             console.error('Error saving meal:', error);
             addToast({ type: 'error', title: 'Error', message: 'Failed to save meal' });
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -374,6 +544,7 @@ export default function MealManagementPage() {
                             onFinalize={handleFinalize}
                             setIsEditingMember={setIsEditingMember}
                             memberList={managerMealList}
+                            khataId={user.khataId || ''}
                         />
                     ) : (
                         <MemberMealView
@@ -381,6 +552,10 @@ export default function MealManagementPage() {
                             meals={memberMeals}
                             setMeals={setMemberMeals}
                             onSaveChanges={handleSaveChanges}
+                            saving={saving}
+                            khataId={user.khataId || ''}
+                            userId={user.id}
+                            userName={user.name || ''}
                         />
                     )}
                 </div>
@@ -388,11 +563,11 @@ export default function MealManagementPage() {
 
             {user.role === Role.Manager && isEditingMember && (
                 <ManagerEditModal
-                    memberName={isEditingMember}
-                    memberList={managerMealList}
+                    member={managerMealList.find(m => m.name === isEditingMember)!}
                     onClose={() => setIsEditingMember(null)}
                     onSubmit={handleManagerEditSubmit}
                     isFinalized={isFinalized}
+                    khataId={user.khataId || ''}
                 />
             )}
 

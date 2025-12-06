@@ -14,7 +14,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ room
         const { roomId } = await params;
 
         const room = await Room.findOne({ khataId: roomId })
-            .populate('members.user', 'name email');
+            .populate('members.user', 'name email whatsapp facebook avatarUrl');
 
         if (!room) {
             return NextResponse.json({ message: 'Room not found' }, { status: 404 });
@@ -27,7 +27,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ room
                 id: m.user._id,
                 name: m.user.name,
                 email: m.user.email,
-                joinedAt: m.joinedAt
+                role: m.user.role || 'Member', // Ensure role is passed if needed, though schema defaults
+                joinedAt: m.joinedAt,
+                whatsapp: m.user.whatsapp,
+                facebook: m.user.facebook,
+                avatarUrl: m.user.avatarUrl
             }));
 
         return NextResponse.json(approvedMembers);

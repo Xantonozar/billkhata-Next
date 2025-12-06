@@ -3,6 +3,7 @@ import Room from '@/models/Room';
 import User from '@/models/User';
 import connectDB from '@/lib/db';
 import { getSession } from '@/lib/auth';
+import { globalCache } from '@/lib/cache';
 
 export async function POST(req: NextRequest) {
     try {
@@ -44,6 +45,9 @@ export async function POST(req: NextRequest) {
             khataId,
             roomStatus: 'Approved'
         });
+
+        // Invalidate user cache so next request gets fresh data
+        globalCache.delete(`user:${user._id}`);
 
         return NextResponse.json({
             message: 'Room created successfully',

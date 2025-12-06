@@ -3,6 +3,7 @@ import Room from '@/models/Room';
 import User from '@/models/User';
 import connectDB from '@/lib/db';
 import { getSession } from '@/lib/auth';
+import { globalCache } from '@/lib/cache';
 
 export async function POST(req: NextRequest) {
     try {
@@ -47,6 +48,9 @@ export async function POST(req: NextRequest) {
             khataId,
             roomStatus: 'Pending'
         });
+
+        // Invalidate user cache
+        globalCache.delete(`user:${user._id}`);
 
         // Notify manager about the join request
         try {

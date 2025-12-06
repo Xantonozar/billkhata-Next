@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { api } from '@/services/api';
 import { useTheme } from '@/contexts/ThemeContext';
 import {
     UserCircleIcon, BellIcon, MoonIcon, LogoutIcon,
@@ -12,17 +13,56 @@ import { useNotifications } from '@/contexts/NotificationContext';
 import ToastContainer from '@/components/ToastContainer';
 
 export default function SettingsPage() {
-    const { user, logout } = useAuth();
+    const { user, logout, setUser } = useAuth();
     const { theme, toggleTheme } = useTheme();
     const { addToast } = useNotifications();
     const [name, setName] = useState(user?.name || '');
+    const [whatsapp, setWhatsapp] = useState(user?.whatsapp || '');
+    const [facebook, setFacebook] = useState(user?.facebook || '');
     const [editing, setEditing] = useState(false);
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-    const handleSaveProfile = () => {
-        // Here we would call API to update user name
-        // await api.updateProfile({ name });
-        addToast({ type: 'success', title: 'Profile Updated', message: 'Your profile changes have been saved.' });
-        setEditing(false);
+    const handleSaveProfile = async () => {
+        try {
+            await api.updateProfile({ name, whatsapp, facebook });
+            addToast({ type: 'success', title: 'Profile Updated', message: 'Your profile changes have been saved.' });
+            setEditing(false);
+            // Optional: Reload to reflect changes if context doesn't auto-update
+            window.location.reload();
+        } catch (error) {
+            addToast({ type: 'error', title: 'Error', message: 'Failed to update profile' });
+        }
+    };
+
+    const handleUploadAvatar = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            try {
+                addToast({ type: 'warning', title: 'Uploading...', message: 'Please wait while we upload your image.' });
+                console.log('📤 Uploading file...', file.name);
+                const url = await api.uploadImage(file);
+                console.log('📥 Upload result URL:', url);
+                if (url) {
+                    const updatedUser = await api.updateProfile({ avatarUrl: url });
+                    console.log('👤 Updated user from API:', updatedUser);
+                    console.log('🖼️ Avatar URL in response:', updatedUser?.avatarUrl);
+                    if (updatedUser) {
+                        // Update the user context instead of reloading
+                        setUser(updatedUser);
+                        addToast({ type: 'success', title: 'Success', message: 'Profile picture updated!' });
+                    } else {
+                        console.error('❌ updatedUser is null/undefined');
+                        addToast({ type: 'error', title: 'Error', message: 'Failed to update profile' });
+                    }
+                } else {
+                    console.error('❌ Upload returned null URL');
+                    addToast({ type: 'error', title: 'Error', message: 'Failed to upload image' });
+                }
+            } catch (error) {
+                console.error('❌ Avatar upload error:', error);
+                addToast({ type: 'error', title: 'Error', message: 'Something went wrong' });
+            }
+        }
     };
 
     const handleCopyId = () => {
@@ -49,20 +89,59 @@ export default function SettingsPage() {
                     </div>
                     <div className="p-4 sm:p-6 space-y-4">
                         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
-                            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-primary-100 flex items-center justify-center text-2xl sm:text-3xl font-bold text-primary-700">
-                                {user.name.charAt(0).toUpperCase()}
+                            <div className="relative group">
+                                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-primary-100 flex items-center justify-center text-2xl sm:text-3xl font-bold text-primary-700 overflow-hidden border-2 border-transparent group-hover:border-primary-500 transition-all cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                                    {user.avatarUrl ? (
+                                        <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        user.name.charAt(0).toUpperCase()
+                                    )}
+                                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <span className="text-white text-xs font-medium">Change</span>
+                                    </div>
+                                </div>
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    className="hidden"
+                                    accept="image/*"
+                                    onChange={handleUploadAvatar}
+                                />
                             </div>
                             <div className="flex-1 text-center sm:text-left w-full">
                                 {editing ? (
                                     <div className="space-y-3">
-                                        <input
-                                            type="text"
-                                            value={name}
-                                            onChange={(e) => setName(e.target.value)}
-                                            className="w-full max-w-sm px-3 py-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white text-center sm:text-left"
-                                            placeholder="Enter your name"
-                                        />
-                                        <div className="flex gap-2 justify-center sm:justify-start">
+                                        <div>
+                                            <label className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Full Name</label>
+                                            <input
+                                                type="text"
+                                                value={name}
+                                                onChange={(e) => setName(e.target.value)}
+                                                className="w-full max-w-sm px-3 py-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                                                placeholder="Enter your name"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs text-slate-500 font-semibold uppercase tracking-wider">WhatsApp Number</label>
+                                            <input
+                                                type="text"
+                                                value={whatsapp}
+                                                onChange={(e) => setWhatsapp(e.target.value)}
+                                                className="w-full max-w-sm px-3 py-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                                                placeholder="e.g. +88017..."
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Facebook/Social Link</label>
+                                            <input
+                                                type="text"
+                                                value={facebook}
+                                                onChange={(e) => setFacebook(e.target.value)}
+                                                className="w-full max-w-sm px-3 py-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                                                placeholder="Profile Link"
+                                            />
+                                        </div>
+                                        <div className="flex gap-2 justify-center sm:justify-start pt-2">
                                             <button
                                                 onClick={() => setEditing(false)}
                                                 className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700 rounded-lg transition-colors"
@@ -81,6 +160,23 @@ export default function SettingsPage() {
                                     <div className="space-y-1">
                                         <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">{name}</h3>
                                         <p className="text-slate-500 text-sm sm:text-base">{user.email}</p>
+                                        {(user.whatsapp || user.facebook) && (
+                                            <div className="pt-2 space-y-1 text-sm text-slate-600 dark:text-slate-400">
+                                                {user.whatsapp && (
+                                                    <p className="flex items-center gap-2">
+                                                        <span className="font-semibold w-20">WhatsApp:</span> {user.whatsapp}
+                                                    </p>
+                                                )}
+                                                {user.facebook && (
+                                                    <p className="flex items-center gap-2">
+                                                        <span className="font-semibold w-20">Facebook:</span>
+                                                        <a href={user.facebook} target="_blank" rel="noopener noreferrer" className="text-primary-600 hover:underline truncate max-w-[200px]">
+                                                            {user.facebook}
+                                                        </a>
+                                                    </p>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>

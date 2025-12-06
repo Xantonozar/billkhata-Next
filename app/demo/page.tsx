@@ -9,7 +9,9 @@ import {
     ChartBarIcon,
     MealIcon,
     ShoppingCartIcon,
-    MenuBookIcon
+    MenuBookIcon,
+    BriefcaseIcon,
+    PhoneIcon
 } from '@/components/Icons';
 
 // Mock Component for "Create Room" Screenshot
@@ -126,6 +128,41 @@ const MockMealManagement = () => (
                             <span className="px-1.5 bg-slate-100 text-slate-400 rounded text-[10px] font-bold">-</span>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+);
+
+const MockStaff = () => (
+    <div className="bg-white dark:bg-slate-800 p-5 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 w-full max-w-sm mx-auto transform rotate-1 hover:rotate-0 transition-transform duration-500">
+        <div className="flex items-center gap-3 mb-4">
+            <BriefcaseIcon className="w-6 h-6 text-primary-500" />
+            <h3 className="font-bold text-slate-800 dark:text-white">Household Services</h3>
+        </div>
+        <div className="space-y-3">
+            <div className="bg-slate-50 dark:bg-slate-700/50 p-3 rounded-lg flex items-center justify-between border border-slate-100 dark:border-slate-700">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-600 flex items-center justify-center text-lg">🧹</div>
+                    <div>
+                        <p className="font-bold text-slate-800 dark:text-white text-sm">Fatima Begum</p>
+                        <p className="text-xs text-slate-500">Maid</p>
+                    </div>
+                </div>
+                <div className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 p-2 rounded-full">
+                    <PhoneIcon className="w-4 h-4" />
+                </div>
+            </div>
+            <div className="bg-slate-50 dark:bg-slate-700/50 p-3 rounded-lg flex items-center justify-between border border-slate-100 dark:border-slate-700">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-600 flex items-center justify-center text-lg">🔧</div>
+                    <div>
+                        <p className="font-bold text-slate-800 dark:text-white text-sm">Nosin Miah</p>
+                        <p className="text-xs text-slate-500">Plumber</p>
+                    </div>
+                </div>
+                <div className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 p-2 rounded-full">
+                    <PhoneIcon className="w-4 h-4" />
                 </div>
             </div>
         </div>
@@ -278,6 +315,20 @@ export default function DemoPage() {
                         stepNumber={5}
                         isActive={activeStep === 5}
                         onClick={() => setActiveStep(5)}
+                        title="Manage Household Staff"
+                        description="Keep essential contacts like your Maid, Cook, Electrician, or Plumber in one place. Anyone in the room can access them instantly."
+                        features={[
+                            "Shared Contact List",
+                            "One-tap Calling",
+                            "Categories for Maid, Cook, etc."
+                        ]}
+                        mock={<MockStaff />}
+                    />
+
+                    <DemoStep
+                        stepNumber={6}
+                        isActive={activeStep === 6}
+                        onClick={() => setActiveStep(6)}
                         title="Transparent Reports"
                         description="End the month with zero confusion. Get automated financial breakdowns for every member."
                         features={[

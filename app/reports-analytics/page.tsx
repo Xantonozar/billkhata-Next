@@ -242,12 +242,7 @@ export default function ReportsAnalyticsPage() {
     const [activeDateRange, setActiveDateRange] = useState('This Month');
     const [loading, setLoading] = useState(true);
     const [sortCategoryBy, setSortCategoryBy] = useState<'amount' | 'name'>('amount');
-
-    const [expenses, setExpenses] = useState<any[]>([]);
-    const [bills, setBills] = useState<any[]>([]);
-    const [meals, setMeals] = useState<any[]>([]);
-    const [deposits, setDeposits] = useState<any[]>([]);
-    const [members, setMembers] = useState<any[]>([]);
+    const [analyticsData, setAnalyticsData] = useState<any>(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -258,19 +253,8 @@ export default function ReportsAnalyticsPage() {
 
             setLoading(true);
             try {
-                const [expensesData, billsData, mealsData, depositsData, membersData] = await Promise.all([
-                    api.getExpenses(user.khataId),
-                    api.getBillsForRoom(user.khataId),
-                    api.getMeals(user.khataId),
-                    api.getDeposits(user.khataId),
-                    api.getMembersForRoom(user.khataId)
-                ]);
-
-                setExpenses(expensesData || []);
-                setBills(billsData || []);
-                setMeals(mealsData || []);
-                setDeposits(depositsData || []);
-                setMembers(membersData || []);
+                const data = await api.getAnalytics(user.khataId, activeDateRange);
+                setAnalyticsData(data);
             } catch (error) {
                 console.error('Error fetching report data:', error);
                 addToast({ type: 'error', title: 'Error', message: 'Failed to load report data' });
@@ -280,111 +264,40 @@ export default function ReportsAnalyticsPage() {
         };
 
         fetchData();
-    }, [user?.khataId, addToast]);
+    }, [user?.khataId, activeDateRange, addToast]);
 
     const reportData = useMemo(() => {
-        const now = new Date();
-        let startDate = new Date();
+        if (!analyticsData) return {
+            totalShoppingExpenses: 0,
+            totalBillAmount: 0,
+            avgMealCost: 0,
+            totalDeposits: 0,
+            fundHealth: 0,
+            billCategoryData: [],
+            trendData: [],
+            activeMembers: 0,
+            totalBills: 0
+        };
 
-        if (activeDateRange === 'This Month') {
-            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-        } else if (activeDateRange === 'Last 30 Days') {
-            startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        }
-
-        const filteredExpenses = expenses.filter(e => e.createdAt && new Date(e.createdAt) >= startDate && e.status === 'Approved');
-        const filteredBills = bills.filter(b => b.dueDate && new Date(b.dueDate) >= startDate);
-        const filteredDeposits = deposits.filter(d => d.createdAt && new Date(d.createdAt) >= startDate && d.status === 'Approved');
-        const filteredMeals = meals.filter(m => m.date && new Date(m.date) >= startDate);
-
-        const totalBillAmount = filteredBills.reduce((sum, b) => sum + (b.totalAmount || 0), 0);
-        const totalMealExpenses = filteredExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
-        const totalExpenses = totalBillAmount + totalMealExpenses;
-        const totalMealsCount = filteredMeals.reduce((sum, m) => sum + (m.totalMeals || 0), 0);
-        const avgMealCost = totalMealsCount > 0 ? totalMealExpenses / totalMealsCount : 0;
-        const totalDeposits = filteredDeposits.reduce((sum, d) => sum + (d.amount || 0), 0);
-        const fundHealth = totalDeposits - totalExpenses;
-
-        const billCategories: { [key: string]: number } = {};
-        filteredBills.forEach(b => {
-            const category = b.category || 'Other';
-            billCategories[category] = (billCategories[category] || 0) + (b.totalAmount || 0);
-        });
-
-        // Add meal expenses as a category
-        if (totalMealExpenses > 0) {
-            billCategories['Meal Shopping'] = totalMealExpenses;
-        }
-
-        let billCategoryData = Object.entries(billCategories).map(([label, value], index) => ({
-            label,
-            value,
-            color: ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#6366f1', '#14b8a6'][index % 8]
-        }));
+        let categoryData = [...(analyticsData.billCategoryData || [])];
 
         // Sort Categories
         if (sortCategoryBy === 'amount') {
-            billCategoryData.sort((a, b) => b.value - a.value);
+            categoryData.sort((a: any, b: any) => b.value - a.value);
         } else {
-            billCategoryData.sort((a, b) => a.label.localeCompare(b.label));
-        }
-
-        // Generate trend data for last 6 months
-        const trendData = [];
-        for (let i = 5; i >= 0; i--) {
-            const d = new Date();
-            d.setMonth(d.getMonth() - i);
-            const month = d.getMonth();
-            const year = d.getFullYear();
-            const label = d.toLocaleDateString('en-US', { month: 'short' });
-
-            const monthExpenses = expenses.filter(e => {
-                if (!e.createdAt) return false;
-                const date = new Date(e.createdAt);
-                return date.getMonth() === month && date.getFullYear() === year && e.status === 'Approved';
-            }).reduce((sum, e) => sum + (e.amount || 0), 0);
-
-            const monthDeposits = deposits.filter(d => {
-                if (!d.createdAt) return false;
-                const date = new Date(d.createdAt);
-                return date.getMonth() === month && date.getFullYear() === year && d.status === 'Approved';
-            }).reduce((sum, d) => sum + (d.amount || 0), 0);
-
-            const monthBills = bills.filter(b => {
-                if (!b.dueDate) return false;
-                const date = new Date(b.dueDate);
-                return date.getMonth() === month && date.getFullYear() === year;
-            }).reduce((sum, b) => sum + (b.totalAmount || 0), 0);
-
-            trendData.push({
-                label,
-                values: [
-                    { name: 'Deposits', value: monthDeposits, color: '#10b981' },
-                    { name: 'Expenses', value: monthExpenses + monthBills, color: '#ef4444' }, // Combine bills and expenses
-                ]
-            });
+            categoryData.sort((a: any, b: any) => a.label.localeCompare(b.label));
         }
 
         return {
-            totalExpenses,
-            avgMealCost,
-            totalDeposits,
-            fundHealth,
-            billCategoryData,
-            trendData
+            ...analyticsData,
+            billCategoryData: categoryData,
+            activeMembers: analyticsData.stats?.activeMembers || 0,
+            totalBills: analyticsData.stats?.totalBills || 0
         };
-    }, [expenses, bills, meals, deposits, activeDateRange, sortCategoryBy]);
+    }, [analyticsData, sortCategoryBy]);
 
-    if (user?.role !== Role.Manager) {
-        return (
-            <AppLayout>
-                <div className="text-center p-8">
-                    <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Access Denied</h2>
-                    <p className="text-slate-500 dark:text-slate-400">This page is only available for managers.</p>
-                </div>
-            </AppLayout>
-        );
-    }
+    // Access check removed to allow all members to view reports
+
 
     if (loading) {
         return (
@@ -436,17 +349,17 @@ export default function ReportsAnalyticsPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                         <SummaryCard
                             icon={<CurrencyRupeeIcon className="w-5 h-5 sm:w-6 sm:h-6 text-red-600 dark:text-red-400" />}
-                            title="Total Expenses"
-                            value={`৳${reportData.totalExpenses.toLocaleString()}`}
+                            title="Shopping Exp"
+                            value={`৳${reportData.totalShoppingExpenses.toLocaleString()}`}
                             subtitle={activeDateRange}
                             colorClass="bg-red-100 dark:bg-red-900/20"
                         />
                         <SummaryCard
-                            icon={<MealIcon className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600 dark:text-orange-400" />}
-                            title="Avg Meal Cost"
-                            value={`৳${reportData.avgMealCost.toFixed(2)}`}
-                            subtitle="Per Meal"
-                            colorClass="bg-orange-100 dark:bg-orange-900/20"
+                            icon={<MealIcon className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600 dark:text-purple-400" />}
+                            title="Total Bills"
+                            value={`৳${reportData.totalBillAmount.toLocaleString()}`}
+                            subtitle="Rent, Wifi, etc."
+                            colorClass="bg-purple-100 dark:bg-purple-900/20"
                         />
                         <SummaryCard
                             icon={<BanknotesIcon className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" />}
@@ -498,21 +411,21 @@ export default function ReportsAnalyticsPage() {
                         <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-700/50 flex items-center justify-between">
                             <div>
                                 <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">Total Bills</p>
-                                <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-1">{bills.length}</p>
+                                <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-1">{reportData.totalBills}</p>
                             </div>
                             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-lg sm:text-xl">📄</div>
                         </div>
                         <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-700/50 flex items-center justify-between">
                             <div>
                                 <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">Total Meals Served</p>
-                                <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-1">{meals.reduce((acc, m) => acc + (m.totalMeals || 0), 0)}</p>
+                                <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-1">{reportData.totalMealsCount || 0}</p>
                             </div>
                             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-lg sm:text-xl">🍛</div>
                         </div>
                         <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-700/50 flex items-center justify-between">
                             <div>
                                 <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">Active Members</p>
-                                <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-1">{members.length}</p>
+                                <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-1">{reportData.activeMembers}</p>
                             </div>
                             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-lg sm:text-xl">👥</div>
                         </div>

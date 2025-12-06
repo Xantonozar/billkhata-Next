@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Meal from '@/models/Meal';
 import MealFinalization from '@/models/MealFinalization';
+import '@/models/User'; // Ensure User model is registered for populate
 import connectDB from '@/lib/db';
 import { getSession } from '@/lib/auth';
 
@@ -17,18 +18,25 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ khat
         const startDate = searchParams.get('startDate');
         const endDate = searchParams.get('endDate');
 
+        const status = searchParams.get('status');
+
         if (user.khataId !== khataId) {
             return NextResponse.json({ message: 'Access denied' }, { status: 403 });
         }
 
         const query: any = { khataId };
+
+        if (status) {
+            query.status = status;
+        }
+
         if (startDate || endDate) {
             query.date = {};
             if (startDate) query.date.$gte = new Date(startDate);
             if (endDate) query.date.$lte = new Date(endDate);
         }
 
-        const meals = await Meal.find(query).sort({ date: -1 });
+        const meals = await Meal.find(query).sort({ date: -1 }).populate('userId', 'name').lean(); // Populate user data
         return NextResponse.json(meals);
 
     } catch (error: any) {
@@ -45,6 +53,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ kha
 
         const { khataId } = await params;
         const { date, breakfast, lunch, dinner, userId, userName } = await req.json();
+
+        console.log('Received meal update:', { date, breakfast, lunch, dinner, userId, userName });
 
         if (user.khataId !== khataId) {
             return NextResponse.json({ message: 'Access denied' }, { status: 403 });
@@ -80,27 +90,51 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ kha
             }
         }
 
-        let meal = await Meal.findOne({
-            khataId,
-            userId: targetUserId,
-            date: mealDate
-        });
+        const b = typeof breakfast === 'number' ? breakfast : 0;
+        const l = typeof lunch === 'number' ? lunch : 0;
+        const d = typeof dinner === 'number' ? dinner : 0;
+        const totalMeals = b + l + d;
 
-        if (meal) {
-            meal.breakfast = breakfast !== undefined ? breakfast : meal.breakfast;
-            meal.lunch = lunch !== undefined ? lunch : meal.lunch;
-            meal.dinner = dinner !== undefined ? dinner : meal.dinner;
-            await meal.save();
-        } else {
-            meal = await Meal.create({
+        // Use findOneAndUpdate with upsert to handle race conditions
+        const meal = await Meal.findOneAndUpdate(
+            {
                 khataId,
                 userId: targetUserId,
-                userName: targetUserName,
+                date: mealDate
+            },
+            {
+                $set: {
+                    userName: targetUserName, // Ensure name is up to date
+                    breakfast: b,
+                    lunch: l,
+                    dinner: d,
+                    totalMeals: totalMeals,
+                    // All meal updates are auto-approved/live, but logged in history
+                    status: 'Approved'
+                }
+            },
+            {
+                new: true,
+                upsert: true,
+                setDefaultsOnInsert: true,
+                runValidators: true
+            }
+        );
+
+        // Create History Log
+        try {
+            const MealHistory = await import('@/models/MealHistory').then(mod => mod.default);
+            await MealHistory.create({
+                khataId,
+                targetUserId: targetUserId,
+                changedByUserId: user._id,
                 date: mealDate,
-                breakfast: breakfast || 0,
-                lunch: lunch || 0,
-                dinner: dinner || 0
+                breakfast: b,
+                lunch: l,
+                dinner: d
             });
+        } catch (historyError) {
+            console.error('Error logging meal history:', historyError);
         }
 
         return NextResponse.json(meal, { status: 201 });
