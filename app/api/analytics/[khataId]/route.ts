@@ -248,8 +248,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ khat
         ]);
 
         const avgMealCost = totalMealsCount > 0 ? totalShoppingExpenses / totalMealsCount : 0;
-        const totalOutflow = totalBillAmount + totalShoppingExpenses;
-        const fundHealth = totalDeposits - totalOutflow;
+        // Fund Health = Total Deposits - Total Shopping Expenses (not including bills)
+        const fundHealth = totalDeposits - totalShoppingExpenses;
 
         return NextResponse.json({
             totalShoppingExpenses,
