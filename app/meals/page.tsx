@@ -375,14 +375,15 @@ export default function MealManagementPage() {
 
             try {
                 setLoading(true);
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                const todayStr = today.toISOString();
 
-                // Create end of day for robust querying
-                const endOfDay = new Date(today);
-                endOfDay.setHours(23, 59, 59, 999);
-                const endOfDayStr = endOfDay.toISOString();
+                // Fix: Generate date strings based on user's LOCAL calendar day, but normalized to UTC 
+                // to prevent server from shifting it back to previous day if user is ahead of UTC.
+                const now = new Date();
+                const startOfDayUTC = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+                const endOfDayUTC = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999));
+
+                const todayStr = startOfDayUTC.toISOString();
+                const endOfDayStr = endOfDayUTC.toISOString();
 
                 console.log('Fetching meals for date range:', { start: todayStr, end: endOfDayStr });
 
@@ -441,9 +442,11 @@ export default function MealManagementPage() {
         if (!user?.khataId) return;
 
         try {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const success = await api.finalizeMeals(user.khataId, today.toISOString());
+            // Fix: Use UTC midnight for local day
+            const now = new Date();
+            const todayUTC = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+
+            const success = await api.finalizeMeals(user.khataId, todayUTC.toISOString());
             if (success) {
                 setIsFinalized(true);
                 addToast({ type: 'success', title: 'Meals Finalized', message: "Today's meal counts are now locked." });
@@ -464,11 +467,12 @@ export default function MealManagementPage() {
         if (!member) return;
 
         try {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
+            // Fix: Use UTC midnight for local day
+            const now = new Date();
+            const todayUTC = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
 
             await api.submitMeal(user.khataId, {
-                date: today.toISOString(),
+                date: todayUTC.toISOString(),
                 breakfast: newMeals.breakfast,
                 lunch: newMeals.lunch,
                 dinner: newMeals.dinner,
@@ -498,11 +502,12 @@ export default function MealManagementPage() {
 
         try {
             setSaving(true);
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
+            // Fix: Use UTC midnight for local day
+            const now = new Date();
+            const todayUTC = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
 
             await api.submitMeal(user.khataId, {
-                date: today.toISOString(),
+                date: todayUTC.toISOString(),
                 breakfast: memberMeals.breakfast,
                 lunch: memberMeals.lunch,
                 dinner: memberMeals.dinner

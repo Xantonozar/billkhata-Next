@@ -2,9 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import User from '@/models/User';
 import { globalCache } from '@/lib/cache';
+import { ProfileUpdateSchema, validateBody } from '@/lib/validation';
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * Get current user profile
+ */
 export async function GET(req: NextRequest) {
     try {
         console.log('🔍 GET /api/auth/me called');
@@ -33,7 +37,9 @@ export async function GET(req: NextRequest) {
     }
 }
 
-// Update profile
+/**
+ * Update current user profile
+ */
 export async function PUT(req: NextRequest) {
     try {
         const user = await getSession(req);
@@ -41,15 +47,22 @@ export async function PUT(req: NextRequest) {
             return NextResponse.json({ message: 'Not authorized' }, { status: 401 });
         }
 
+        // Parse and validate body
         const body = await req.json();
-        const { name, avatarUrl, whatsapp, facebook } = body;
+        const validation = validateBody(ProfileUpdateSchema, body);
+
+        if (!validation.success) {
+            return NextResponse.json({ message: validation.error }, { status: 400 });
+        }
+
+        const { name, avatarUrl, whatsapp, facebook } = validation.data;
 
         console.log('📝 PUT /api/auth/me received:', { name, avatarUrl, whatsapp, facebook });
 
         // Build update object explicitly
         const updateData: Record<string, any> = {};
         if (name) updateData.name = name;
-        if (avatarUrl) updateData.avatarUrl = avatarUrl;
+        if (avatarUrl !== undefined) updateData.avatarUrl = avatarUrl;
         if (whatsapp !== undefined) updateData.whatsapp = whatsapp;
         if (facebook !== undefined) updateData.facebook = facebook;
 

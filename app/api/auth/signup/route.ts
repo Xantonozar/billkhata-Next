@@ -1,40 +1,59 @@
 import { NextRequest, NextResponse } from 'next/server';
 import User from '@/models/User';
 import connectDB from '@/lib/db';
-import { generateToken } from '@/lib/auth';
+import {
+    generateAccessToken,
+    generateRefreshToken,
+    setAuthCookies
+} from '@/lib/auth';
+import { SignupSchema, validateBody } from '@/lib/validation';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
     try {
+        console.log('🔍 POST /api/auth/signup called');
         await connectDB();
-        const { name, email, password, role } = await req.json();
 
-        if (!name || !email || !password || !role) {
-            return NextResponse.json({ message: 'Please provide all fields' }, { status: 400 });
+        // Parse and validate request body
+        const body = await req.json();
+        const validation = validateBody(SignupSchema, body);
+
+        if (!validation.success) {
+            console.log('⚠️ Signup validation failed:', validation.error);
+            return NextResponse.json({ message: validation.error }, { status: 400 });
         }
 
+        const { name, email, password, role } = validation.data;
+
         // Check if user already exists
-        const userExists = await User.findOne({ email: email.toLowerCase() });
+        const userExists = await User.findOne({ email });
 
         if (userExists) {
-            return NextResponse.json({ message: 'User already exists with this email' }, { status: 400 });
+            return NextResponse.json(
+                { message: 'User already exists with this email' },
+                { status: 400 }
+            );
         }
 
         // Create user
         const user = await User.create({
             name,
-            email: email.toLowerCase(),
+            email,
             password,
             role,
             roomStatus: 'NoRoom'
         });
 
-        // Generate token
-        const token = generateToken(user._id.toString());
+        // Generate tokens
+        const accessToken = generateAccessToken(user._id.toString());
+        const refreshToken = generateRefreshToken(user._id.toString());
 
-        return NextResponse.json({
-            token,
+        console.log('✅ Signup successful for:', email);
+
+        // Create response
+        const response = NextResponse.json({
+            token: accessToken,
             user: {
                 id: user._id,
                 name: user.name,
@@ -44,8 +63,16 @@ export async function POST(req: NextRequest) {
                 khataId: user.khataId
             }
         }, { status: 201 });
+
+        // Set HttpOnly cookies
+        setAuthCookies(response, accessToken, refreshToken);
+
+        return response;
     } catch (error: any) {
-        console.error('Signup error:', error);
-        return NextResponse.json({ message: error.message || 'Server error during signup' }, { status: 500 });
+        console.error('❌ Signup error:', error);
+        return NextResponse.json(
+            { message: error.message || 'Server error during signup' },
+            { status: 500 }
+        );
     }
 }

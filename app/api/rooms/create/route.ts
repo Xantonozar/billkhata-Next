@@ -2,34 +2,44 @@ import { NextRequest, NextResponse } from 'next/server';
 import Room from '@/models/Room';
 import User from '@/models/User';
 import connectDB from '@/lib/db';
-import { getSession } from '@/lib/auth';
+import { getSession, requireManager } from '@/lib/auth';
 import { globalCache } from '@/lib/cache';
+import { CreateRoomSchema, validateBody } from '@/lib/validation';
 
 export async function POST(req: NextRequest) {
     try {
         await connectDB();
         const user = await getSession(req);
-        if (!user) return NextResponse.json({ message: 'Not authorized' }, { status: 401 });
 
-        if (user.role !== 'Manager') {
-            return NextResponse.json({ message: 'Not authorized as Manager' }, { status: 403 });
+        // Check authorization
+        const authError = requireManager(user);
+        if (authError) return authError;
+
+        // Parse and validate body
+        const body = await req.json();
+        const validation = validateBody(CreateRoomSchema, body);
+
+        if (!validation.success) {
+            return NextResponse.json({ message: validation.error }, { status: 400 });
         }
 
-        const { name, khataId } = await req.json();
-
-        if (!name || !khataId) {
-            return NextResponse.json({ message: 'Name and Khata ID are required' }, { status: 400 });
-        }
+        const { name, khataId } = validation.data;
 
         // Check if room already exists
         const roomExists = await Room.findOne({ khataId });
         if (roomExists) {
-            return NextResponse.json({ message: 'Room with this Khata ID already exists' }, { status: 400 });
+            return NextResponse.json(
+                { message: 'Room with this Khata ID already exists' },
+                { status: 400 }
+            );
         }
 
         // Check if user already has a room
         if (user.khataId) {
-            return NextResponse.json({ message: 'You already have a room' }, { status: 400 });
+            return NextResponse.json(
+                { message: 'You already have a room' },
+                { status: 400 }
+            );
         }
 
         // Create room
@@ -60,6 +70,9 @@ export async function POST(req: NextRequest) {
 
     } catch (error: any) {
         console.error('Create room error:', error);
-        return NextResponse.json({ message: 'Server error creating room' }, { status: 500 });
+        return NextResponse.json(
+            { message: 'Server error creating room' },
+            { status: 500 }
+        );
     }
 }

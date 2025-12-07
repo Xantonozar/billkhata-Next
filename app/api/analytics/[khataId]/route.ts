@@ -144,9 +144,27 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ khat
         }));
 
 
-        // 6. Trend Data (Last 6 Months) - Fixed range, ignored 'range' param
+        // 6. Trend Data (Last 6 Months)
         const performTrendAggregation = async () => {
             const trendData = [];
+
+            // 1. Get all unique bill categories used in the last 6 months
+            const sixMonthsAgo = new Date();
+            sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+            sixMonthsAgo.setDate(1);
+
+            const distinctCategories = await Bill.distinct('category', {
+                khataId,
+                dueDate: { $gte: sixMonthsAgo }
+            });
+
+            // Color palette for dynamic categories
+            const categoryColors: Record<string, string> = {};
+            const availableColors = ['#f59e0b', '#ec4899', '#6366f1', '#14b8a6', '#84cc16', '#06b6d4', '#d946ef', '#f43f5e'];
+            distinctCategories.forEach((cat, index) => {
+                categoryColors[cat] = availableColors[index % availableColors.length];
+            });
+
             for (let i = 5; i >= 0; i--) {
                 const d = new Date();
                 d.setMonth(d.getMonth() - i);
@@ -157,29 +175,60 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ khat
                 const startOfMonth = new Date(year, month, 1);
                 const endOfMonth = new Date(year, month + 1, 0, 23, 59, 59);
 
-                // We run 3 parallel aggregations per month - efficient enough for 6 months
-                const [monthExpenses, monthBills, monthDeposits] = await Promise.all([
+                // Run parallel aggregations
+                const [monthShopping, monthBillsTotal, monthBillsByCategory, monthDeposits] = await Promise.all([
+                    // Shopping Expenses (Only from Expense model)
                     Expense.aggregate([
                         { $match: { khataId, status: 'Approved', createdAt: { $gte: startOfMonth, $lte: endOfMonth } } },
                         { $group: { _id: null, total: { $sum: '$amount' } } }
                     ]),
+                    // Total Bills
                     Bill.aggregate([
                         { $match: { khataId, dueDate: { $gte: startOfMonth, $lte: endOfMonth } } },
                         { $group: { _id: null, total: { $sum: '$totalAmount' } } }
                     ]),
+                    // Bills by Category
+                    Bill.aggregate([
+                        { $match: { khataId, dueDate: { $gte: startOfMonth, $lte: endOfMonth } } },
+                        { $group: { _id: '$category', total: { $sum: '$totalAmount' } } }
+                    ]),
+                    // Deposits
                     Deposit.aggregate([
                         { $match: { khataId, status: 'Approved', createdAt: { $gte: startOfMonth, $lte: endOfMonth } } },
                         { $group: { _id: null, total: { $sum: '$amount' } } }
                     ])
                 ]);
 
-                trendData.push({
-                    label,
-                    values: [
-                        { name: 'Deposits', value: monthDeposits[0]?.total || 0, color: '#10b981' },
-                        { name: 'Expenses', value: (monthExpenses[0]?.total || 0) + (monthBills[0]?.total || 0), color: '#ef4444' }
-                    ]
+                // Construct values array
+                const values = [
+                    {
+                        name: 'Deposits',
+                        value: monthDeposits[0]?.total || 0,
+                        color: '#10b981' // Green
+                    },
+                    {
+                        name: 'Shopping',
+                        value: monthShopping[0]?.total || 0,
+                        color: '#ef4444' // Red
+                    },
+                    {
+                        name: 'All Bills',
+                        value: monthBillsTotal[0]?.total || 0,
+                        color: '#3b82f6' // Blue
+                    }
+                ];
+
+                // Add dynamic bill categories (ensure all distinct categories exist for every month)
+                distinctCategories.forEach(cat => {
+                    const found = monthBillsByCategory.find((c: any) => c._id === cat);
+                    values.push({
+                        name: cat as string,
+                        value: found ? found.total : 0,
+                        color: categoryColors[cat as string] || '#94a3b8'
+                    });
                 });
+
+                trendData.push({ label, values });
             }
             return trendData;
         };

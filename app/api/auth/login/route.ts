@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import User from '@/models/User';
 import connectDB from '@/lib/db';
-import { generateToken } from '@/lib/auth';
+import {
+    generateAccessToken,
+    generateRefreshToken,
+    setAuthCookies
+} from '@/lib/auth';
+import { LoginSchema, validateBody } from '@/lib/validation';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,16 +14,21 @@ export async function POST(req: NextRequest) {
     try {
         console.log('🔍 POST /api/auth/login called');
         await connectDB();
-        const { email, password } = await req.json();
-        console.log('📝 Login attempt for:', email);
 
-        if (!email || !password) {
-            console.log('⚠️ Login missing fields');
-            return NextResponse.json({ message: 'Please provide email and password' }, { status: 400 });
+        // Parse and validate request body
+        const body = await req.json();
+        const validation = validateBody(LoginSchema, body);
+
+        if (!validation.success) {
+            console.log('⚠️ Login validation failed:', validation.error);
+            return NextResponse.json({ message: validation.error }, { status: 400 });
         }
 
+        const { email, password } = validation.data;
+        console.log('📝 Login attempt for:', email);
+
         // Find user (include password for comparison)
-        const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
+        const user = await User.findOne({ email }).select('+password');
 
         if (!user) {
             console.log('⚠️ Login failed: User not found');
@@ -32,12 +42,16 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
         }
 
-        // Generate token
-        const token = generateToken(user._id.toString());
+        // Generate tokens
+        const accessToken = generateAccessToken(user._id.toString());
+        const refreshToken = generateRefreshToken(user._id.toString());
+
         console.log('✅ Login successful for:', email);
 
-        return NextResponse.json({
-            token,
+        // Create response with user data
+        const response = NextResponse.json({
+            // Still return token in body for backward compatibility with mobile/API clients
+            token: accessToken,
             user: {
                 id: user._id,
                 name: user.name,
@@ -47,8 +61,16 @@ export async function POST(req: NextRequest) {
                 khataId: user.khataId
             }
         });
+
+        // Set HttpOnly cookies for browser clients
+        setAuthCookies(response, accessToken, refreshToken);
+
+        return response;
     } catch (error: any) {
         console.error('❌ Login error:', error);
-        return NextResponse.json({ message: error.message || 'Server error during login' }, { status: 500 });
+        return NextResponse.json(
+            { message: error.message || 'Server error during login' },
+            { status: 500 }
+        );
     }
 }

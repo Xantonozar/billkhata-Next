@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Deposit from '@/models/Deposit';
 import connectDB from '@/lib/db';
-import { getSession } from '@/lib/auth';
+import { getSession, requireKhataAccess } from '@/lib/auth';
+import { CreateDepositSchema, PaginationSchema, validateBody, validateQuery } from '@/lib/validation';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,23 +10,28 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ khat
     try {
         await connectDB();
         const user = await getSession(req);
-        if (!user) return NextResponse.json({ message: 'Not authorized' }, { status: 401 });
+        if (!user) {
+            return NextResponse.json({ message: 'Not authorized' }, { status: 401 });
+        }
 
         const { khataId } = await params;
 
-        if (user.khataId !== khataId) {
-            return NextResponse.json({ message: 'Access denied' }, { status: 403 });
-        }
+        // Check khata access
+        const accessError = requireKhataAccess(user, khataId);
+        if (accessError) return accessError;
 
         const { searchParams } = new URL(req.url);
-        const page = parseInt(searchParams.get('page') || '1');
-        const limit = parseInt(searchParams.get('limit') || '20');
+
+        // Validate pagination
+        const paginationResult = validateQuery(PaginationSchema, searchParams);
+        const page = paginationResult.success ? paginationResult.data.page : 1;
+        const limit = paginationResult.success ? paginationResult.data.limit : 20;
         const skip = (page - 1) * limit;
 
         const status = searchParams.get('status');
 
         const query: any = { khataId };
-        if (status) {
+        if (status && ['Pending', 'Approved', 'Rejected'].includes(status)) {
             query.status = status;
         }
 
@@ -42,7 +48,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ khat
 
     } catch (error: any) {
         console.error('Error fetching deposits:', error);
-        return NextResponse.json({ message: 'Server error fetching deposits' }, { status: 500 });
+        return NextResponse.json(
+            { message: 'Server error fetching deposits' },
+            { status: 500 }
+        );
     }
 }
 
@@ -50,14 +59,25 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ kha
     try {
         await connectDB();
         const user = await getSession(req);
-        if (!user) return NextResponse.json({ message: 'Not authorized' }, { status: 401 });
+        if (!user) {
+            return NextResponse.json({ message: 'Not authorized' }, { status: 401 });
+        }
 
         const { khataId } = await params;
-        const { amount, paymentMethod, transactionId, screenshotUrl } = await req.json();
 
-        if (user.khataId !== khataId) {
-            return NextResponse.json({ message: 'Access denied' }, { status: 403 });
+        // Check khata access
+        const accessError = requireKhataAccess(user, khataId);
+        if (accessError) return accessError;
+
+        // Parse and validate body
+        const body = await req.json();
+        const validation = validateBody(CreateDepositSchema, body);
+
+        if (!validation.success) {
+            return NextResponse.json({ message: validation.error }, { status: 400 });
         }
+
+        const { amount, paymentMethod, transactionId, screenshotUrl } = validation.data;
 
         const deposit = await Deposit.create({
             khataId,
@@ -98,6 +118,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ kha
 
     } catch (error: any) {
         console.error('Error creating deposit:', error);
-        return NextResponse.json({ message: 'Server error creating deposit' }, { status: 500 });
+        return NextResponse.json(
+            { message: 'Server error creating deposit' },
+            { status: 500 }
+        );
     }
 }

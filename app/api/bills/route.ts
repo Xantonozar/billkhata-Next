@@ -3,6 +3,7 @@ import Bill from '@/models/Bill';
 import Room from '@/models/Room';
 import connectDB from '@/lib/db';
 import { getSession } from '@/lib/auth';
+import { CreateBillSchema, validateBody } from '@/lib/validation';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,17 +11,26 @@ export async function POST(req: NextRequest) {
     try {
         await connectDB();
         const user = await getSession(req);
-        if (!user) return NextResponse.json({ message: 'Not authorized' }, { status: 401 });
-
-        const { title, category, totalAmount, dueDate, description, imageUrl, shares } = await req.json();
-
-        if (!title || !category || !totalAmount || !dueDate || !shares) {
-            return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
+        if (!user) {
+            return NextResponse.json({ message: 'Not authorized' }, { status: 401 });
         }
+
+        // Parse and validate body
+        const body = await req.json();
+        const validation = validateBody(CreateBillSchema, body);
+
+        if (!validation.success) {
+            return NextResponse.json({ message: validation.error }, { status: 400 });
+        }
+
+        const { title, category, totalAmount, dueDate, description, imageUrl, shares } = validation.data;
 
         // Verify user has a room
         if (!user.khataId) {
-            return NextResponse.json({ message: 'You must be in a room to create bills' }, { status: 400 });
+            return NextResponse.json(
+                { message: 'You must be in a room to create bills' },
+                { status: 400 }
+            );
         }
 
         // Verify room exists
@@ -31,7 +41,10 @@ export async function POST(req: NextRequest) {
 
         // Verify user is the manager
         if (room.manager.toString() !== user._id.toString()) {
-            return NextResponse.json({ message: 'Only the room manager can create bills' }, { status: 403 });
+            return NextResponse.json(
+                { message: 'Only the room manager can create bills' },
+                { status: 403 }
+            );
         }
 
         // Create bill
@@ -41,10 +54,10 @@ export async function POST(req: NextRequest) {
             category,
             totalAmount,
             dueDate,
-            description,
-            imageUrl,
+            description: description || '',
+            imageUrl: imageUrl || null,
             createdBy: user._id,
-            shares: shares.map((share: any) => ({
+            shares: shares.map((share) => ({
                 userId: share.userId,
                 userName: share.userName,
                 amount: share.amount,
@@ -55,7 +68,7 @@ export async function POST(req: NextRequest) {
         // Create notifications for all users involved in the bill
         try {
             const Notification = await import('@/models/Notification').then(mod => mod.default);
-            const notificationsToCreate = shares.map((share: any) => ({
+            const notificationsToCreate = shares.map((share) => ({
                 userId: share.userId,
                 khataId: user.khataId,
                 type: 'bill',
@@ -67,7 +80,7 @@ export async function POST(req: NextRequest) {
                 relatedId: bill._id
             }));
 
-            console.log(`DEBUG: Creating ${notificationsToCreate.length} bill notifications for users:`, notificationsToCreate.map((n: any) => n.userId));
+            console.log(`DEBUG: Creating ${notificationsToCreate.length} bill notifications`);
             await Notification.insertMany(notificationsToCreate);
             console.log(`SUCCESS: Created ${notificationsToCreate.length} notifications for bill: ${title}`);
         } catch (notificationError) {
@@ -90,6 +103,9 @@ export async function POST(req: NextRequest) {
 
     } catch (error: any) {
         console.error('Create bill error:', error);
-        return NextResponse.json({ message: 'Server error creating bill' }, { status: 500 });
+        return NextResponse.json(
+            { message: 'Server error creating bill' },
+            { status: 500 }
+        );
     }
 }
