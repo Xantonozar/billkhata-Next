@@ -8,6 +8,7 @@ import Room from '@/models/Room';
 import User from '@/models/User';
 import Menu from '@/models/Menu';
 import { globalCache } from '@/lib/cache';
+import { getWeekStart } from '@/lib/dateUtils';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,7 +25,6 @@ export async function GET(req: NextRequest) {
         const statsCacheKey = `dashboard:${user._id}:${user.khataId}`;
         const cachedStats = globalCache.get(statsCacheKey);
 
-        // Cache for short duration (e.g., 30s) as dashboard data changes frequently but not every second
         // For now, let's keep it real-time or very short cache to ensure responsiveness to actions
         // if (cachedStats) return NextResponse.json(cachedStats);
 
@@ -33,8 +33,34 @@ export async function GET(req: NextRequest) {
         const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
         const todayStr = now.toLocaleDateString('en-US', { weekday: 'long' });
 
-        // Common queries
-        const menuPromise = Menu.findOne({ khataId: user.khataId, day: todayStr }).lean();
+        // Helper function to get today's menu from weekly/permanent menu
+        const getTodaysMenu = async () => {
+            const weekStart = getWeekStart();
+
+            // Try to find temporary menu for current week first
+            let menu = await Menu.findOne({
+                khataId: user.khataId,
+                weekStart,
+                isPermanent: false
+            }).lean();
+
+            // Fallback to permanent menu if no temporary menu exists
+            if (!menu) {
+                menu = await Menu.findOne({
+                    khataId: user.khataId,
+                    isPermanent: true
+                }).lean();
+            }
+
+            // Extract today's menu from items array
+            if (menu?.items) {
+                const todayMenu = menu.items.find((item: any) => item.day === todayStr);
+                return todayMenu || null;
+            }
+            return null;
+        };
+
+        const menuPromise = getTodaysMenu();
 
         let responseData: any = {};
 
