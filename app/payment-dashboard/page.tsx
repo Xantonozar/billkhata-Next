@@ -107,7 +107,9 @@ export default function PaymentDashboardPage() {
             let totalDue = 0;
             let paid = 0;
             let pending = 0;
+            let unpaid = 0;
             let pendingCount = 0;
+            let unpaidCount = 0;
 
             monthlyBills.forEach(bill => {
                 const share = bill.shares.find((s: any) => String(s.userId) === String(member.id));
@@ -115,19 +117,32 @@ export default function PaymentDashboardPage() {
                     totalDue += share.amount;
                     if (share.status === 'Paid') {
                         paid += share.amount;
-                    } else {
+                    } else if (share.status === 'Pending Approval') {
                         pending += share.amount;
                         pendingCount++;
+                    } else {
+                        unpaid += share.amount;
+                        unpaidCount++;
                     }
                 }
             });
+
+            let statusText = '✅ All Paid';
+            if (unpaidCount > 0 && pendingCount > 0) {
+                statusText = `❌ ${unpaidCount} Unpaid | ⏳ ${pendingCount} Pending`;
+            } else if (unpaidCount > 0) {
+                statusText = `❌ ${unpaidCount} Unpaid`;
+            } else if (pendingCount > 0) {
+                statusText = `⏳ ${pendingCount} Pending`;
+            }
 
             return {
                 name: member.name,
                 totalDue: `৳${totalDue.toFixed(2)}`,
                 paid: `৳${paid.toFixed(2)}`,
                 pending: `৳${pending.toFixed(2)}`,
-                status: pendingCount === 0 ? '✅ All Paid' : `⏳ ${pendingCount} Pending`
+                unpaid: `৳${unpaid.toFixed(2)}`,
+                status: statusText
             };
         });
 
@@ -137,7 +152,8 @@ export default function PaymentDashboardPage() {
                 const share = shares.find((s: any) => String(s.userId) === String(member.id));
                 if (!share) return '-';
                 if (share.status === 'Paid') return '✅';
-                return '⏳';
+                if (share.status === 'Pending Approval') return '⏳';
+                return '❌';
             });
 
             const paidShares = shares.filter((s: any) => s.status === 'Paid').length;
@@ -265,7 +281,7 @@ export default function PaymentDashboardPage() {
                                         <p className="font-medium text-slate-900 dark:text-white text-lg">{member.name}</p>
                                         <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{member.status}</span>
                                     </div>
-                                    <div className="grid grid-cols-3 gap-2 text-sm">
+                                    <div className="grid grid-cols-4 gap-2 text-sm">
                                         <div className="bg-slate-50 dark:bg-slate-900/50 p-2 rounded">
                                             <p className="text-xs text-slate-500">Total Due</p>
                                             <p className="font-bold text-slate-700 dark:text-slate-300">{member.totalDue}</p>
@@ -274,9 +290,13 @@ export default function PaymentDashboardPage() {
                                             <p className="text-xs text-green-600 dark:text-green-400">Paid</p>
                                             <p className="font-bold text-green-700 dark:text-green-400">{member.paid}</p>
                                         </div>
+                                        <div className="bg-yellow-50 dark:bg-yellow-900/10 p-2 rounded">
+                                            <p className="text-xs text-yellow-600 dark:text-yellow-400">Pending</p>
+                                            <p className="font-bold text-yellow-700 dark:text-yellow-400">{member.pending}</p>
+                                        </div>
                                         <div className="bg-red-50 dark:bg-red-900/10 p-2 rounded">
-                                            <p className="text-xs text-red-600 dark:text-red-400">Pending</p>
-                                            <p className="font-bold text-red-700 dark:text-red-400">{member.pending}</p>
+                                            <p className="text-xs text-red-600 dark:text-red-400">Unpaid</p>
+                                            <p className="font-bold text-red-700 dark:text-red-400">{member.unpaid}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -292,6 +312,7 @@ export default function PaymentDashboardPage() {
                                         <th className="px-6 py-3 text-right">Total Due</th>
                                         <th className="px-6 py-3 text-right">Paid</th>
                                         <th className="px-6 py-3 text-right">Pending</th>
+                                        <th className="px-6 py-3 text-right">Unpaid</th>
                                         <th className="px-6 py-3">Status</th>
                                     </tr>
                                 </thead>
@@ -301,7 +322,8 @@ export default function PaymentDashboardPage() {
                                             <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">{member.name}</td>
                                             <td className="px-6 py-4 text-right text-slate-700 dark:text-slate-300">{member.totalDue}</td>
                                             <td className="px-6 py-4 text-right text-green-600 dark:text-green-400 font-semibold">{member.paid}</td>
-                                            <td className="px-6 py-4 text-right text-red-600 dark:text-red-400 font-semibold">{member.pending}</td>
+                                            <td className="px-6 py-4 text-right text-yellow-600 dark:text-yellow-400 font-semibold">{member.pending}</td>
+                                            <td className="px-6 py-4 text-right text-red-600 dark:text-red-400 font-semibold">{member.unpaid}</td>
                                             <td className="px-6 py-4 font-medium text-slate-700 dark:text-slate-300">{member.status}</td>
                                         </tr>
                                     ))}
@@ -313,7 +335,7 @@ export default function PaymentDashboardPage() {
                     {/* Bill Details */}
                     <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md overflow-hidden">
                         <h3 className="p-5 text-lg font-semibold text-slate-800 dark:text-white border-b border-slate-100 dark:border-slate-700">Bill Details</h3>
-                        <p className="px-5 py-3 text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/30">Legend: ✅ Paid | ⏳ Pending</p>
+                        <p className="px-5 py-3 text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/30">Legend: ✅ Paid | ⏳ Pending Approval | ❌ Unpaid</p>
 
                         {/* Mobile Card View */}
                         <div className="block lg:hidden divide-y divide-slate-100 dark:divide-slate-700">
