@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotifications } from '@/contexts/NotificationContext';
@@ -14,6 +14,7 @@ import {
 import { Role } from '@/types';
 import NotificationsPanel from './NotificationsPanel';
 import { usePendingCount } from '@/hooks/usePendingCount';
+import PusherProvider from './PusherProvider';
 
 interface NavLinkProps {
     href: string;
@@ -85,9 +86,8 @@ const BillsNavGroup: React.FC = () => {
     )
 }
 
-const SidebarContent: React.FC = () => {
+const SidebarContent: React.FC<{ pendingCount: number }> = ({ pendingCount }) => {
     const { user, logout } = useAuth();
-    const pendingTasksCount = usePendingCount(user?.khataId, user?.role === Role.Manager);
 
     return (
         <div className="flex flex-col h-full bg-white dark:bg-slate-800/50 backdrop-blur-sm">
@@ -98,7 +98,7 @@ const SidebarContent: React.FC = () => {
             <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
                 <NavLink href="/dashboard" icon={<DashboardIcon />}>Dashboard</NavLink>
                 {user?.role === Role.Manager && (
-                    <NavLink href="/pending-approvals" icon={<ClipboardCheckIcon />} badgeCount={pendingTasksCount}>Pending Approvals</NavLink>
+                    <NavLink href="/pending-approvals" icon={<ClipboardCheckIcon />} badgeCount={pendingCount}>Pending Approvals</NavLink>
                 )}
                 <BillsNavGroup />
                 <NavLink href="/meals" icon={<MealIcon />}>Meal Management</NavLink>
@@ -146,79 +146,83 @@ const SidebarContent: React.FC = () => {
 };
 
 const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const { user } = useAuth();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [notificationsOpen, setNotificationsOpen] = useState(false);
     const { unreadCount } = useNotifications();
+    const { count: pendingCount, refetch: refetchPendingCount } = usePendingCount(user?.khataId, user?.role === Role.Manager);
 
     return (
-        <div className="h-screen flex overflow-hidden bg-slate-100 dark:bg-slate-900">
-            {/* Mobile Sidebar */}
-            {sidebarOpen && (
-                <div className="fixed inset-0 flex z-40 md:hidden" role="dialog" aria-modal="true">
-                    <div className="fixed inset-0 bg-slate-600 bg-opacity-75 transition-opacity" aria-hidden="true" onClick={() => setSidebarOpen(false)}></div>
-                    <div className="relative flex-1 flex flex-col max-w-xs w-full animate-slide-in-right">
-                        <div className="absolute top-0 right-0 -mr-12 pt-2">
-                            <button
-                                type="button"
-                                className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
-                                onClick={() => setSidebarOpen(false)}
-                            >
-                                <span className="sr-only">Close sidebar</span>
-                                <XIcon className="h-6 w-6 text-white" />
-                            </button>
+        <PusherProvider onPendingCountUpdate={refetchPendingCount}>
+            <div className="h-screen flex overflow-hidden bg-slate-100 dark:bg-slate-900">
+                {/* Mobile Sidebar */}
+                {sidebarOpen && (
+                    <div className="fixed inset-0 flex z-40 md:hidden" role="dialog" aria-modal="true">
+                        <div className="fixed inset-0 bg-slate-600 bg-opacity-75 transition-opacity" aria-hidden="true" onClick={() => setSidebarOpen(false)}></div>
+                        <div className="relative flex-1 flex flex-col max-w-xs w-full animate-slide-in-right">
+                            <div className="absolute top-0 right-0 -mr-12 pt-2">
+                                <button
+                                    type="button"
+                                    className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+                                    onClick={() => setSidebarOpen(false)}
+                                >
+                                    <span className="sr-only">Close sidebar</span>
+                                    <XIcon className="h-6 w-6 text-white" />
+                                </button>
+                            </div>
+                            <SidebarContent pendingCount={pendingCount} />
                         </div>
-                        <SidebarContent />
+                        <div className="flex-shrink-0 w-14" aria-hidden="true"></div>
                     </div>
-                    <div className="flex-shrink-0 w-14" aria-hidden="true"></div>
-                </div>
-            )}
+                )}
 
-            {/* Desktop Sidebar */}
-            <div className="hidden md:flex md:flex-shrink-0">
-                <div className="flex flex-col w-64">
-                    <div className="flex flex-col h-0 flex-1 border-r border-slate-200 dark:border-slate-700">
-                        <SidebarContent />
+                {/* Desktop Sidebar */}
+                <div className="hidden md:flex md:flex-shrink-0">
+                    <div className="flex flex-col w-64">
+                        <div className="flex flex-col h-0 flex-1 border-r border-slate-200 dark:border-slate-700">
+                            <SidebarContent pendingCount={pendingCount} />
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div className="flex flex-col w-0 flex-1 overflow-hidden">
-                <div className="relative z-30 flex-shrink-0 flex h-16 bg-white dark:bg-slate-800 shadow-sm">
-                    <button
-                        type="button"
-                        className="px-4 border-r border-slate-200 dark:border-slate-700 text-slate-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500 md:hidden"
-                        onClick={() => setSidebarOpen(true)}
-                    >
-                        <span className="sr-only">Open sidebar</span>
-                        <MenuIcon className="h-6 w-6" />
-                    </button>
-                    <div className="flex-1 px-4 flex justify-between items-center">
-                        <div className="flex items-center md:hidden">
-                            <SparklesIcon className="w-8 h-8 text-primary-500" />
-                            <span className="ml-2 font-bold text-xl text-slate-800 dark:text-white font-sans">BillKhata</span>
-                        </div>
-                        <div className="hidden md:block"></div>
-                        <div className="flex items-center gap-4">
-                            <button onClick={() => setNotificationsOpen(true)} className="relative p-2 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all active:scale-95">
-                                <span className="sr-only">View notifications</span>
-                                <BellIcon className="h-6 w-6" />
-                                {unreadCount > 0 && (
-                                    <span className="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full bg-danger-500 ring-2 ring-white dark:ring-slate-800"></span>
-                                )}
-                            </button>
+                <div className="flex flex-col w-0 flex-1 overflow-hidden">
+                    <div className="relative z-30 flex-shrink-0 flex h-16 bg-white dark:bg-slate-800 shadow-sm">
+                        <button
+                            type="button"
+                            className="px-4 border-r border-slate-200 dark:border-slate-700 text-slate-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500 md:hidden"
+                            onClick={() => setSidebarOpen(true)}
+                        >
+                            <span className="sr-only">Open sidebar</span>
+                            <MenuIcon className="h-6 w-6" />
+                        </button>
+                        <div className="flex-1 px-4 flex justify-between items-center">
+                            <div className="flex items-center md:hidden">
+                                <SparklesIcon className="w-8 h-8 text-primary-500" />
+                                <span className="ml-2 font-bold text-xl text-slate-800 dark:text-white font-sans">BillKhata</span>
+                            </div>
+                            <div className="hidden md:block"></div>
+                            <div className="flex items-center gap-4">
+                                <button onClick={() => setNotificationsOpen(true)} className="relative p-2 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all active:scale-95">
+                                    <span className="sr-only">View notifications</span>
+                                    <BellIcon className="h-6 w-6" />
+                                    {unreadCount > 0 && (
+                                        <span className="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full bg-danger-500 ring-2 ring-white dark:ring-slate-800"></span>
+                                    )}
+                                </button>
+                            </div>
                         </div>
                     </div>
+                    <main className="flex-1 relative overflow-y-auto focus:outline-none">
+                        <div className="py-6">
+                            <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+                                {children}
+                            </div>
+                        </div>
+                    </main>
                 </div>
-                <main className="flex-1 relative overflow-y-auto focus:outline-none">
-                    <div className="py-6">
-                        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-                            {children}
-                        </div>
-                    </div>
-                </main>
+                <NotificationsPanel isOpen={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
             </div>
-            <NotificationsPanel isOpen={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
-        </div>
+        </PusherProvider>
     );
 };
 

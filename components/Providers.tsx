@@ -4,6 +4,7 @@ import React from 'react';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
+import ToastContainer from './ToastContainer';
 
 export function Providers({ children }: { children: React.ReactNode }) {
     return (
@@ -11,6 +12,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
             <AuthProvider>
                 <NotificationProvider>
                     {children}
+                    <ToastContainer />
                 </NotificationProvider>
             </AuthProvider>
         </ThemeProvider>

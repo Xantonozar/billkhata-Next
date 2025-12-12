@@ -4,7 +4,7 @@ import React, { createContext, useState, useContext, ReactNode, useEffect } from
 import { useAuth } from './AuthContext';
 import { api } from '@/services/api';
 
-export type ToastType = 'success' | 'warning' | 'error';
+export type ToastType = 'success' | 'warning' | 'error' | 'info';
 export interface Toast {
     id: number;
     type: ToastType;

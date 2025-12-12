@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Toast as ToastType } from '@/contexts/NotificationContext';
-import { CheckCircleSolidIcon, ExclamationTriangleIcon, XCircleIcon, XIcon } from './Icons';
+import { CheckCircleSolidIcon, ExclamationTriangleIcon, XCircleIcon, XIcon, SparklesIcon } from './Icons';
 
 interface ToastProps {
     toast: ToastType;
@@ -34,6 +34,14 @@ const toastConfig = {
         titleColor: 'text-red-900 dark:text-red-100',
         messageColor: 'text-red-800 dark:text-red-200'
     },
+    info: {
+        icon: SparklesIcon,
+        bgColor: 'bg-blue-100 dark:bg-blue-800',
+        borderColor: 'border-l-4 border-blue-600 dark:border-blue-400',
+        iconColor: 'text-blue-700 dark:text-blue-300',
+        titleColor: 'text-blue-900 dark:text-blue-100',
+        messageColor: 'text-blue-800 dark:text-blue-200'
+    }
 };
 
 const Toast: React.FC<ToastProps> = ({ toast, onClose }) => {
