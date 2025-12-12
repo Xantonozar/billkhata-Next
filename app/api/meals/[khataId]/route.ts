@@ -137,6 +137,31 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ kha
             console.error('Error logging meal history:', historyError);
         }
 
+
+        // NEW: Real-time Notifications for Meal Update
+        try {
+            const { pushToRoom, pushToUser } = await import('@/lib/pusher');
+
+            if (user.role === 'Manager' && targetUserId.toString() !== user._id.toString()) {
+                // Manager updated a member's meal -> Notify Member
+                await pushToUser(targetUserId.toString(), 'meal-updated', {
+                    type: 'meal-updated',
+                    message: `Manager updated your meal for ${mealDate.toLocaleDateString()}`
+                });
+            } else {
+                // Member updated their own meal -> Notify Manager
+                // We use 'meal-updated' on room channel but filtered for Manager in frontend
+                // OR we can just use pushToRoom and let manager filter it
+                // Actually, let's keep it simple: pushToRoom 'meal-updated' (Manager listens to this)
+                await pushToRoom(khataId, 'meal-updated', {
+                    type: 'meal-updated',
+                    message: `${user.name} updated their meal for ${mealDate.toLocaleDateString()}`
+                });
+            }
+        } catch (pusherErr) {
+            console.error('Pusher error:', pusherErr);
+        }
+
         return NextResponse.json(meal, { status: 201 });
 
     } catch (error: any) {

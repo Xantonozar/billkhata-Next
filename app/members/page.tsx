@@ -214,16 +214,16 @@ export default function RoomMembersPage() {
             }
 
             try {
-                const [membersData, roomData] = await Promise.all([
+                // Fetch all data in parallel for faster load
+                const [membersData, roomData, pendingData] = await Promise.all([
                     api.getMembersForRoom(user.khataId),
-                    api.getRoomDetails(user.khataId)
+                    api.getRoomDetails(user.khataId),
+                    user.role === Role.Manager ? api.getPendingApprovals(user.khataId) : Promise.resolve([])
                 ]);
 
                 setMembers(membersData);
                 setRoomDetails(roomData);
-
                 if (user.role === Role.Manager) {
-                    const pendingData = await api.getPendingApprovals(user.khataId);
                     setPendingRequests(pendingData);
                 }
             } catch (error) {
@@ -250,21 +250,36 @@ export default function RoomMembersPage() {
     const handleApproveMember = async (userId: string) => {
         if (!user?.khataId) return;
 
+        // Optimistic UI: Remove from pending immediately
+        const approvedRequest = pendingRequests.find(p => p.id === userId);
+        setPendingRequests(prev => prev.filter(p => p.id !== userId));
+        addToast({ type: 'success', title: 'Success', message: 'Member approved successfully!' });
+
         try {
             const success = await api.approveMember(user.khataId, userId);
             if (success) {
-                addToast({ type: 'success', title: 'Success', message: 'Member approved successfully!' });
-                const pendingData = await api.getPendingApprovals(user.khataId);
+                // Refresh all data in parallel
+                const [pendingData, membersData, details] = await Promise.all([
+                    api.getPendingApprovals(user.khataId),
+                    api.getMembersForRoom(user.khataId),
+                    api.getRoomDetails(user.khataId)
+                ]);
                 setPendingRequests(pendingData);
-                const membersData = await api.getMembersForRoom(user.khataId);
                 setMembers(membersData);
-                const details = await api.getRoomDetails(user.khataId);
                 if (details) setRoomDetails(details);
             } else {
+                // Revert optimistic update
+                if (approvedRequest) {
+                    setPendingRequests(prev => [...prev, approvedRequest]);
+                }
                 addToast({ type: 'error', title: 'Error', message: 'Failed to approve member' });
             }
         } catch (error) {
             console.error('Error approving member:', error);
+            // Revert optimistic update
+            if (approvedRequest) {
+                setPendingRequests(prev => [...prev, approvedRequest]);
+            }
             addToast({ type: 'error', title: 'Error', message: 'Failed to approve member' });
         }
     };
@@ -455,7 +470,7 @@ export default function RoomMembersPage() {
                 loading={actionLoading}
             />
 
-            <ToastContainer />
+
         </>
     );
 }

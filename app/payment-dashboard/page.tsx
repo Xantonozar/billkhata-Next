@@ -429,7 +429,7 @@ export default function PaymentDashboardPage() {
                     </div>
                 </div>
             </AppLayout>
-            <ToastContainer />
+
         </>
     );
 }

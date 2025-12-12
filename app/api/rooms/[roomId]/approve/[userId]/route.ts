@@ -4,6 +4,8 @@ import User from '@/models/User';
 import connectDB from '@/lib/db';
 import { getSession } from '@/lib/auth';
 import { globalCache } from '@/lib/cache';
+import { pushToUser } from '@/lib/pusher';
+import { sendPushToUser } from '@/lib/pushHelper';
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ roomId: string; userId: string }> }) {
     try {
@@ -57,6 +59,21 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ room
             read: false,
             relatedId: room._id
         }));
+
+        // Push real-time notification via Pusher (instant in-app update)
+        pushToUser(userId, 'member-approved', {
+            type: 'member-approved',
+            message: `Your request to join "${room.name}" has been approved!`,
+            roomName: room.name,
+            khataId: roomId
+        });
+
+        // Send native push notification (works even when app is closed/offline)
+        sendPushToUser(userId, {
+            title: '🎉 Welcome to BillKhata!',
+            body: `Your request to join "${room.name}" has been approved.`,
+            data: { url: '/dashboard' }
+        }).catch(err => console.error('Push notification error:', err));
 
         return NextResponse.json({ message: 'Member approved successfully' });
 

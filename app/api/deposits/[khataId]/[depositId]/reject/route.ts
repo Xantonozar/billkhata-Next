@@ -47,6 +47,16 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ khat
                 read: false,
                 relatedId: deposit._id
             });
+
+            // Push real-time notification to member (instant toast)
+            const { pushToUser } = await import('@/lib/pusher');
+            pushToUser(deposit.userId.toString(), 'deposit-rejected', {
+                type: 'deposit-rejected',
+                message: `Your deposit of ৳${deposit.amount} was rejected`,
+                amount: deposit.amount,
+                reason
+            });
+
             console.log(`Rejection notification sent to user for deposit ৳${deposit.amount}`);
         } catch (notificationError) {
             console.error('Error creating deposit rejection notification:', notificationError);

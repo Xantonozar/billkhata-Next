@@ -354,7 +354,7 @@ export default function MenuPage() {
                     onSavePermanent={handleSavePermanentMenu}
                 />
             )}
-            <ToastContainer />
+
         </AppLayout>
     );
 }

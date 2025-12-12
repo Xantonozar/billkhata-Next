@@ -83,6 +83,14 @@ export async function POST(req: NextRequest) {
             console.log(`DEBUG: Creating ${notificationsToCreate.length} bill notifications`);
             await Notification.insertMany(notificationsToCreate);
             console.log(`SUCCESS: Created ${notificationsToCreate.length} notifications for bill: ${title}`);
+
+            // NEW: Push real-time notification
+            const { pushToRoom } = await import('@/lib/pusher');
+            await pushToRoom(user.khataId, 'new-bill', {
+                type: 'new-bill',
+                message: `New bill: ${title} (৳${totalAmount})`
+            });
+
         } catch (notificationError) {
             console.error('Error creating notifications:', notificationError);
             // Don't fail the bill creation if notifications fail

@@ -6,7 +6,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { RoomStatus, Role } from '@/types';
 import type { TodaysMenu, Bill } from '@/types';
 import AppLayout from '@/components/AppLayout';
-import ToastContainer from '@/components/ToastContainer';
 import { PlusIcon, MealIcon, UsersIcon, ChartBarIcon, PencilIcon, XIcon, CheckCircleIcon, BillsIcon } from '@/components/Icons';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { api } from '@/services/api';
@@ -442,7 +441,7 @@ export default function DashboardPage() {
                     <MemberDashboard initialData={stats} loading={statsLoading} user={user} />
                 }
             </AppLayout>
-            <ToastContainer />
+
         </>
     );
 }

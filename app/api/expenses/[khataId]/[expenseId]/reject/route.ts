@@ -47,6 +47,16 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ khat
                 read: false,
                 relatedId: expense._id
             });
+
+            // Push real-time notification to member (instant toast)
+            const { pushToUser } = await import('@/lib/pusher');
+            pushToUser(expense.userId.toString(), 'expense-rejected', {
+                type: 'expense-rejected',
+                message: `Your expense of ৳${expense.amount} was rejected`,
+                amount: expense.amount,
+                reason
+            });
+
             console.log(`Rejection notification sent to user for expense ৳${expense.amount}`);
         } catch (notificationError) {
             console.error('Error creating expense rejection notification:', notificationError);

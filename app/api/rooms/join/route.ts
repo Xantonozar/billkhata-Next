@@ -67,6 +67,16 @@ export async function POST(req: NextRequest) {
                 read: false,
                 relatedId: user._id
             });
+
+            // Push real-time notification to room (manager gets instant toast)
+            const { pushToRoom } = await import('@/lib/pusher');
+            pushToRoom(khataId, 'new-join-request', {
+                type: 'new-join-request',
+                message: `${user.name} wants to join your room`,
+                userName: user.name,
+                userId: user._id.toString()
+            });
+
             console.log(`SUCCESS: Notification created with ID ${notification._id} for manager ${room.manager}`);
         } catch (notificationError) {
             console.error('Error creating join request notification:', notificationError);

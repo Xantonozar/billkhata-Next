@@ -255,7 +255,7 @@ export default function SettingsPage() {
                     </button>
                 </div>
             </div>
-            <ToastContainer />
+
         </AppLayout>
     );
 }

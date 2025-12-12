@@ -671,7 +671,7 @@ export default function HistoryPage() {
                     )}
                 </div>
             </AppLayout>
-            <ToastContainer />
+
         </>
     );
 }

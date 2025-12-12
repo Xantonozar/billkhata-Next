@@ -7,6 +7,7 @@ import { RoomStatus } from '@/types';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { api } from '@/services/api';
 import ToastContainer from '@/components/ToastContainer';
+import { usePusherChannel } from '@/hooks/usePusher';
 
 export default function PendingApprovalPage() {
     const { user, setUser, logout } = useAuth();
@@ -14,6 +15,26 @@ export default function PendingApprovalPage() {
     const [checking, setChecking] = useState(false);
     const router = useRouter();
 
+    // Listen for real-time approval notification via Pusher
+    usePusherChannel(
+        user?.id ? `user-${user.id}` : null,
+        'member-approved',
+        async (data) => {
+            // Instant notification received!
+            const updatedUser = await api.getCurrentUser();
+            if (updatedUser && updatedUser.roomStatus === RoomStatus.Approved) {
+                setUser(updatedUser);
+                addToast({
+                    type: 'success',
+                    title: 'Approved!',
+                    message: data.message || 'Your request has been approved. Welcome to the room!'
+                });
+                router.push('/dashboard');
+            }
+        }
+    );
+
+    // Fallback: check on mount and every 60s (reduced from 5s)
     useEffect(() => {
         const checkApprovalStatus = async () => {
             if (checking) return;
@@ -39,7 +60,8 @@ export default function PendingApprovalPage() {
         };
 
         checkApprovalStatus();
-        const interval = setInterval(checkApprovalStatus, 5000);
+        // Fallback polling every 60s instead of 5s (Pusher handles instant updates)
+        const interval = setInterval(checkApprovalStatus, 60000);
         return () => clearInterval(interval);
     }, []);
 
@@ -98,7 +120,7 @@ export default function PendingApprovalPage() {
                         {checking && <span className="block mt-2 text-primary-500">Checking for updates...</span>}
                     </p>
                     <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
-                        Auto-refreshing every 5 seconds
+                        ⚡ Real-time updates enabled
                     </p>
                     <div className="mt-8 space-y-3">
                         <button
@@ -132,7 +154,8 @@ export default function PendingApprovalPage() {
                     </div>
                 </div>
             </div>
-            <ToastContainer />
+
         </>
     );
 }
+

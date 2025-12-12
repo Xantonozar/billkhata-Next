@@ -88,6 +88,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ kha
                     read: false,
                     relatedId: expense._id
                 });
+
+                // Push real-time notification to room (manager gets instant toast)
+                const { pushToRoom } = await import('@/lib/pusher');
+                pushToRoom(khataId, 'new-expense', {
+                    type: 'new-expense',
+                    message: `${user.name} submitted an expense of ৳${amount}`,
+                    amount,
+                    userId: user._id.toString()
+                });
+
                 console.log(`Expense notification sent to manager for ৳${amount}`);
             }
         } catch (notificationError) {

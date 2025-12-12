@@ -119,7 +119,7 @@ export default function JoinRoomPage() {
                     Logout
                 </button>
             </div>
-            <ToastContainer />
+
         </>
     );
 }

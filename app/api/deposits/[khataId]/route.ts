@@ -108,6 +108,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ kha
                     read: false,
                     relatedId: deposit._id
                 });
+
+                // Push real-time notification to room (manager gets instant toast)
+                const { pushToRoom } = await import('@/lib/pusher');
+                pushToRoom(khataId, 'new-deposit', {
+                    type: 'new-deposit',
+                    message: `${user.name} submitted a deposit of ৳${amount}`,
+                    amount,
+                    userId: user._id.toString()
+                });
+
                 console.log(`Deposit notification sent to manager for ৳${amount}`);
             }
         } catch (notificationError) {

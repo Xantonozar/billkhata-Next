@@ -81,6 +81,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ kha
                 { khataId, items, weekStart, isPermanent: false },
                 { upsert: true, new: true }
             );
+
+            // NEW: Notify members via Pusher
+            try {
+                const { pushToRoom } = await import('@/lib/pusher');
+                await pushToRoom(khataId, 'menu-updated', {
+                    type: 'menu-updated',
+                    message: `Weekly menu has been updated`
+                });
+            } catch (err) {
+                console.error('Pusher error:', err);
+            }
+
             return NextResponse.json({ message: 'Menu saved for this week', items: menu.items });
         }
 

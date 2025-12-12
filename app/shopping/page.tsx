@@ -37,7 +37,7 @@ export default function ShoppingPage() {
 
                 {user.role === Role.Manager ? <ManagerShoppingView /> : <MemberShoppingView />}
             </div>
-            <ToastContainer />
+
         </AppLayout>
     );
 }

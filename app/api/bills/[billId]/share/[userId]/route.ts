@@ -42,30 +42,88 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ bill
         bill.shares[shareIndex].status = status;
         await bill.save();
 
-        // Notify manager when member marks as paid
-        if (status === 'Paid' && user._id.toString() !== bill.createdBy.toString()) {
-            try {
-                const Room = await import('@/models/Room').then(mod => mod.default);
-                const room = await Room.findOne({ khataId: bill.khataId });
+        // Notification Logic
+        try {
+            const Room = await import('@/models/Room').then(mod => mod.default);
+            const Notification = await import('@/models/Notification').then(mod => mod.default);
+            const { pushToRoom, pushToUser } = await import('@/lib/pusher');
 
-                if (room) {
-                    const Notification = await import('@/models/Notification').then(mod => mod.default);
+            const room = await Room.findOne({ khataId: bill.khataId });
+
+            if (room) {
+                // Case 1: Member marks as "Pending Approval" -> Notify Manager
+                if (status === 'Pending Approval') {
+                    // Create db notification
                     await Notification.create({
                         userId: room.manager,
                         khataId: bill.khataId,
                         type: 'payment',
-                        title: 'Payment Received',
-                        message: `${user.name} has paid their share (৳${bill.shares[shareIndex].amount}) for "${bill.title}".`,
-                        actionText: 'View Bill',
+                        title: 'Payment Pending Approval',
+                        message: `${user.name} has marked their share of ৳${bill.shares[shareIndex].amount} for "${bill.title}" as paid.`,
+                        actionText: 'Review Bill',
                         link: `/bills`,
                         read: false,
                         relatedId: bill._id
                     });
-                    console.log(`Payment notification sent to manager for ${bill.title}`);
+
+                    // Push to manager
+                    pushToRoom(bill.khataId, 'new-bill-payment', {
+                        type: 'new-bill-payment',
+                        message: `${user.name} marked "${bill.title}" as paid`,
+                        amount: bill.shares[shareIndex].amount,
+                        billTitle: bill.title,
+                        userId: user._id.toString()
+                    });
                 }
-            } catch (notificationError) {
-                console.error('Error creating payment notification:', notificationError);
+
+                // Case 2: Manager marks as "Paid" -> Notify Member (Approved)
+                else if (status === 'Paid' && user._id.toString() === room.manager.toString()) {
+                    // Create db notification
+                    await Notification.create({
+                        userId: userId, // The member
+                        khataId: bill.khataId,
+                        type: 'payment',
+                        title: 'Payment Approved',
+                        message: `Your payment of ৳${bill.shares[shareIndex].amount} for "${bill.title}" has been approved.`,
+                        actionText: 'View Bills',
+                        link: `/bills`,
+                        read: false,
+                        relatedId: bill._id
+                    });
+
+                    // Push to member
+                    pushToUser(userId, 'bill-approved', {
+                        type: 'bill-approved',
+                        message: `Payment for "${bill.title}" approved!`,
+                        amount: bill.shares[shareIndex].amount
+                    });
+                }
+
+                // Case 3: Manager marks as "Unpaid" -> Notify Member (Rejected)
+                else if (status === 'Unpaid' && user._id.toString() === room.manager.toString()) {
+                    // Create db notification
+                    await Notification.create({
+                        userId: userId, // The member
+                        khataId: bill.khataId,
+                        type: 'payment',
+                        title: 'Payment Rejected',
+                        message: `Your payment for "${bill.title}" was marked as unpaid (rejected).`,
+                        actionText: 'View Bills',
+                        link: `/bills`,
+                        read: false,
+                        relatedId: bill._id
+                    });
+
+                    // Push to member
+                    pushToUser(userId, 'bill-rejected', {
+                        type: 'bill-rejected',
+                        message: `Payment for "${bill.title}" rejected`,
+                        billTitle: bill.title
+                    });
+                }
             }
+        } catch (notificationError) {
+            console.error('Error handling notification:', notificationError);
         }
 
         return NextResponse.json({

@@ -166,7 +166,7 @@ export default function BillsOverviewPage() {
                     </div>
                 </div>
             </AppLayout>
-            <ToastContainer />
+
         </>
     );
 }

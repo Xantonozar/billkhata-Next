@@ -116,7 +116,7 @@ export default function CreateRoomPage() {
                     Logout
                 </button>
             </div>
-            <ToastContainer />
+
         </>
     );
 }

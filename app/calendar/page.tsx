@@ -320,7 +320,7 @@ export default function CalendarPage() {
                     mealsForDay={getMealsForDay(selectedDate.getDate())}
                 />
             )}
-            <ToastContainer />
+
         </AppLayout>
     );
 }

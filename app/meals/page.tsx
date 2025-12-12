@@ -579,7 +579,7 @@ export default function MealManagementPage() {
                 />
             )}
 
-            <ToastContainer />
+
         </>
     );
 }

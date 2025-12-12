@@ -522,7 +522,7 @@ export default function PendingApprovalsPage() {
                     </div>
                 </div>
             )}
-            <ToastContainer />
+
         </>
     );
 }

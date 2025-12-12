@@ -62,6 +62,17 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ kha
             { upsert: true, new: true }
         );
 
+        // NEW: Real-time Notification
+        try {
+            const { pushToRoom } = await import('@/lib/pusher');
+            await pushToRoom(khataId, 'shopping-roster-updated', {
+                type: 'shopping-roster-updated',
+                message: 'Shopping roster has been updated for this week'
+            });
+        } catch (err) {
+            console.error('Pusher error:', err);
+        }
+
         return NextResponse.json({ message: 'Shopping roster saved', items: shoppingDuty.items });
 
     } catch (error: any) {

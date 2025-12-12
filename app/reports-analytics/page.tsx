@@ -438,7 +438,7 @@ export default function ReportsAnalyticsPage() {
                     </div>
                 </div>
             </AppLayout>
-            <ToastContainer />
+
         </>
     );
 }
