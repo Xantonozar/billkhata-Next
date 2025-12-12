@@ -261,6 +261,12 @@ export default function ReportsAnalyticsPage() {
             } finally {
                 setLoading(false);
             }
+
+            // Prefetch the other date range in background (for instant switching)
+            const otherRange = activeDateRange === 'This Month' ? 'Last 6 Months' : 'This Month';
+            api.getAnalytics(user.khataId, otherRange).catch(() => {
+                // Silently ignore prefetch errors
+            });
         };
 
         fetchData();
@@ -326,7 +332,7 @@ export default function ReportsAnalyticsPage() {
                         </div>
                         <div className="flex flex-col sm:flex-row items-stretch sm:items-center flex-wrap gap-2 sm:gap-3">
                             <div className="bg-white dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700 flex shadow-sm w-full sm:w-auto">
-                                {['This Month', 'Last 30 Days'].map(range => (
+                                {['This Month', 'Last 6 Months'].map(range => (
                                     <button
                                         key={range}
                                         onClick={() => setActiveDateRange(range)}

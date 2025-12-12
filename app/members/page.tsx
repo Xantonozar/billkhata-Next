@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Role } from '@/types';
 import type { User } from '@/types';
@@ -27,6 +28,46 @@ interface JoinRequest {
     email: string;
     requestedAt: string;
 }
+
+// Confirmation Modal Component
+const ConfirmModal: React.FC<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmText: string;
+    confirmColor?: string;
+    onConfirm: () => void;
+    onCancel: () => void;
+    loading?: boolean;
+}> = ({ isOpen, title, message, confirmText, confirmColor = 'bg-red-500 hover:bg-red-600', onConfirm, onCancel, loading }) => {
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 animate-fade-in p-4" onClick={onCancel}>
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md p-6" onClick={e => e.stopPropagation()}>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{title}</h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-6">{message}</p>
+                <div className="flex gap-3 justify-end">
+                    <button
+                        onClick={onCancel}
+                        disabled={loading}
+                        className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={onConfirm}
+                        disabled={loading}
+                        className={`px-4 py-2 text-white rounded-lg font-semibold disabled:opacity-50 flex items-center gap-2 ${confirmColor}`}
+                    >
+                        {loading && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>}
+                        {confirmText}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 const MemberHistoryModal: React.FC<{ member: Member | null, onClose: () => void }> = ({ member, onClose }) => {
     if (!member) return null;
@@ -95,12 +136,6 @@ const MemberCard: React.FC<{ member: Member, onHistoryClick: () => void }> = ({ 
         }
     };
 
-    const handleFacebook = () => {
-        if (member.facebook) {
-            window.open(member.facebook.startsWith('http') ? member.facebook : `https://${member.facebook}`, '_blank');
-        }
-    };
-
     return (
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-5">
             <div className="flex items-center gap-4">
@@ -134,7 +169,6 @@ const MemberCard: React.FC<{ member: Member, onHistoryClick: () => void }> = ({ 
             <div className="space-y-1 text-sm text-gray-500 dark:text-gray-400">
                 <p><strong>Role:</strong> {member.role}</p>
                 <p><strong>Status:</strong> {member.roomStatus}</p>
-                {/* <p><strong>Room:</strong> {member.room || member.khataId || 'N/A'}</p> */}
             </div>
             <div className="border-t my-3 border-gray-200 dark:border-gray-700"></div>
             <div className="flex flex-wrap gap-2 text-sm font-semibold">
@@ -148,9 +182,6 @@ const MemberCard: React.FC<{ member: Member, onHistoryClick: () => void }> = ({ 
                         {member.phone && member.phone !== 'Not added' && (
                             <button onClick={handleCall} className="flex-1 px-3 py-2 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-md flex items-center justify-center gap-2 transition-colors hover:bg-blue-200 dark:hover:bg-blue-900"><PhoneIcon className="w-4 h-4" /> Call</button>
                         )}
-                        {/* {member.facebook && (
-                             <button onClick={handleFacebook} className="flex-1 px-3 py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-md flex items-center justify-center gap-2 transition-colors hover:bg-blue-100 dark:hover:bg-blue-900">FB</button>
-                        )} */}
                         <button onClick={onHistoryClick} className="w-full text-left mt-1 text-primary hover:underline p-1">View Profile →</button>
                     </>
                 )}
@@ -160,14 +191,20 @@ const MemberCard: React.FC<{ member: Member, onHistoryClick: () => void }> = ({ 
 };
 
 export default function RoomMembersPage() {
-    const { user, setUser } = useAuth(); // Need setUser to update context if khataId changes
+    const { user, setUser } = useAuth();
     const { addToast } = useNotifications();
+    const router = useRouter();
     const [viewingMember, setViewingMember] = useState<Member | null>(null);
     const [members, setMembers] = useState<Member[]>([]);
     const [roomDetails, setRoomDetails] = useState<any>(null);
     const [pendingRequests, setPendingRequests] = useState<JoinRequest[]>([]);
     const [loading, setLoading] = useState(true);
     const [copied, setCopied] = useState(false);
+
+    // Confirmation modal states
+    const [showLeaveModal, setShowLeaveModal] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [actionLoading, setActionLoading] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -177,7 +214,6 @@ export default function RoomMembersPage() {
             }
 
             try {
-                // Fetch members and room details in parallel
                 const [membersData, roomData] = await Promise.all([
                     api.getMembersForRoom(user.khataId),
                     api.getRoomDetails(user.khataId)
@@ -202,7 +238,6 @@ export default function RoomMembersPage() {
     }, [user?.khataId, user?.role]);
 
     const handleCopyRoomCode = () => {
-        // Use the code from roomDetails if available (most up to date), otherwise fallback to user.khataId
         const code = roomDetails?.khataId || user?.khataId;
         if (code) {
             navigator.clipboard.writeText(code);
@@ -211,8 +246,6 @@ export default function RoomMembersPage() {
             setTimeout(() => setCopied(false), 2000);
         }
     };
-
-
 
     const handleApproveMember = async (userId: string) => {
         if (!user?.khataId) return;
@@ -225,7 +258,6 @@ export default function RoomMembersPage() {
                 setPendingRequests(pendingData);
                 const membersData = await api.getMembersForRoom(user.khataId);
                 setMembers(membersData);
-                // Also refresh details to update count
                 const details = await api.getRoomDetails(user.khataId);
                 if (details) setRoomDetails(details);
             } else {
@@ -234,6 +266,48 @@ export default function RoomMembersPage() {
         } catch (error) {
             console.error('Error approving member:', error);
             addToast({ type: 'error', title: 'Error', message: 'Failed to approve member' });
+        }
+    };
+
+    const handleLeaveRoom = async () => {
+        if (!user?.khataId) return;
+        setActionLoading(true);
+
+        try {
+            await api.leaveRoom(user.khataId);
+            addToast({ type: 'success', title: 'Left Room', message: 'You have left the room successfully.' });
+
+            // Update user context
+            const updatedUser = await api.getCurrentUser();
+            if (updatedUser) setUser(updatedUser);
+
+            router.push('/join-room');
+        } catch (error: any) {
+            addToast({ type: 'error', title: 'Error', message: error.message || 'Failed to leave room' });
+        } finally {
+            setActionLoading(false);
+            setShowLeaveModal(false);
+        }
+    };
+
+    const handleDeleteRoom = async () => {
+        if (!user?.khataId) return;
+        setActionLoading(true);
+
+        try {
+            await api.deleteRoom(user.khataId);
+            addToast({ type: 'success', title: 'Room Deleted', message: 'The room and all data have been deleted.' });
+
+            // Update user context
+            const updatedUser = await api.getCurrentUser();
+            if (updatedUser) setUser(updatedUser);
+
+            router.push('/create-room');
+        } catch (error: any) {
+            addToast({ type: 'error', title: 'Error', message: error.message || 'Failed to delete room' });
+        } finally {
+            setActionLoading(false);
+            setShowDeleteModal(false);
         }
     };
 
@@ -330,11 +404,59 @@ export default function RoomMembersPage() {
                             </div>
                         </div>
                     )}
+
+                    {/* Leave Room / Delete Room Section */}
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border-2 border-red-200 dark:border-red-900/50">
+                        <h3 className="text-lg font-bold text-red-600 dark:text-red-400 mb-2">⚠️ Danger Zone</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                            {user?.role === Role.Manager
+                                ? 'Deleting this room will permanently remove all data including bills, meals, deposits, and expenses.'
+                                : 'Leaving this room will remove you from the member list. You can join again later.'}
+                        </p>
+                        {user?.role === Role.Manager ? (
+                            <button
+                                onClick={() => setShowDeleteModal(true)}
+                                className="px-4 py-2 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition-colors"
+                            >
+                                🗑️ Delete Room
+                            </button>
+                        ) : (
+                            <button
+                                onClick={() => setShowLeaveModal(true)}
+                                className="px-4 py-2 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition-colors"
+                            >
+                                🚪 Leave Room
+                            </button>
+                        )}
+                    </div>
                 </div>
             </AppLayout>
 
             <MemberHistoryModal member={viewingMember} onClose={() => setViewingMember(null)} />
+
+            {/* Confirmation Modals */}
+            <ConfirmModal
+                isOpen={showLeaveModal}
+                title="Leave Room?"
+                message="Are you sure you want to leave this room? You can request to join again later."
+                confirmText="Leave Room"
+                onConfirm={handleLeaveRoom}
+                onCancel={() => setShowLeaveModal(false)}
+                loading={actionLoading}
+            />
+
+            <ConfirmModal
+                isOpen={showDeleteModal}
+                title="Delete Room?"
+                message="This will permanently delete the room and ALL data (bills, meals, deposits, expenses). All members will be removed. This action cannot be undone!"
+                confirmText="Delete Forever"
+                onConfirm={handleDeleteRoom}
+                onCancel={() => setShowDeleteModal(false)}
+                loading={actionLoading}
+            />
+
             <ToastContainer />
         </>
     );
 }
+

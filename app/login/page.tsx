@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { SpinnerIcon, HomeIcon, SparklesIcon } from '@/components/Icons';
+import { SpinnerIcon, HomeIcon } from '@/components/Icons';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -26,90 +26,76 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex">
-            {/* Left Panel */}
-            <div className="hidden lg:flex w-2/5 bg-primary-600 items-center justify-center p-12 text-white flex-col relative">
-                <div className="absolute top-8 left-8">
-                    <Link href="/" className="flex items-center space-x-2 opacity-70 hover:opacity-100 transition-opacity">
-                        <HomeIcon className="w-6 h-6" />
-                        <span>Home</span>
-                    </Link>
+        <div className="min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden bg-slate-950">
+            {/* Background Effects */}
+            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary-600/30 rounded-full blur-[100px] animate-pulse"></div>
+            <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-light-cyan-500/20 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1s' }}></div>
+
+            <div className="w-full max-w-md relative z-10 animate-fade-in glass-panel rounded-2xl p-8 border border-slate-800/50">
+                <div className="text-center mb-8">
+                    <h1 className="text-3xl font-bold bg-gradient-to-r from-primary-400 to-light-cyan-400 bg-clip-text text-transparent">
+                        BillKhata
+                    </h1>
+                    <p className="text-slate-400 mt-2 text-sm">Welcome back! Please login to continue.</p>
                 </div>
-                <div className="text-center">
-                    <SparklesIcon className="w-24 h-24 mx-auto mb-6 opacity-80" />
-                    <h1 className="text-4xl font-bold">Welcome Back</h1>
-                    <p className="mt-4 text-lg opacity-80">
-                        Manage your shared expenses with ease. Log in to continue where you left off.
+
+                <form className="space-y-5" onSubmit={handleSubmit}>
+                    <div className="space-y-2">
+                        <label htmlFor="email" className="text-sm font-medium text-slate-300 ml-1">
+                            Email address
+                        </label>
+                        <input
+                            id="email"
+                            type="email"
+                            required
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="w-full px-4 py-3 rounded-xl bg-slate-900/50 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all"
+                            placeholder="Enter your email"
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <label htmlFor="password" className="text-sm font-medium text-slate-300 ml-1">
+                            Password
+                        </label>
+                        <input
+                            id="password"
+                            type="password"
+                            required
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="w-full px-4 py-3 rounded-xl bg-slate-900/50 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all"
+                            placeholder="••••••••"
+                        />
+                    </div>
+
+                    {error && (
+                        <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
+                            {error}
+                        </div>
+                    )}
+
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full py-3.5 rounded-xl bg-gradient-to-r from-primary-600 to-primary-500 text-white font-semibold shadow-lg shadow-primary-500/20 hover:shadow-primary-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-70 disabled:hover:scale-100 flex items-center justify-center gap-2"
+                    >
+                        {loading ? <SpinnerIcon className="h-5 w-5" /> : 'Sign In'}
+                    </button>
+                </form>
+
+                <div className="mt-8 text-center space-y-4">
+                    <p className="text-slate-400 text-sm">
+                        Don't have an account?{' '}
+                        <Link href="/signup" className="text-primary-400 hover:text-primary-300 font-medium transition-colors">
+                            Create one now
+                        </Link>
                     </p>
-                </div>
-            </div>
-
-            {/* Right Panel (Form) */}
-            <div className="w-full lg:w-3/5 flex items-center justify-center p-4 sm:p-12">
-                <div className="max-w-md w-full">
-                    <div className="lg:hidden text-center mb-8">
-                        <h1 className="text-center text-4xl font-bold text-primary-600">BillKhata</h1>
-                    </div>
-                    <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-                        Log in to your account
-                    </h2>
-                    <div className="bg-white dark:bg-slate-800 p-6 sm:p-8 mt-8 rounded-lg shadow-lg">
-                        <form className="space-y-6" onSubmit={handleSubmit}>
-                            <div>
-                                <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    Email address
-                                </label>
-                                <div className="mt-1">
-                                    <input
-                                        id="email"
-                                        name="email"
-                                        type="email"
-                                        autoComplete="email"
-                                        required
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        className="block w-full appearance-none rounded-md border border-slate-300 dark:border-slate-600 px-3 py-2 placeholder-slate-400 dark:placeholder-slate-500 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-primary-500 sm:text-sm bg-white dark:bg-slate-700 dark:text-white"
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label htmlFor="password" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    Password
-                                </label>
-                                <div className="mt-1">
-                                    <input
-                                        id="password"
-                                        name="password"
-                                        type="password"
-                                        autoComplete="current-password"
-                                        required
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        className="block w-full appearance-none rounded-md border border-slate-300 dark:border-slate-600 px-3 py-2 placeholder-slate-400 dark:placeholder-slate-500 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-primary-500 sm:text-sm bg-white dark:bg-slate-700 dark:text-white"
-                                    />
-                                </div>
-                            </div>
-
-                            {error && <p className="text-sm text-red-500">{error}</p>}
-
-                            <div>
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="flex w-full justify-center rounded-md border border-transparent bg-primary-500 py-2.5 px-4 text-sm font-medium text-white shadow-sm hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800 disabled:opacity-50"
-                                >
-                                    {loading ? <SpinnerIcon className="h-5 w-5" /> : 'Log In'}
-                                </button>
-                            </div>
-                        </form>
-                        <p className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">
-                            Don't have an account?{' '}
-                            <Link href="/signup" className="font-medium text-primary-600 hover:text-primary-500">
-                                Sign up
-                            </Link>
-                        </p>
-                    </div>
+                    <Link href="/" className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-300 text-sm transition-colors">
+                        <HomeIcon className="w-4 h-4" />
+                        <span>Back to Home</span>
+                    </Link>
                 </div>
             </div>
         </div>

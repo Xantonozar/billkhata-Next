@@ -3,6 +3,7 @@ import Room from '@/models/Room';
 import User from '@/models/User';
 import connectDB from '@/lib/db';
 import { getSession } from '@/lib/auth';
+import { globalCache } from '@/lib/cache';
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ roomId: string; userId: string }> }) {
     try {
@@ -40,6 +41,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ room
         await User.findByIdAndUpdate(userId, {
             roomStatus: 'Approved'
         });
+
+        // Invalidate user cache so they see the update immediately
+        globalCache.delete(`user:${userId}`);
 
         // Create notification for the approved user
         await import('@/models/Notification').then(mod => mod.default.create({

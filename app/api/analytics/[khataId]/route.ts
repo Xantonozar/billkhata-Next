@@ -6,6 +6,7 @@ import Expense from '@/models/Expense';
 import Bill from '@/models/Bill';
 import Deposit from '@/models/Deposit';
 import Meal from '@/models/Meal';
+import { globalCache } from '@/lib/cache';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,106 +24,59 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ khat
         const { searchParams } = new URL(req.url);
         const range = searchParams.get('range') || 'This Month';
 
+        // Check cache first (3 minute cache for analytics)
+        const cacheKey = `analytics:${khataId}:${range}`;
+        const cachedData = globalCache.getValue(cacheKey);
+        if (cachedData) {
+            return NextResponse.json(cachedData);
+        }
+
         const now = new Date();
-        let startDate = new Date(); // Default to beginning of time if not specified, but logic below sets it
+        let startDate = new Date();
 
         if (range === 'This Month') {
             startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-        } else if (range === 'Last 30 Days') {
-            startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        } else if (range === 'Last 6 Months') {
+            // Start from 6 months ago, first day of that month
+            startDate = new Date(now.getFullYear(), now.getMonth() - 5, 1);
         } else {
-            // Default to this month if unknown
             startDate = new Date(now.getFullYear(), now.getMonth(), 1);
         }
 
-        // --- Aggregations ---
-
-        // 1. Total Shopping Expenses (Approved only)
-        const expenseAgg = await Expense.aggregate([
-            {
-                $match: {
-                    khataId,
-                    status: 'Approved',
-                    createdAt: { $gte: startDate }
-                }
-            },
-            {
-                $group: {
-                    _id: null,
-                    total: { $sum: '$amount' }
-                }
-            }
+        // --- Run all initial aggregations in parallel (5 queries) ---
+        const [expenseAgg, billAgg, depositAgg, mealAgg, billCategoryAgg] = await Promise.all([
+            // 1. Total Shopping Expenses (Approved only)
+            Expense.aggregate([
+                { $match: { khataId, status: 'Approved', createdAt: { $gte: startDate } } },
+                { $group: { _id: null, total: { $sum: '$amount' } } }
+            ]),
+            // 2. Total Bills (Based on Due Date)
+            Bill.aggregate([
+                { $match: { khataId, dueDate: { $gte: startDate } } },
+                { $group: { _id: null, total: { $sum: '$totalAmount' } } }
+            ]),
+            // 3. Total Deposits (Approved only)
+            Deposit.aggregate([
+                { $match: { khataId, status: 'Approved', createdAt: { $gte: startDate } } },
+                { $group: { _id: null, total: { $sum: '$amount' } } }
+            ]),
+            // 4. Meal Stats (Total Meals)
+            Meal.aggregate([
+                { $match: { khataId, date: { $gte: startDate } } },
+                { $group: { _id: null, totalMeals: { $sum: '$totalMeals' } } }
+            ]),
+            // 5. Bill Categories
+            Bill.aggregate([
+                { $match: { khataId, dueDate: { $gte: startDate } } },
+                { $group: { _id: '$category', value: { $sum: '$totalAmount' } } }
+            ])
         ]);
+
         const totalShoppingExpenses = expenseAgg[0]?.total || 0;
-
-        // 2. Total Bills (Based on Due Date)
-        const billAgg = await Bill.aggregate([
-            {
-                $match: {
-                    khataId,
-                    dueDate: { $gte: startDate }
-                }
-            },
-            {
-                $group: {
-                    _id: null,
-                    total: { $sum: '$totalAmount' }
-                }
-            }
-        ]);
         const totalBillAmount = billAgg[0]?.total || 0;
-
-        // 3. Total Deposits (Approved only)
-        const depositAgg = await Deposit.aggregate([
-            {
-                $match: {
-                    khataId,
-                    status: 'Approved',
-                    createdAt: { $gte: startDate }
-                }
-            },
-            {
-                $group: {
-                    _id: null,
-                    total: { $sum: '$amount' }
-                }
-            }
-        ]);
         const totalDeposits = depositAgg[0]?.total || 0;
-
-        // 4. Meal Stats (Total Meals)
-        const mealAgg = await Meal.aggregate([
-            {
-                $match: {
-                    khataId,
-                    date: { $gte: startDate }
-                }
-            },
-            {
-                $group: {
-                    _id: null,
-                    totalMeals: { $sum: '$totalMeals' }
-                }
-            }
-        ]);
         const totalMealsCount = mealAgg[0]?.totalMeals || 0;
 
-
-        // 5. Bill Categories
-        const billCategoryAgg = await Bill.aggregate([
-            {
-                $match: {
-                    khataId,
-                    dueDate: { $gte: startDate }
-                }
-            },
-            {
-                $group: {
-                    _id: '$category',
-                    value: { $sum: '$totalAmount' }
-                }
-            }
-        ]);
         const billCategories = billCategoryAgg.map(item => ({
             label: item._id,
             value: item.value || 0
@@ -251,7 +205,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ khat
         // Fund Health = Total Deposits - Total Shopping Expenses (not including bills)
         const fundHealth = totalDeposits - totalShoppingExpenses;
 
-        return NextResponse.json({
+        const responseData = {
             totalShoppingExpenses,
             totalBillAmount,
             totalDeposits,
@@ -264,7 +218,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ khat
                 activeMembers: activeMembersCount,
                 totalBills: totalBillsCount
             }
-        });
+        };
+
+        // Cache the response for 3 minutes (180 seconds)
+        globalCache.set(cacheKey, responseData, 180);
+
+        return NextResponse.json(responseData);
 
     } catch (error: any) {
         console.error('Analytics error:', error);

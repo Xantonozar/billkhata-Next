@@ -387,16 +387,19 @@ export default function MealManagementPage() {
 
                 console.log('Fetching meals for date range:', { start: todayStr, end: endOfDayStr });
 
-                const meals = await api.getMeals(user.khataId, todayStr, endOfDayStr);
+                // Fetch all data in parallel for faster loading
+                const [meals, finalizationStatus, members] = await Promise.all([
+                    api.getMeals(user.khataId, todayStr, endOfDayStr),
+                    api.getFinalizationStatus(user.khataId, todayStr),
+                    user.role === Role.Manager ? api.getMembersForRoom(user.khataId) : Promise.resolve([])
+                ]);
 
                 // Debug log
                 console.log('Fetched meals:', meals);
 
-                const finalizationStatus = await api.getFinalizationStatus(user.khataId, todayStr);
                 setIsFinalized(finalizationStatus.isFinalized);
 
                 if (user.role === Role.Manager) {
-                    const members = await api.getMembersForRoom(user.khataId);
                     const mealList = members.map(member => {
                         // Note: userId may be populated as an object { _id, name } or a plain string
                         const memberMeal = meals.find(m => {

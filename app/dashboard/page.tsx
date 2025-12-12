@@ -46,87 +46,77 @@ const QuickActionButton: React.FC<{ icon: React.ReactNode; label: string, onClic
     </button>
 );
 
-const ManagerDashboard: React.FC = () => {
+// We lift the state up to Manager/Member dashboard or use a Context
+// For simpler refactor, we accept props or fetch inside.
+// To support parallel fetching, the fetching should ideally happen in the Parent
+// or we make these components resilient to loading states.
+
+const ManagerDashboard: React.FC<{ initialData?: any, loading?: boolean, user?: any }> = ({ initialData, loading, user }) => {
     const router = useRouter();
-    const { user } = useAuth();
-    const { addToast, notifications } = useNotifications();
+    const { addToast } = useNotifications();
     const [menu, setMenu] = useState(initialTodaysMenu);
     const [editingMeal, setEditingMeal] = useState<keyof TodaysMenu | null>(null);
     const [editText, setEditText] = useState('');
 
-    const [stats, setStats] = useState({
-        totalBillsAmount: 0,
-        pendingApprovals: 0,
-        fundBalance: 0,
-        activeMembers: 0,
-        totalBillsCount: 0,
-    });
-    const [priorityActions, setPriorityActions] = useState<any[]>([]);
-    const [loadingStats, setLoadingStats] = useState(true);
     const [todayName, setTodayName] = useState('');
 
     useEffect(() => {
         const today = new Date();
         setTodayName(today.toLocaleDateString('en-US', { weekday: 'long' }));
+    }, []);
 
-        if (user?.khataId) {
-            setLoadingStats(true);
-            api.getDashboardStats().then((data) => {
-                setStats({
-                    totalBillsAmount: data.totalBillsAmount,
-                    pendingApprovals: data.pendingApprovals,
-                    fundBalance: data.fundBalance,
-                    activeMembers: data.activeMembers,
-                    totalBillsCount: data.totalBillsCount
-                });
-
-                const actions = [];
-                // Process priority actions from backend data
-                if (data.pendingJoinRequestsCount > 0) {
-                    actions.push({
-                        title: `👤 ${data.pendingJoinRequestsCount} Join Request${data.pendingJoinRequestsCount > 1 ? 's' : ''}`,
-                        details: 'Click to review',
-                        page: '/members'
-                    });
-                }
-
-                if (data.priorityActions?.expenses?.length > 0) {
-                    const count = data.priorityActions.expenses.length;
-                    const total = data.priorityActions.expenses.reduce((sum: number, e: any) => sum + e.amount, 0);
-                    actions.push({
-                        title: `🛒 ${count} Shopping Approval${count > 1 ? 's' : ''}`,
-                        details: `Total: ৳${total}`,
-                        page: '/shopping'
-                    });
-                }
-
-                if (data.priorityActions?.deposits?.length > 0) {
-                    const count = data.priorityActions.deposits.length;
-                    const total = data.priorityActions.deposits.reduce((sum: number, d: any) => sum + d.amount, 0);
-                    actions.push({
-                        title: `💵 ${count} Deposit Approval${count > 1 ? 's' : ''}`,
-                        details: `Total: ৳${total}`,
-                        page: '/shopping'
-                    });
-                }
-
-                setPriorityActions(actions);
-
-                if (data.todaysMenu) {
-                    setMenu({
-                        breakfast: data.todaysMenu.breakfast || 'Not set',
-                        lunch: data.todaysMenu.lunch || 'Not set',
-                        dinner: data.todaysMenu.dinner || 'Not set'
-                    });
-                }
-
-                setLoadingStats(false);
-            }).catch(err => {
-                console.error("Error loading dashboard data", err);
-                setLoadingStats(false);
+    useEffect(() => {
+        if (initialData?.todaysMenu) {
+            setMenu({
+                breakfast: initialData.todaysMenu.breakfast || 'Not set',
+                lunch: initialData.todaysMenu.lunch || 'Not set',
+                dinner: initialData.todaysMenu.dinner || 'Not set'
             });
         }
-    }, [user]);
+    }, [initialData]);
+
+    const stats = useMemo(() => ({
+        totalBillsAmount: initialData?.totalBillsAmount || 0,
+        pendingApprovals: initialData?.pendingApprovals || 0,
+        fundBalance: initialData?.fundBalance || 0,
+        activeMembers: initialData?.activeMembers || 0,
+        totalBillsCount: initialData?.totalBillsCount || 0,
+    }), [initialData]);
+
+    const priorityActions = useMemo(() => {
+        if (!initialData) return [];
+        const actions = [];
+        // Process priority actions from backend data
+        if (initialData.pendingJoinRequestsCount > 0) {
+            actions.push({
+                title: `👤 ${initialData.pendingJoinRequestsCount} Join Request${initialData.pendingJoinRequestsCount > 1 ? 's' : ''}`,
+                details: 'Click to review',
+                page: '/members'
+            });
+        }
+
+        if (initialData.priorityActions?.expenses?.length > 0) {
+            const count = initialData.priorityActions.expenses.length;
+            const total = initialData.priorityActions.expenses.reduce((sum: number, e: any) => sum + e.amount, 0);
+            actions.push({
+                title: `🛒 ${count} Shopping Approval${count > 1 ? 's' : ''}`,
+                details: `Total: ৳${total}`,
+                page: '/shopping'
+            });
+        }
+
+        if (initialData.priorityActions?.deposits?.length > 0) {
+            const count = initialData.priorityActions.deposits.length;
+            const total = initialData.priorityActions.deposits.reduce((sum: number, d: any) => sum + d.amount, 0);
+            actions.push({
+                title: `💵 ${count} Deposit Approval${count > 1 ? 's' : ''}`,
+                details: `Total: ৳${total}`,
+                page: '/shopping'
+            });
+        }
+        return actions;
+    }, [initialData]);
+
 
     const handleEditClick = (meal: keyof TodaysMenu) => {
         setEditingMeal(meal);
@@ -209,10 +199,10 @@ const ManagerDashboard: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
-                <StatCard title="💰 Total Bills" value={`৳${stats.totalBillsAmount.toLocaleString()}`} subtitle={`${stats.totalBillsCount} bills`} isLoading={loadingStats} />
-                <StatCard title="🔔 Approvals" value={`${stats.pendingApprovals} items`} subtitle="Pending action" isLoading={loadingStats} />
-                <StatCard title="💵 Fund" value={`+৳${stats.fundBalance.toLocaleString()}`} subtitle="Current balance" isLoading={loadingStats} />
-                <StatCard title="👥 Members" value={`${stats.activeMembers}`} subtitle="Active users" isLoading={loadingStats} />
+                <StatCard title="💰 Total Bills" value={`৳${stats.totalBillsAmount.toLocaleString()}`} subtitle={`${stats.totalBillsCount} bills`} isLoading={loading} />
+                <StatCard title="🔔 Approvals" value={`${stats.pendingApprovals} items`} subtitle="Pending action" isLoading={loading} />
+                <StatCard title="💵 Fund" value={`+৳${stats.fundBalance.toLocaleString()}`} subtitle="Current balance" isLoading={loading} />
+                <StatCard title="👥 Members" value={`${stats.activeMembers}`} subtitle="Active users" isLoading={loading} />
             </div>
 
             <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-md">
@@ -268,68 +258,34 @@ const ManagerDashboard: React.FC = () => {
     );
 };
 
-const MemberDashboard: React.FC = () => {
+const MemberDashboard: React.FC<{ initialData?: any, loading?: boolean, user?: any }> = ({ initialData, loading, user }) => {
     const router = useRouter();
-    const { user } = useAuth();
     const { notifications } = useNotifications();
-    const [dashboardData, setDashboardData] = useState<any>(null);
+
+    // We rely on initialData being passed down from parent
     const [menu, setMenu] = useState(initialTodaysMenu);
-    const [loading, setLoading] = useState(true);
-    const [totalMealCount, setTotalMealCount] = useState(0);
-    const [refundAmount, setRefundAmount] = useState(0);
     const [todayName, setTodayName] = useState('');
 
     useEffect(() => {
         const today = new Date();
         setTodayName(today.toLocaleDateString('en-US', { weekday: 'long' }));
+    }, []);
 
-        if (user?.khataId) {
-            setLoading(true);
-
-            api.getDashboardStats().then((data) => {
-                // Set formatted bills for the useMemo hook or use data directly?
-                // The existing UI uses useMemo to calculate billsDueAmount etc from 'bills' state.
-                // However, the new API returns pre-calculated stats.
-                // To minimize substantial UI rewrites, I should probably directly set the stats state 
-                // BUT MemberDashboard component uses `bills` state in a `useMemo`.
-                // I need to adapt the component to use the pre-calculated `data.billsDueAmount` etc.
-
-                // Let's store the data in a new state or override existing states
-                setTotalMealCount(data.totalMealCount);
-                setRefundAmount(data.refundAmount);
-
-                // For bills, the backend now returns aggregates. 
-                // I'll update the component logic to use these values instead of calculating them.
-                // But `bills` state is used for `nextBillDue` logic.
-                // The API returns `nextBillDue`.
-
-                // Store the raw response to be used by the render
-                // But I can't easily change the hook logic without rewriting the component body.
-                // Hack: Set 'bills' to empty array to avoid errors, and add new state for stats.
-                // Better: Rewrite the component to not use the useMemo for stats and use the API data directly.
-                // See next tool call for component body update.
-
-                setDashboardData(data); // I'll need to add this state
-
-                if (data.todaysMenu) {
-                    setMenu({
-                        breakfast: data.todaysMenu.breakfast || 'Not set',
-                        lunch: data.todaysMenu.lunch || 'Not set',
-                        dinner: data.todaysMenu.dinner || 'Not set'
-                    });
-                }
-            }).finally(() => setLoading(false));
-        } else {
-            setLoading(false);
+    useEffect(() => {
+        if (initialData?.todaysMenu) {
+            setMenu({
+                breakfast: initialData.todaysMenu.breakfast || 'Not set',
+                lunch: initialData.todaysMenu.lunch || 'Not set',
+                dinner: initialData.todaysMenu.dinner || 'Not set'
+            });
         }
-    }, [user]);
+    }, [initialData]);
 
-
-
-    // Remove useMemo logic as data comes pre-calculated
-    const billsDueAmount = dashboardData?.billsDueAmount || 0;
-    const billsDueCount = dashboardData?.billsDueCount || 0;
-    const nextBillDue = dashboardData?.nextBillDue;
+    const billsDueAmount = initialData?.billsDueAmount || 0;
+    const billsDueCount = initialData?.billsDueCount || 0;
+    const nextBillDue = initialData?.nextBillDue;
+    const totalMealCount = initialData?.totalMealCount || 0;
+    const refundAmount = initialData?.refundAmount || 0;
 
     const nextBillDueText = nextBillDue
         ? `${nextBillDue.title} - ${new Date(nextBillDue.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
@@ -427,11 +383,30 @@ const MemberDashboard: React.FC = () => {
 };
 
 export default function DashboardPage() {
-    const { user, loading } = useAuth();
+    const { user, loading: authLoading } = useAuth();
     const router = useRouter();
+    const [stats, setStats] = useState<any>(null);
+    const [statsLoading, setStatsLoading] = useState(true);
+
+    // Parallel Data Fetching Strategy:
+    // 1. Fetch Stats IMMEDIATELY on mount (don't wait for useAuth to finish)
+    // 2. AuthContext checks user validation in parallel
+    useEffect(() => {
+        // We optimistically try to fetch stats assuming token is present
+        api.getDashboardStats()
+            .then(data => {
+                setStats(data);
+                setStatsLoading(false);
+            })
+            .catch(err => {
+                // If it fails (e.g. 401), we just ignore it here
+                // Key takeaway: The authLoading check below handles the redirection
+                setStatsLoading(false);
+            });
+    }, []);
 
     useEffect(() => {
-        if (!loading) {
+        if (!authLoading) {
             if (!user) {
                 router.push('/login');
             } else if (user.roomStatus === RoomStatus.NoRoom) {
@@ -444,9 +419,14 @@ export default function DashboardPage() {
                 router.push('/pending-approval');
             }
         }
-    }, [user, loading, router]);
+    }, [user, authLoading, router]);
 
-    if (loading || !user) {
+    // Show loading only if Auth is loading AND we haven't determined user status
+    // If we have stats but user is still "loading" (auth check), we might theoretically show dashboard?
+    // No, we need 'user' object for names and roles. 
+    // BUT 'stats' loading happens in parallel.
+
+    if (authLoading || !user) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-light-cyan-50 dark:bg-slate-900">
                 <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-primary-500"></div>
@@ -457,7 +437,10 @@ export default function DashboardPage() {
     return (
         <>
             <AppLayout>
-                {user.role === Role.Manager ? <ManagerDashboard /> : <MemberDashboard />}
+                {user.role === Role.Manager ?
+                    <ManagerDashboard initialData={stats} loading={statsLoading} user={user} /> :
+                    <MemberDashboard initialData={stats} loading={statsLoading} user={user} />
+                }
             </AppLayout>
             <ToastContainer />
         </>

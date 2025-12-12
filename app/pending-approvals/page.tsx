@@ -36,12 +36,20 @@ export default function PendingApprovalsPage() {
         if (user?.khataId && user.role === Role.Manager) {
             setLoading(true);
             try {
-                const memberRequests = await api.getPendingApprovals(user.khataId);
+                // Fetch all data in parallel for faster loading
+                const [memberRequests, bills, expenses, deposits] = await Promise.all([
+                    api.getPendingApprovals(user.khataId),
+                    api.getBillsForRoom(user.khataId),
+                    api.getExpenses(user.khataId, { status: 'Pending' }),
+                    api.getDeposits(user.khataId, { status: 'Pending' })
+                ]);
+
                 setPendingMemberRequests(memberRequests);
+                setPendingExpenses(expenses);
+                setPendingDeposits(deposits);
 
-                const bills = await api.getBillsForRoom(user.khataId);
+                // Process bills to find pending payments
                 const pendingPayments: { bill: Bill, share: any }[] = [];
-
                 bills.forEach(bill => {
                     bill.shares.forEach(share => {
                         if (share.status === 'Pending Approval') {
@@ -50,14 +58,6 @@ export default function PendingApprovalsPage() {
                     });
                 });
                 setPendingBillPayments(pendingPayments);
-
-                // Fetch pending shopping expenses
-                const expenses = await api.getExpenses(user.khataId, { status: 'Pending' });
-                setPendingExpenses(expenses);
-
-                // Fetch pending deposits
-                const deposits = await api.getDeposits(user.khataId, { status: 'Pending' });
-                setPendingDeposits(deposits);
 
             } catch (error) {
                 console.error('Error fetching pending approvals:', error);
@@ -76,106 +76,142 @@ export default function PendingApprovalsPage() {
 
     const handleApproveMember = async (userId: string) => {
         if (!user?.khataId) return;
+
+        // Optimistic UI - remove immediately
+        const removedItem = pendingMemberRequests.find(req => req.id === userId);
+        setPendingMemberRequests(prev => prev.filter(req => req.id !== userId));
+        addToast({ type: 'success', title: 'Approved', message: 'Member approved successfully' });
+
         try {
             const success = await api.approveMember(user.khataId, userId);
-            if (success) {
-                setPendingMemberRequests(prev => prev.filter(req => req.id !== userId));
-                addToast({ type: 'success', title: 'Approved', message: 'Member approved successfully' });
-            } else {
-                addToast({ type: 'error', title: 'Error', message: 'Failed to approve member' });
+            if (!success && removedItem) {
+                // Restore on failure
+                setPendingMemberRequests(prev => [...prev, removedItem]);
+                addToast({ type: 'error', title: 'Error', message: 'Failed to approve member. Please try again.' });
             }
         } catch (error) {
-            addToast({ type: 'error', title: 'Error', message: 'Failed to approve member' });
+            if (removedItem) {
+                setPendingMemberRequests(prev => [...prev, removedItem]);
+            }
+            addToast({ type: 'error', title: 'Error', message: 'Failed to approve member. Please try again.' });
         }
     };
 
     const handleApproveBill = async (billId: string, userId: string) => {
+        // Optimistic UI - remove immediately
+        const removedItem = pendingBillPayments.find(item => item.bill.id === billId && item.share.userId === userId);
+        setPendingBillPayments(prev => prev.filter(item => !(item.bill.id === billId && item.share.userId === userId)));
+        addToast({ type: 'success', title: 'Approved', message: 'Payment approved successfully.' });
+
         const updatedBill = await api.updateBillShareStatus(billId, userId, 'Paid');
-        if (updatedBill) {
-            setPendingBillPayments(prev => prev.filter(item => !(item.bill.id === billId && item.share.userId === userId)));
-            addToast({ type: 'success', title: 'Approved', message: 'Payment approved successfully.' });
-        } else {
-            addToast({ type: 'error', title: 'Error', message: 'Failed to approve payment.' });
+        if (!updatedBill && removedItem) {
+            // Restore on failure
+            setPendingBillPayments(prev => [...prev, removedItem]);
+            addToast({ type: 'error', title: 'Error', message: 'Failed to approve payment. Please try again.' });
         }
     };
 
     const handleDenyBill = async (billId: string, userId: string) => {
+        // Optimistic UI - remove immediately
+        const removedItem = pendingBillPayments.find(item => item.bill.id === billId && item.share.userId === userId);
+        setPendingBillPayments(prev => prev.filter(item => !(item.bill.id === billId && item.share.userId === userId)));
+        addToast({ type: 'warning', title: 'Denied', message: 'Payment rejected. Status reset to Unpaid.' });
+
         const updatedBill = await api.updateBillShareStatus(billId, userId, 'Unpaid');
-        if (updatedBill) {
-            setPendingBillPayments(prev => prev.filter(item => !(item.bill.id === billId && item.share.userId === userId)));
-            addToast({ type: 'warning', title: 'Denied', message: 'Payment rejected. Status reset to Unpaid.' });
-        } else {
-            addToast({ type: 'error', title: 'Error', message: 'Failed to deny payment.' });
+        if (!updatedBill && removedItem) {
+            // Restore on failure
+            setPendingBillPayments(prev => [...prev, removedItem]);
+            addToast({ type: 'error', title: 'Error', message: 'Failed to deny payment. Please try again.' });
         }
     };
 
     const handleApproveExpense = async (expenseId: string) => {
         if (!user?.khataId) return;
+
+        // Optimistic UI - remove immediately
+        const removedItem = pendingExpenses.find(exp => exp._id === expenseId);
+        setPendingExpenses(prev => prev.filter(exp => exp._id !== expenseId));
+        addToast({ type: 'success', title: 'Approved', message: 'Shopping expense approved' });
+
         try {
             const success = await api.approveExpense(user.khataId, expenseId);
-            if (success) {
-                setPendingExpenses(prev => prev.filter(exp => exp._id !== expenseId));
-                addToast({ type: 'success', title: 'Approved', message: 'Shopping expense approved' });
-            } else {
-                addToast({ type: 'error', title: 'Error', message: 'Failed to approve expense' });
+            if (!success && removedItem) {
+                setPendingExpenses(prev => [...prev, removedItem]);
+                addToast({ type: 'error', title: 'Error', message: 'Failed to approve expense. Please try again.' });
             }
         } catch (error) {
-            addToast({ type: 'error', title: 'Error', message: 'Failed to approve expense' });
+            if (removedItem) {
+                setPendingExpenses(prev => [...prev, removedItem]);
+            }
+            addToast({ type: 'error', title: 'Error', message: 'Failed to approve expense. Please try again.' });
         }
     };
 
     const handleRejectExpense = async (expenseId: string) => {
         if (!user?.khataId) return;
+
+        // Optimistic UI - remove immediately
+        const removedItem = pendingExpenses.find(exp => exp._id === expenseId);
+        setPendingExpenses(prev => prev.filter(exp => exp._id !== expenseId));
+        addToast({ type: 'warning', title: 'Rejected', message: 'Shopping expense rejected' });
+
         try {
             const success = await api.rejectExpense(user.khataId, expenseId);
-            if (success) {
-                setPendingExpenses(prev => prev.filter(exp => exp._id !== expenseId));
-                addToast({ type: 'warning', title: 'Rejected', message: 'Shopping expense rejected' });
-            } else {
-                addToast({ type: 'error', title: 'Error', message: 'Failed to reject expense' });
+            if (!success && removedItem) {
+                setPendingExpenses(prev => [...prev, removedItem]);
+                addToast({ type: 'error', title: 'Error', message: 'Failed to reject expense. Please try again.' });
             }
         } catch (error) {
-            addToast({ type: 'error', title: 'Error', message: 'Failed to reject expense' });
+            if (removedItem) {
+                setPendingExpenses(prev => [...prev, removedItem]);
+            }
+            addToast({ type: 'error', title: 'Error', message: 'Failed to reject expense. Please try again.' });
         }
     };
 
     const handleApproveDeposit = async (depositId: string) => {
         if (!user?.khataId) return;
+
+        // Optimistic UI - remove immediately
+        const removedItem = pendingDeposits.find(dep => dep._id === depositId);
+        setPendingDeposits(prev => prev.filter(dep => dep._id !== depositId));
+        addToast({ type: 'success', title: 'Approved', message: 'Deposit approved' });
+
         try {
             const success = await api.approveDeposit(user.khataId, depositId);
-            if (success) {
-                setPendingDeposits(prev => prev.filter(dep => dep._id !== depositId));
-                addToast({ type: 'success', title: 'Approved', message: 'Deposit approved' });
-            } else {
-                addToast({ type: 'error', title: 'Error', message: 'Failed to approve deposit' });
+            if (!success && removedItem) {
+                setPendingDeposits(prev => [...prev, removedItem]);
+                addToast({ type: 'error', title: 'Error', message: 'Failed to approve deposit. Please try again.' });
             }
         } catch (error) {
-            addToast({ type: 'error', title: 'Error', message: 'Failed to approve deposit' });
+            if (removedItem) {
+                setPendingDeposits(prev => [...prev, removedItem]);
+            }
+            addToast({ type: 'error', title: 'Error', message: 'Failed to approve deposit. Please try again.' });
         }
     };
 
     const handleRejectDeposit = async (depositId: string) => {
         if (!user?.khataId) return;
+
+        // Optimistic UI - remove immediately
+        const removedItem = pendingDeposits.find(dep => dep._id === depositId);
+        setPendingDeposits(prev => prev.filter(dep => dep._id !== depositId));
+        addToast({ type: 'warning', title: 'Rejected', message: 'Deposit rejected' });
+
         try {
             const success = await api.rejectDeposit(user.khataId, depositId);
-            if (success) {
-                setPendingDeposits(prev => prev.filter(dep => dep._id !== depositId));
-                addToast({ type: 'warning', title: 'Rejected', message: 'Deposit rejected' });
-            } else {
-                addToast({ type: 'error', title: 'Error', message: 'Failed to reject deposit' });
+            if (!success && removedItem) {
+                setPendingDeposits(prev => [...prev, removedItem]);
+                addToast({ type: 'error', title: 'Error', message: 'Failed to reject deposit. Please try again.' });
             }
         } catch (error) {
-            addToast({ type: 'error', title: 'Error', message: 'Failed to reject deposit' });
+            if (removedItem) {
+                setPendingDeposits(prev => [...prev, removedItem]);
+            }
+            addToast({ type: 'error', title: 'Error', message: 'Failed to reject deposit. Please try again.' });
         }
     };
-
-    if (loading) {
-        return (
-            <AppLayout>
-                <div className="p-8 text-center">Loading pending requests...</div>
-            </AppLayout>
-        );
-    }
 
     if (user?.role !== Role.Manager) {
         return (
@@ -203,12 +239,20 @@ export default function PendingApprovalsPage() {
                             <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white font-sans tracking-tight">Pending Approvals</h1>
                             <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Manage and review pending requests</p>
                         </div>
-                        <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-warning-500/10 to-orange-500/10 text-orange-600 dark:text-orange-400 rounded-full font-semibold text-sm border border-orange-200 dark:border-orange-500/20 self-start sm:self-auto shadow-sm">
-                            <span className="relative flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
-                            </span>
-                            {totalPending} Pending Tasks
+                        <div className="flex items-center gap-3">
+                            {loading && (
+                                <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-full text-sm font-medium">
+                                    <div className="w-4 h-4 border-2 border-blue-600 dark:border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+                                    Loading...
+                                </div>
+                            )}
+                            <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-warning-500/10 to-orange-500/10 text-orange-600 dark:text-orange-400 rounded-full font-semibold text-sm border border-orange-200 dark:border-orange-500/20 self-start sm:self-auto shadow-sm">
+                                <span className="relative flex h-2 w-2">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
+                                </span>
+                                {totalPending} Pending Tasks
+                            </div>
                         </div>
                     </div>
 

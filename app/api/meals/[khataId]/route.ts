@@ -65,7 +65,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ kha
         }
 
         const mealDate = new Date(date);
-        mealDate.setHours(0, 0, 0, 0);
+        mealDate.setUTCHours(0, 0, 0, 0);
 
         const finalization = await MealFinalization.findOne({
             khataId,

@@ -61,27 +61,105 @@ export default function RentBillsPage() {
 
     const handleMarkAsPaid = async () => {
         if (!confirmingPayment || !user) return;
-        const updatedBill = await api.updateBillShareStatus(confirmingPayment.id, user.id, 'Pending Approval');
-        if (updatedBill) {
-            setBills(prevBills => prevBills.map(b => b.id === updatedBill.id ? updatedBill : b));
-            addToast({ type: 'success', title: 'Payment Submitted', message: 'Your payment is now pending approval.' });
-        }
+
+        // Optimistic UI - update immediately
+        const billId = confirmingPayment.id;
+        setBills(prevBills => prevBills.map(b => {
+            if (b.id === billId) {
+                return {
+                    ...b,
+                    shares: b.shares.map(s =>
+                        s.userId === user.id ? { ...s, status: 'Pending Approval' as const } : s
+                    )
+                };
+            }
+            return b;
+        }));
         setConfirmingPayment(null);
+        addToast({ type: 'success', title: 'Payment Submitted', message: 'Your payment is now pending approval.' });
+
+        // API call in background
+        const updatedBill = await api.updateBillShareStatus(billId, user.id, 'Pending Approval');
+        if (!updatedBill) {
+            // Revert on failure
+            setBills(prevBills => prevBills.map(b => {
+                if (b.id === billId) {
+                    return {
+                        ...b,
+                        shares: b.shares.map(s =>
+                            s.userId === user.id ? { ...s, status: 'Unpaid' as const } : s
+                        )
+                    };
+                }
+                return b;
+            }));
+            addToast({ type: 'error', title: 'Error', message: 'Payment failed. Please try again.' });
+        }
     };
 
     const handleApprovePayment = async (billId: string, userId: string) => {
+        // Optimistic UI - update immediately
+        setBills(prev => prev.map(b => {
+            if (b.id === billId) {
+                return {
+                    ...b,
+                    shares: b.shares.map(s =>
+                        s.userId === userId ? { ...s, status: 'Paid' as const } : s
+                    )
+                };
+            }
+            return b;
+        }));
+        addToast({ type: 'success', title: 'Approved', message: 'Payment approved successfully.' });
+
         const updatedBill = await api.updateBillShareStatus(billId, userId, 'Paid');
-        if (updatedBill) {
-            setBills(prev => prev.map(b => b.id === updatedBill.id ? updatedBill : b));
-            addToast({ type: 'success', title: 'Approved', message: 'Payment approved successfully.' });
+        if (!updatedBill) {
+            // Revert on failure
+            setBills(prev => prev.map(b => {
+                if (b.id === billId) {
+                    return {
+                        ...b,
+                        shares: b.shares.map(s =>
+                            s.userId === userId ? { ...s, status: 'Pending Approval' as const } : s
+                        )
+                    };
+                }
+                return b;
+            }));
+            addToast({ type: 'error', title: 'Error', message: 'Failed to approve. Please try again.' });
         }
     };
 
     const handleDenyPayment = async (billId: string, userId: string) => {
+        // Optimistic UI - update immediately
+        setBills(prev => prev.map(b => {
+            if (b.id === billId) {
+                return {
+                    ...b,
+                    shares: b.shares.map(s =>
+                        s.userId === userId ? { ...s, status: 'Unpaid' as const } : s
+                    )
+                };
+            }
+            return b;
+        }));
+        addToast({ type: 'warning', title: 'Denied', message: 'Payment rejected.' });
+
         const updatedBill = await api.updateBillShareStatus(billId, userId, 'Unpaid');
-        if (updatedBill) {
-            setBills(prev => prev.map(b => b.id === updatedBill.id ? updatedBill : b));
-            addToast({ type: 'warning', title: 'Denied', message: 'Payment rejected.' });
+        if (!updatedBill) {
+            // Revert on failure
+            setBills(prev => prev.map(b => {
+                if (b.id === billId) {
+                    return {
+                        ...b,
+                        shares: b.shares.map(s =>
+                            s.userId === userId ? { ...s, status: 'Pending Approval' as const } : s
+                        )
+                    };
+                }
+                return b;
+            }));
+            addToast({ type: 'error', title: 'Error', message: 'Failed to deny. Please try again.' });
         }
     };
 

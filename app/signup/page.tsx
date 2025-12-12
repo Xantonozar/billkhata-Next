@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Role } from '@/types';
-import { SpinnerIcon, SparklesIcon } from '@/components/Icons';
+import { SpinnerIcon, HomeIcon } from '@/components/Icons';
 
 export default function SignUpPage() {
     const [name, setName] = useState('');
@@ -33,85 +33,121 @@ export default function SignUpPage() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex">
-            {/* Left Panel */}
-            <div className="hidden lg:flex w-2/5 bg-primary-600 items-center justify-center p-12 text-white flex-col">
-                <div className="text-center">
-                    <SparklesIcon className="w-24 h-24 mx-auto mb-6 opacity-80" />
-                    <h1 className="text-4xl font-bold">Join thousands managing expenses together</h1>
-                    <p className="mt-4 text-lg opacity-80">
-                        BillKhata makes it simple to track bills, log meals, and stay organized with your roommates.
-                    </p>
+        <div className="min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden bg-slate-950">
+            {/* Background Effects */}
+            <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary-600/30 rounded-full blur-[100px] animate-pulse"></div>
+            <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-light-cyan-500/20 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1.5s' }}></div>
+
+            <div className="w-full max-w-lg relative z-10 animate-fade-in glass-panel rounded-2xl p-8 border border-slate-800/50">
+                <div className="text-center mb-8">
+                    <h1 className="text-3xl font-bold bg-gradient-to-r from-primary-400 to-light-cyan-400 bg-clip-text text-transparent">
+                        Create Account
+                    </h1>
+                    <p className="text-slate-400 mt-2 text-sm">Join BillKhata to manage expenses smartly.</p>
                 </div>
-            </div>
 
-            {/* Right Panel (Form) */}
-            <div className="w-full lg:w-3/5 flex items-center justify-center p-4 sm:p-12">
-                <div className="max-w-md w-full">
-                    <div className="lg:hidden text-center mb-8">
-                        <h1 className="text-center text-4xl font-bold text-primary-600">BillKhata</h1>
+                <form className="space-y-5" onSubmit={handleSubmit}>
+                    <div className="space-y-2">
+                        <label htmlFor="name" className="text-sm font-medium text-slate-300 ml-1">
+                            Full Name
+                        </label>
+                        <input
+                            id="name"
+                            type="text"
+                            required
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            className="w-full px-4 py-3 rounded-xl bg-slate-900/50 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all"
+                            placeholder="John Doe"
+                        />
                     </div>
-                    <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-                        Create an Account
-                    </h2>
-                    <div className="bg-white dark:bg-slate-800 p-6 sm:p-8 mt-8 rounded-lg shadow-lg">
-                        <form className="space-y-6" onSubmit={handleSubmit}>
-                            <div>
-                                <label htmlFor="name" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    Full Name
-                                </label>
-                                <input id="name" type="text" required value={name} onChange={(e) => setName(e.target.value)}
-                                    className="mt-1 block w-full appearance-none rounded-md border border-slate-300 dark:border-slate-600 px-3 py-2 placeholder-slate-400 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-primary-500 sm:text-sm bg-white dark:bg-slate-700 dark:text-white"
-                                />
-                            </div>
-                            <div>
-                                <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    Email address
-                                </label>
-                                <input id="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)}
-                                    className="mt-1 block w-full appearance-none rounded-md border border-slate-300 dark:border-slate-600 px-3 py-2 placeholder-slate-400 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-primary-500 sm:text-sm bg-white dark:bg-slate-700 dark:text-white"
-                                />
-                            </div>
 
-                            <div>
-                                <label htmlFor="password" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    Password
-                                </label>
-                                <input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
-                                    className="mt-1 block w-full appearance-none rounded-md border border-slate-300 dark:border-slate-600 px-3 py-2 placeholder-slate-400 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-primary-500 sm:text-sm bg-white dark:bg-slate-700 dark:text-white"
-                                />
-                            </div>
+                    <div className="space-y-2">
+                        <label htmlFor="email" className="text-sm font-medium text-slate-300 ml-1">
+                            Email address
+                        </label>
+                        <input
+                            id="email"
+                            type="email"
+                            required
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="w-full px-4 py-3 rounded-xl bg-slate-900/50 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all"
+                            placeholder="john@example.com"
+                        />
+                    </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">I am a:</label>
-                                <div className="mt-2 grid grid-cols-2 gap-4">
-                                    {[Role.Manager, Role.Member].map((r) => (
-                                        <label key={r} className={`flex flex-col items-center text-center p-4 rounded-md cursor-pointer border-2 transition-all ${role === r ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/20 shadow-md' : 'border-slate-300 dark:border-slate-600 hover:border-primary-300'}`}>
-                                            <input type="radio" name="role" value={r} checked={role === r} onChange={() => setRole(r)} className="sr-only" />
-                                            <span className={`font-bold text-base ${role === r ? 'text-primary-600' : 'text-slate-800 dark:text-slate-200'}`}>{r}</span>
-                                            <span className="text-xs text-slate-500 dark:text-slate-400 mt-1">{r === Role.Manager ? '(Create Room)' : '(Join Room)'}</span>
-                                        </label>
-                                    ))}
-                                </div>
-                            </div>
+                    <div className="space-y-2">
+                        <label htmlFor="password" className="text-sm font-medium text-slate-300 ml-1">
+                            Password
+                        </label>
+                        <input
+                            id="password"
+                            type="password"
+                            required
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="w-full px-4 py-3 rounded-xl bg-slate-900/50 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all"
+                            placeholder="••••••••"
+                        />
+                    </div>
 
-                            {error && <p className="text-sm text-center text-red-500">{error}</p>}
-
-                            <div>
-                                <button type="submit" disabled={loading}
-                                    className="flex w-full justify-center rounded-md border border-transparent bg-primary-500 py-2.5 px-4 text-sm font-medium text-white shadow-sm hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800 disabled:opacity-50"
+                    <div className="space-y-3">
+                        <label className="text-sm font-medium text-slate-300 ml-1">I want to:</label>
+                        <div className="grid grid-cols-2 gap-4">
+                            {[Role.Manager, Role.Member].map((r) => (
+                                <label
+                                    key={r}
+                                    className={`relative flex flex-col items-center justify-center p-4 rounded-xl cursor-pointer border transition-all duration-200 group ${role === r
+                                        ? 'bg-primary-600/20 border-primary-500 shadow-[0_0_20px_rgba(168,85,247,0.15)]'
+                                        : 'bg-slate-900/50 border-slate-700 hover:border-slate-500 hover:bg-slate-800/50'
+                                        }`}
                                 >
-                                    {loading ? <SpinnerIcon className="h-5 w-5" /> : 'Create Account'}
-                                </button>
-                            </div>
-                        </form>
-                        <p className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">
-                            Already have an account?{' '}
-                            <Link href="/login" className="font-medium text-primary-600 hover:text-primary-500">
-                                Log in
-                            </Link>
-                        </p>
+                                    <input
+                                        type="radio"
+                                        name="role"
+                                        value={r}
+                                        checked={role === r}
+                                        onChange={() => setRole(r)}
+                                        className="sr-only"
+                                    />
+                                    <span className={`font-semibold text-base transition-colors ${role === r ? 'text-primary-300' : 'text-slate-300 group-hover:text-white'}`}>
+                                        {r}
+                                    </span>
+                                    <span className="text-xs text-slate-500 mt-1">
+                                        {r === Role.Manager ? 'Create & Manage Room' : 'Join Existing Room'}
+                                    </span>
+                                </label>
+                            ))}
+                        </div>
                     </div>
+
+                    {error && (
+                        <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
+                            {error}
+                        </div>
+                    )}
+
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full py-3.5 rounded-xl bg-gradient-to-r from-primary-600 to-primary-500 text-white font-semibold shadow-lg shadow-primary-500/20 hover:shadow-primary-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-70 disabled:hover:scale-100 flex items-center justify-center gap-2"
+                    >
+                        {loading ? <SpinnerIcon className="h-5 w-5" /> : 'Create Account'}
+                    </button>
+                </form>
+
+                <div className="mt-8 text-center space-y-4">
+                    <p className="text-slate-400 text-sm">
+                        Already have an account?{' '}
+                        <Link href="/login" className="text-primary-400 hover:text-primary-300 font-medium transition-colors">
+                            Log in
+                        </Link>
+                    </p>
+                    <Link href="/" className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-300 text-sm transition-colors">
+                        <HomeIcon className="w-4 h-4" />
+                        <span>Back to Home</span>
+                    </Link>
                 </div>
             </div>
         </div>
