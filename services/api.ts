@@ -178,6 +178,26 @@ const api = {
         }
     },
 
+    leaveRoom: async (roomId: string): Promise<boolean> => {
+        try {
+            await axiosInstance.delete(`/rooms/${roomId}/leave`);
+            return true;
+        } catch (error: any) {
+            console.error('Leave room error:', error.response?.data?.message || error.message);
+            throw new Error(error.response?.data?.message || 'Failed to leave room');
+        }
+    },
+
+    deleteRoom: async (roomId: string): Promise<boolean> => {
+        try {
+            await axiosInstance.delete(`/rooms/${roomId}/delete`);
+            return true;
+        } catch (error: any) {
+            console.error('Delete room error:', error.response?.data?.message || error.message);
+            throw new Error(error.response?.data?.message || 'Failed to delete room');
+        }
+    },
+
 
 
     // Bills

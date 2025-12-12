@@ -97,7 +97,10 @@ export const CreateDepositSchema = z.object({
     amount: z.number().positive('Amount must be positive'),
     paymentMethod: z.string().min(1, 'Payment method is required'),
     transactionId: z.string().max(100).optional(),
-    screenshotUrl: z.string().url().optional().nullable()
+    screenshotUrl: z.string().optional().nullable().refine(
+        (val) => !val || val === '' || z.string().url().safeParse(val).success,
+        { message: 'Invalid URL format' }
+    )
 });
 
 // ============================================
