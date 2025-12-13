@@ -33,25 +33,14 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ khat
 
         // Notify member about expense approval
         try {
-            const Notification = await import('@/models/Notification').then(mod => mod.default);
-            await Notification.create({
-                userId: expense.userId,
-                khataId,
-                type: 'expense',
+            const { notifyUser } = await import('@/lib/notificationService');
+            await notifyUser({
+                userId: expense.userId.toString(),
                 title: 'Expense Approved',
                 message: `Your expense of ৳${expense.amount} has been approved by the manager.`,
-                actionText: 'View Expenses',
-                link: `/shopping`,
-                read: false,
-                relatedId: expense._id
-            });
-
-            // Push real-time notification to member (instant toast)
-            const { pushToUser } = await import('@/lib/pusher');
-            pushToUser(expense.userId.toString(), 'expense-approved', {
                 type: 'expense-approved',
-                message: `Your expense of ৳${expense.amount} has been approved!`,
-                amount: expense.amount
+                link: `/shopping`,
+                relatedId: expense._id.toString()
             });
 
             console.log(`Approval notification sent to user for expense ৳${expense.amount}`);

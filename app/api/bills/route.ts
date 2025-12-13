@@ -67,30 +67,23 @@ export async function POST(req: NextRequest) {
 
         // Create notifications for all users involved in the bill
         try {
-            const Notification = await import('@/models/Notification').then(mod => mod.default);
-            const notificationsToCreate = shares.map((share) => ({
-                userId: share.userId,
-                khataId: user.khataId,
-                type: 'bill',
-                title: 'New Bill Added',
-                message: `A new bill "${title}" of ৳${totalAmount} has been added.`,
-                actionText: 'View Bills',
-                link: `/bills`,
-                read: false,
-                relatedId: bill._id
-            }));
+            const { notifyUsers } = await import('@/lib/notificationService');
 
-            console.log(`DEBUG: Creating ${notificationsToCreate.length} bill notifications`);
-            await Notification.insertMany(notificationsToCreate);
-            console.log(`SUCCESS: Created ${notificationsToCreate.length} notifications for bill: ${title}`);
+            // Filter out the creator from receiving their own notification
+            const recipientIds = shares
+                .map(s => s.userId)
+                .filter(id => id.toString() !== user._id.toString());
 
-            // NEW: Push real-time notification
-            const { pushToRoom } = await import('@/lib/pusher');
-            await pushToRoom(user.khataId, 'new-bill', {
-                type: 'new-bill',
-                message: `New bill: ${title} (৳${totalAmount})`
-            });
-
+            if (recipientIds.length > 0) {
+                await notifyUsers(recipientIds, {
+                    title: 'New Bill Added',
+                    message: `A new bill "${title}" of ৳${totalAmount} has been added.`,
+                    type: 'new-bill',
+                    link: `/bills/${bill._id}`,
+                    relatedId: bill._id.toString()
+                });
+                console.log(`SUCCESS: Sent notifications to ${recipientIds.length} users`);
+            }
         } catch (notificationError) {
             console.error('Error creating notifications:', notificationError);
             // Don't fail the bill creation if notifications fail

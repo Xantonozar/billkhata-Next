@@ -33,25 +33,14 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ khat
 
         // Notify member about deposit approval
         try {
-            const Notification = await import('@/models/Notification').then(mod => mod.default);
-            await Notification.create({
-                userId: deposit.userId,
-                khataId,
-                type: 'deposit',
+            const { notifyUser } = await import('@/lib/notificationService');
+            await notifyUser({
+                userId: deposit.userId.toString(),
                 title: 'Deposit Approved',
                 message: `Your deposit of ৳${deposit.amount} has been approved by the manager.`,
-                actionText: 'View Deposits',
-                link: `/shopping`,
-                read: false,
-                relatedId: deposit._id
-            });
-
-            // Push real-time notification to member (instant toast)
-            const { pushToUser } = await import('@/lib/pusher');
-            pushToUser(deposit.userId.toString(), 'deposit-approved', {
                 type: 'deposit-approved',
-                message: `Your deposit of ৳${deposit.amount} has been approved!`,
-                amount: deposit.amount
+                link: `/shopping`,
+                relatedId: deposit._id.toString()
             });
 
             console.log(`Approval notification sent to user for deposit ৳${deposit.amount}`);

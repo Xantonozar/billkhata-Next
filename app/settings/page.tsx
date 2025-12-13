@@ -12,6 +12,232 @@ import AppLayout from '@/components/AppLayout';
 import { useNotifications } from '@/contexts/NotificationContext';
 import ToastContainer from '@/components/ToastContainer';
 
+
+// Helper for VAPID key conversion
+function urlBase64ToUint8Array(base64String: string) {
+    const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+}
+
+function PushNotificationSettings() {
+    const [permissionState, setPermissionState] = useState<NotificationPermission>('default');
+    const [subscription, setSubscription] = useState<PushSubscription | null>(null);
+    const [isCompatible, setIsCompatible] = useState(false);
+
+    // Split loading states to avoid confusing UX
+    const [isInitializing, setIsInitializing] = useState(true);
+    const [isProcessing, setIsProcessing] = useState(false);
+
+    // 1. Check Compatibility ON LOAD
+    React.useEffect(() => {
+        const checkCompatibility = async () => {
+            setIsInitializing(true);
+            try {
+                // strict compatibility check
+                if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+                    setIsCompatible(false);
+                    return;
+                }
+
+                setIsCompatible(true);
+                setPermissionState(Notification.permission);
+
+                const registration = await navigator.serviceWorker.getRegistration();
+                if (registration) {
+                    const sub = await registration.pushManager.getSubscription();
+                    if (sub) {
+                        setSubscription(sub);
+                    }
+                }
+            } catch (error) {
+                console.error('Compatibility check error:', error);
+                setIsCompatible(false);
+            } finally {
+                setIsInitializing(false);
+            }
+        };
+
+        checkCompatibility();
+    }, []);
+
+    // 2. Enable Notifications
+    const enableNotifications = async () => {
+        setIsProcessing(true);
+        try {
+            const currentPerm = Notification.permission;
+            if (currentPerm === 'denied') {
+                throw new Error('Notifications are blocked by browser. Please reset permissions.');
+            }
+
+            if (currentPerm !== 'granted') {
+                const permission = await Notification.requestPermission();
+                if (permission !== 'granted') {
+                    throw new Error('Permission denied by user.');
+                }
+                setPermissionState(permission);
+            }
+
+            // 1. Clean Slate
+            const existingRegs = await navigator.serviceWorker.getRegistrations();
+            for (const reg of existingRegs) {
+                await reg.unregister();
+            }
+
+            const registration = await navigator.serviceWorker.register('/custom-sw.js', {
+                scope: '/',
+                updateViaCache: 'none'
+            });
+
+            // Robust wait for active state
+            const waitForActive = async () => {
+                if (registration.active?.state === 'activated') return;
+                return Promise.race([
+                    navigator.serviceWorker.ready,
+                    new Promise((resolve, reject) => {
+                        let checks = 0;
+                        const interval = setInterval(() => {
+                            if (registration.active?.state === 'activated') {
+                                clearInterval(interval);
+                                resolve(true);
+                            }
+                            checks++;
+                            if (checks > 20) { // 10s
+                                clearInterval(interval);
+                                reject(new Error('Activation Timeout'));
+                            }
+                        }, 500);
+                    })
+                ]);
+            };
+
+            await waitForActive();
+
+            const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+            if (!vapidKey) throw new Error('Missing VAPID Key');
+
+            const readyReg = await navigator.serviceWorker.ready;
+            const sub = await readyReg.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(vapidKey)
+            });
+
+            await fetch('/api/push/subscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(sub)
+            });
+
+            setSubscription(sub);
+            alert('✅ Notifications Enabled!');
+        } catch (error: any) {
+            console.error('Enable Error:', error);
+            alert('Error: ' + error.message);
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
+    // 3. Disable Notifications
+    const disableNotifications = async () => {
+        setIsProcessing(true);
+        try {
+            if (subscription) {
+                await subscription.unsubscribe();
+                await fetch('/api/push/subscribe', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ endpoint: subscription.endpoint })
+                });
+                setSubscription(null);
+            }
+        } catch (error) {
+            console.error('Disable Error:', error);
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
+
+
+    // UI RENDER
+    if (isInitializing) {
+        return <div className="text-slate-400 text-sm animate-pulse">Checking compatibility...</div>;
+    }
+
+    if (!isCompatible) {
+        return (
+            <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm border border-red-100">
+                ❌ Not Compatible. Please use Chrome, Edge, or Safari on an updated device.
+            </div>
+        );
+    }
+
+    if (permissionState === 'denied') {
+        return (
+            <div className="p-3 bg-orange-50 text-orange-600 rounded-lg text-sm border border-orange-100">
+                ⚠️ Notifications blocked. Please reset permissions in your browser settings.
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between p-4 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                <div>
+                    <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                        Push Notifications
+                        {subscription ? (
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400 px-2 py-0.5 rounded-full">Active</span>
+                        ) : (
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">Inactive</span>
+                        )}
+                    </h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-md">
+                        {subscription
+                            ? 'You are all set! You will receive real-time updates directly to your device.'
+                            : 'Enable this to receive instant alerts about bills, meals, and tasks, even when the app is closed.'}
+                    </p>
+                </div>
+
+                <div className="flex gap-3 w-full sm:w-auto">
+                    {subscription ? (
+                        <>
+                            <button
+                                onClick={disableNotifications}
+                                disabled={isProcessing}
+                                className="flex-1 sm:flex-none px-4 py-2 text-sm font-medium text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-all border border-transparent hover:border-red-200 disabled:opacity-50"
+                            >
+                                {isProcessing ? '...' : 'Disable'}
+                            </button>
+                        </>
+                    ) : (
+                        <button
+                            onClick={enableNotifications}
+                            disabled={isProcessing}
+                            className={`flex-1 sm:flex-none px-6 py-2.5 text-sm font-semibold text-white bg-primary-600 rounded-lg shadow-md hover:bg-primary-700 active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${isProcessing ? 'animate-pulse' : ''}`}
+                        >
+                            {isProcessing ? (
+                                <><span>Processing...</span></>
+                            ) : (
+                                <>
+                                    <span>Enable Notifications</span>
+                                </>
+                            )}
+                        </button>
+                    )}
+                </div>
+            </div>
+            {/* Debug Log Removed for production polish */}
+        </div>
+    );
+}
+
 export default function SettingsPage() {
     const { user, logout, setUser } = useAuth();
     const { theme, toggleTheme } = useTheme();
@@ -221,6 +447,19 @@ export default function SettingsPage() {
                                 {user.role}
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                {/* Notification Settings */}
+                <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                    <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-slate-700">
+                        <h2 className="text-lg font-semibold flex items-center gap-2 text-slate-800 dark:text-white">
+                            <BellIcon className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
+                            Notifications
+                        </h2>
+                    </div>
+                    <div className="p-4 sm:p-6">
+                        <PushNotificationSettings />
                     </div>
                 </div>
 

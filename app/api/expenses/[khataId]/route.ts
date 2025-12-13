@@ -76,26 +76,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ kha
             const room = await Room.findOne({ khataId }).select('manager').lean();
 
             if (room) {
-                const Notification = await import('@/models/Notification').then(mod => mod.default);
-                await Notification.create({
-                    userId: room.manager,
-                    khataId,
-                    type: 'expense',
+                const { notifyUser } = await import('@/lib/notificationService');
+                await notifyUser({
+                    userId: room.manager.toString(),
                     title: 'New Expense Pending',
                     message: `${user.name} submitted an expense of ৳${amount} for approval.`,
-                    actionText: 'Review Expense',
-                    link: `/shopping`,
-                    read: false,
-                    relatedId: expense._id
-                });
-
-                // Push real-time notification to room (manager gets instant toast)
-                const { pushToRoom } = await import('@/lib/pusher');
-                pushToRoom(khataId, 'new-expense', {
                     type: 'new-expense',
-                    message: `${user.name} submitted an expense of ৳${amount}`,
-                    amount,
-                    userId: user._id.toString()
+                    link: `/shopping`,
+                    relatedId: expense._id.toString()
                 });
 
                 console.log(`Expense notification sent to manager for ৳${amount}`);
@@ -103,6 +91,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ kha
         } catch (notificationError) {
             console.error('Error creating expense notification:', notificationError);
         }
+
 
         return NextResponse.json(expense, { status: 201 });
 

@@ -35,26 +35,14 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ khat
 
         // Notify member about expense rejection
         try {
-            const Notification = await import('@/models/Notification').then(mod => mod.default);
-            await Notification.create({
-                userId: expense.userId,
-                khataId,
-                type: 'expense',
+            const { notifyUser } = await import('@/lib/notificationService');
+            await notifyUser({
+                userId: expense.userId.toString(),
                 title: 'Expense Rejected',
                 message: `Your expense of ৳${expense.amount} was rejected.${reason ? ` Reason: ${reason}` : ''}`,
-                actionText: 'View Expenses',
-                link: `/shopping`,
-                read: false,
-                relatedId: expense._id
-            });
-
-            // Push real-time notification to member (instant toast)
-            const { pushToUser } = await import('@/lib/pusher');
-            pushToUser(expense.userId.toString(), 'expense-rejected', {
                 type: 'expense-rejected',
-                message: `Your expense of ৳${expense.amount} was rejected`,
-                amount: expense.amount,
-                reason
+                link: `/shopping`,
+                relatedId: expense._id.toString()
             });
 
             console.log(`Rejection notification sent to user for expense ৳${expense.amount}`);

@@ -96,26 +96,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ kha
             const room = await Room.findOne({ khataId }).select('manager').lean();
 
             if (room) {
-                const Notification = await import('@/models/Notification').then(mod => mod.default);
-                await Notification.create({
-                    userId: room.manager,
-                    khataId,
-                    type: 'deposit',
+                const { notifyUser } = await import('@/lib/notificationService');
+                await notifyUser({
+                    userId: room.manager.toString(),
                     title: 'New Deposit Pending',
                     message: `${user.name} submitted a deposit of ৳${amount} for approval.`,
-                    actionText: 'Review Deposit',
-                    link: `/shopping`,
-                    read: false,
-                    relatedId: deposit._id
-                });
-
-                // Push real-time notification to room (manager gets instant toast)
-                const { pushToRoom } = await import('@/lib/pusher');
-                pushToRoom(khataId, 'new-deposit', {
                     type: 'new-deposit',
-                    message: `${user.name} submitted a deposit of ৳${amount}`,
-                    amount,
-                    userId: user._id.toString()
+                    link: `/shopping`,
+                    relatedId: deposit._id.toString()
                 });
 
                 console.log(`Deposit notification sent to manager for ৳${amount}`);
@@ -123,6 +111,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ kha
         } catch (notificationError) {
             console.error('Error creating deposit notification:', notificationError);
         }
+
 
         return NextResponse.json(deposit, { status: 201 });
 
