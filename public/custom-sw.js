@@ -20,7 +20,7 @@ self.addEventListener('push', function (event) {
             data: {
                 dateOfArrival: Date.now(),
                 primaryKey: '2',
-                url: data.url || '/',
+                url: data.data?.url || data.url || '/',
             },
             // Attempt to play custom sound (support varies by browser/OS)
             sound: '/notification.mp3'
