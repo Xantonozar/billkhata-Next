@@ -76,6 +76,7 @@ export async function POST(req: NextRequest) {
 
             if (recipientIds.length > 0) {
                 await notifyUsers(recipientIds, {
+                    khataId: user.khataId,
                     title: 'New Bill Added',
                     message: `A new bill "${title}" of ৳${totalAmount} has been added.`,
                     type: 'new-bill',

@@ -98,6 +98,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ kha
             if (room) {
                 const { notifyUser } = await import('@/lib/notificationService');
                 await notifyUser({
+                    khataId,
                     userId: room.manager.toString(),
                     title: 'New Deposit Pending',
                     message: `${user.name} submitted a deposit of ৳${amount} for approval.`,

@@ -15,7 +15,48 @@ const FeatureCard: React.FC<{ icon: React.ReactNode, title: string, description:
   </div>
 );
 
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
+
 export default function LandingPage() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  const [deferredPrompt, setDeferredPrompt] = React.useState<any>(null);
+  const [isInstalled, setIsInstalled] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!loading && user) {
+      router.push('/dashboard');
+    }
+  }, [user, loading, router]);
+
+  React.useEffect(() => {
+    // Check if already installed
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setIsInstalled(true);
+    }
+
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    window.addEventListener('beforeinstallprompt', handler);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setDeferredPrompt(null);
+    }
+  };
+
   return (
     <div className="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
       {/* Header */}
@@ -49,10 +90,22 @@ export default function LandingPage() {
               The ultimate app for managing shared living expenses. From rent and utilities to daily meals, BillKhata keeps everything fair and transparent.
             </p>
             <div className="mt-8 flex gap-4 justify-center md:justify-start">
-              <Link href="/signup" className="px-5 md:px-8 py-3 font-semibold rounded-md bg-primary-500 text-white hover:bg-primary-600 transition-transform hover:scale-105 shadow-lg inline-block">
-                <span className="md:hidden">Create Khata</span>
-                <span className="hidden md:inline">Create Your Khata</span>
-              </Link>
+              {deferredPrompt ? (
+                <button
+                  onClick={handleInstallClick}
+                  className="px-5 md:px-8 py-3 font-semibold rounded-md bg-primary-600 text-white hover:bg-primary-700 transition-transform hover:scale-105 shadow-lg flex items-center gap-2"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                  Install App
+                </button>
+              ) : (
+                <Link href="/signup" className="px-5 md:px-8 py-3 font-semibold rounded-md bg-primary-500 text-white hover:bg-primary-600 transition-transform hover:scale-105 shadow-lg inline-block">
+                  <span className="md:hidden">Create Khata</span>
+                  <span className="hidden md:inline">Create Your Khata</span>
+                </Link>
+              )}
               <Link href="/demo" className="px-5 md:px-8 py-3 font-semibold rounded-md bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600 transition-transform hover:scale-105 inline-block">
                 <span className="md:hidden">Demo</span>
                 <span className="hidden md:inline">See Demo</span>

@@ -19,44 +19,50 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ khat
             return NextResponse.json({ message: 'Access denied' }, { status: 403 });
         }
 
-        // Calculate Total Deposits (Approved only)
-        const depositStats = await Deposit.aggregate([
-            { $match: { khataId, status: 'Approved' } },
-            { $group: { _id: null, total: { $sum: '$amount' } } }
+        // Run all aggregations in parallel
+        const [
+            depositStats,
+            expenseStats,
+            mealStats,
+            memberDepositStats,
+            memberMealStats
+        ] = await Promise.all([
+            // 1. Total Deposits (Approved only)
+            Deposit.aggregate([
+                { $match: { khataId, status: 'Approved' } },
+                { $group: { _id: null, total: { $sum: '$amount' } } }
+            ]),
+            // 2. Total Shopping (Approved only)
+            Expense.aggregate([
+                { $match: { khataId, status: 'Approved' } },
+                { $group: { _id: null, total: { $sum: '$amount' } } }
+            ]),
+            // 3. Total meals for all members
+            Meal.aggregate([
+                { $match: { khataId } },
+                { $group: { _id: null, total: { $sum: '$totalMeals' } } }
+            ]),
+            // 4. Member specific deposits
+            Deposit.aggregate([
+                { $match: { khataId, userId: user._id, status: 'Approved' } },
+                { $group: { _id: null, total: { $sum: '$amount' } } }
+            ]),
+            // 5. Member's total meals
+            Meal.aggregate([
+                { $match: { khataId, userId: user._id } },
+                { $group: { _id: null, total: { $sum: '$totalMeals' } } }
+            ])
         ]);
+
         const totalDeposits = depositStats.length > 0 ? depositStats[0].total : 0;
-
-        // Calculate Total Shopping (Approved only)
-        const expenseStats = await Expense.aggregate([
-            { $match: { khataId, status: 'Approved' } },
-            { $group: { _id: null, total: { $sum: '$amount' } } }
-        ]);
         const totalShopping = expenseStats.length > 0 ? expenseStats[0].total : 0;
-
         const balance = totalDeposits - totalShopping;
-
-        // Get total meals for all members
-        const mealStats = await Meal.aggregate([
-            { $match: { khataId } },
-            { $group: { _id: null, total: { $sum: '$totalMeals' } } }
-        ]);
         const totalMeals = mealStats.length > 0 ? mealStats[0].total : 0;
 
         // Calculate rate - total shopping / total meals
         const rate = totalMeals > 0 ? (totalShopping / totalMeals) : 0;
 
-        // Member specific stats
-        const memberDepositStats = await Deposit.aggregate([
-            { $match: { khataId, userId: user._id, status: 'Approved' } },
-            { $group: { _id: null, total: { $sum: '$amount' } } }
-        ]);
         const memberTotalDeposits = memberDepositStats.length > 0 ? memberDepositStats[0].total : 0;
-
-        // Get member's total meals
-        const memberMealStats = await Meal.aggregate([
-            { $match: { khataId, userId: user._id } },
-            { $group: { _id: null, total: { $sum: '$totalMeals' } } }
-        ]);
         const memberTotalMeals = memberMealStats.length > 0 ? memberMealStats[0].total : 0;
 
         // Member meal cost = rate * member's total meals

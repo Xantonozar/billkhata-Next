@@ -37,6 +37,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ khat
         try {
             const { notifyUser } = await import('@/lib/notificationService');
             await notifyUser({
+                khataId,
                 userId: deposit.userId.toString(),
                 title: 'Deposit Rejected',
                 message: `Your deposit of ৳${deposit.amount} was rejected.${reason ? ` Reason: ${reason}` : ''}`,

@@ -3,7 +3,7 @@ import { Inter, Poppins, Rubik } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import PushNotificationManager from "@/components/PushNotificationManager";
+
 
 const inter = Inter({
   variable: "--font-inter",
@@ -108,7 +108,6 @@ export default function RootLayout({
       >
         <Providers>
           {children}
-          <PushNotificationManager />
         </Providers>
         <SpeedInsights />
       </body>

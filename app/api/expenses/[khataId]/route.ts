@@ -78,6 +78,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ kha
             if (room) {
                 const { notifyUser } = await import('@/lib/notificationService');
                 await notifyUser({
+                    khataId,
                     userId: room.manager.toString(),
                     title: 'New Expense Pending',
                     message: `${user.name} submitted an expense of ৳${amount} for approval.`,

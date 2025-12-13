@@ -35,6 +35,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ khat
         try {
             const { notifyUser } = await import('@/lib/notificationService');
             await notifyUser({
+                khataId,
                 userId: expense.userId.toString(),
                 title: 'Expense Approved',
                 message: `Your expense of ৳${expense.amount} has been approved by the manager.`,
