@@ -24,20 +24,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     useEffect(() => {
         const initAuth = async () => {
-            const storedToken = localStorage.getItem('token');
-            if (storedToken) {
-                try {
-                    const currentUser = await api.getCurrentUser();
-                    if (currentUser) {
-                        setUser(currentUser);
-                    } else {
+            // Always try to fetch current user (relying on Cookie first, then localStorage)
+            try {
+                const currentUser = await api.getCurrentUser();
+                if (currentUser) {
+                    setUser(currentUser);
+                    // If we have a user but no token in localStorage (e.g. cleared by OS),
+                    // we might want to let the interceptor handle it, or just rely on cookies.
+                    // For now, having the user object is enough to be "Logged In".
+                } else {
+                    // Only clear if explicitly failed
+                    const storedToken = localStorage.getItem('token');
+                    if (storedToken) {
                         localStorage.removeItem('token');
                         localStorage.removeItem('user');
                     }
-                } catch (error) {
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('user');
                 }
+            } catch (error) {
+                // If 401, clear everything
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
             }
             setLoading(false);
         };

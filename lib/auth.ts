@@ -9,7 +9,7 @@ import crypto from 'crypto';
 // CONFIGURATION
 // ============================================
 
-const ACCESS_TOKEN_EXPIRES = process.env.JWT_ACCESS_EXPIRES || '15m';
+const ACCESS_TOKEN_EXPIRES = process.env.JWT_ACCESS_EXPIRES || '30d';
 const REFRESH_TOKEN_EXPIRES = process.env.JWT_REFRESH_EXPIRES || '7d';
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
@@ -159,13 +159,13 @@ export const setAuthCookies = (
     // Access token - shorter expiry
     response.cookies.set('accessToken', accessToken, {
         ...COOKIE_OPTIONS,
-        maxAge: 7 * 24 * 60 * 60, // 7 days (matching refresh token for simplicity)
+        maxAge: 30 * 24 * 60 * 60, // 30 days
     });
 
     // Refresh token - longer expiry
     response.cookies.set('refreshToken', refreshToken, {
         ...COOKIE_OPTIONS,
-        maxAge: 7 * 24 * 60 * 60, // 7 days
+        maxAge: 30 * 24 * 60 * 60, // 30 days
     });
 };
 

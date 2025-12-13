@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/services/api';
 import { CheckCircleIcon } from '@/components/Icons';
@@ -22,6 +23,7 @@ const initialMemberSummary = {
 
 const MemberShoppingView: React.FC = () => {
     const { user } = useAuth();
+    const router = useRouter();
     const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
     const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
     const [historyTab, setHistoryTab] = useState<'deposits' | 'expenses'>('deposits');
@@ -32,17 +34,21 @@ const MemberShoppingView: React.FC = () => {
 
     useEffect(() => {
         if (user?.khataId) {
-            // Fetch summary
-            api.getShoppingSummary(user.khataId).then(data => {
-                if (data && data.memberSummary) {
-                    setMemberSummary(data.memberSummary);
+            const fetchData = async () => {
+                const [summaryData, rosterItems, deposits, expenses] = await Promise.all([
+                    api.getShoppingSummary(user.khataId as string),
+                    api.getShoppingRoster(user.khataId as string),
+                    api.getDeposits(user.khataId as string),
+                    api.getExpenses(user.khataId as string)
+                ]);
+
+                if (summaryData?.memberSummary) {
+                    setMemberSummary(summaryData.memberSummary);
                 }
-            });
-            // Fetch roster for member view
-            api.getShoppingRoster(user.khataId).then(items => {
-                if (items && items.length > 0) {
+
+                if (rosterItems?.length > 0) {
                     const newRoster: Roster = { ...emptyRoster };
-                    items.forEach((item: any) => {
+                    rosterItems.forEach((item: any) => {
                         if (newRoster[item.day]) {
                             newRoster[item.day] = {
                                 name: item.userName || '',
@@ -53,30 +59,16 @@ const MemberShoppingView: React.FC = () => {
                     });
                     setRoster(newRoster);
                 }
-            });
 
-            // Fetch my deposits
-            api.getDeposits(user.khataId).then(deposits => {
-                // Filter for my deposits only
-                // Note: The main GET /deposits currently returns ALL. 
-                // We should probably filter on backend for performance, but existing code filtered on frontend.
-                // For 'my history', pagination is acceptable, or specific 'my items' endpoint is better.
-                // Keeping existing logic for now.
-                const myOwn = deposits.filter((d: any) => {
-                    const depositUserId = d.userId?._id || d.userId;
-                    return depositUserId === user.id;
-                });
-                setMyDeposits(myOwn);
-            });
+                // Filter for my items (keeping existing logic)
+                const myDeposits = deposits.filter((d: any) => (d.userId?._id || d.userId) === user.id);
+                setMyDeposits(myDeposits);
 
-            // Fetch my expenses
-            api.getExpenses(user.khataId).then(expenses => {
-                const myOwn = expenses.filter((e: any) => {
-                    const expenseUserId = e.userId?._id || e.userId;
-                    return expenseUserId === user.id;
-                });
-                setMyExpenses(myOwn);
-            });
+                const myExpenses = expenses.filter((e: any) => (e.userId?._id || e.userId) === user.id);
+                setMyExpenses(myExpenses);
+            };
+
+            fetchData();
         }
     }, [user?.khataId, user?.id]);
 
@@ -182,7 +174,7 @@ const MemberShoppingView: React.FC = () => {
                     <div className="p-4 space-y-2">
                         {historyTab === 'deposits' && (
                             myDeposits.length > 0 ? (
-                                myDeposits.map(d => (
+                                myDeposits.slice(0, 3).map(d => (
                                     <div key={d._id} className="flex justify-between items-center text-sm p-2 bg-slate-50 dark:bg-slate-700/50 rounded-md">
                                         <span className="text-slate-700 dark:text-slate-300">{new Date(d.createdAt).toLocaleDateString()} - {d.paymentMethod}</span>
                                         <span className="font-semibold flex items-center gap-1 text-slate-800 dark:text-white">
@@ -199,7 +191,7 @@ const MemberShoppingView: React.FC = () => {
                         )}
                         {historyTab === 'expenses' && (
                             myExpenses.length > 0 ? (
-                                myExpenses.map(e => (
+                                myExpenses.slice(0, 3).map(e => (
                                     <div key={e._id} className="flex justify-between items-center text-sm p-2 bg-slate-50 dark:bg-slate-700/50 rounded-md">
                                         <span className="text-slate-700 dark:text-slate-300">{new Date(e.createdAt).toLocaleDateString()}</span>
                                         <span className="font-semibold flex items-center gap-1 text-slate-800 dark:text-white">
@@ -214,7 +206,7 @@ const MemberShoppingView: React.FC = () => {
                                 <p className="text-center text-slate-500 dark:text-slate-400 py-4">No expense history found.</p>
                             )
                         )}
-                        <button className="text-sm font-semibold text-primary-600 hover:underline mt-2 w-full text-center p-2 dark:text-primary-400">View All →</button>
+                        <button onClick={() => router.push('/shopping/history')} className="text-sm font-semibold text-primary-600 hover:underline mt-2 w-full text-center p-2 dark:text-primary-400">View All →</button>
                     </div>
                 </div>
             </div>
