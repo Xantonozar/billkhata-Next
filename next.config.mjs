@@ -29,9 +29,15 @@ const nextConfig = {
 
 export default withPWA({
     dest: 'public',
-    register: true,
+    register: false, // We handle registration manually in the UI to prevent conflicts
     skipWaiting: true,
-    disable: false, // Enable PWA in development for testing
+    disable: false,
+    buildExcludes: [/middleware-manifest\.json$/, /_buildManifest\.js$/, /_ssgManifest\.js$/],
+    workboxOptions: {
+        importScripts: ['/custom-sw.js'],
+        skipWaiting: true,
+        clientsClaim: true,
+    },
     runtimeCaching: [
         {
             urlPattern: /^https:\/\/fonts\.(?:googleapis|gstatic)\.com\/.*/i,
