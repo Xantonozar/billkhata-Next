@@ -68,11 +68,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return newUser;
     };
 
-    const logout = () => {
-        setUser(null);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        router.push('/login');
+    const logout = async () => {
+        try {
+            await api.logout();
+        } catch (error) {
+            console.error('Error logging out from server:', error);
+        } finally {
+            setUser(null);
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            router.push('/login');
+        }
     };
 
     if (loading) {

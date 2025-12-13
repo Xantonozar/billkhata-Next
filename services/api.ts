@@ -64,6 +64,14 @@ const api = {
         }
     },
 
+    logout: async (): Promise<void> => {
+        try {
+            await axiosInstance.post('/auth/logout');
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
+    },
+
     signup: async (name: string, email: string, pass: string, role: Role): Promise<User | null> => {
         try {
             const response = await axiosInstance.post('/auth/signup', {
