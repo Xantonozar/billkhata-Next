@@ -159,7 +159,7 @@ export const setAuthCookies = (
     // Access token - shorter expiry
     response.cookies.set('accessToken', accessToken, {
         ...COOKIE_OPTIONS,
-        maxAge: 15 * 60, // 15 minutes
+        maxAge: 7 * 24 * 60 * 60, // 7 days (matching refresh token for simplicity)
     });
 
     // Refresh token - longer expiry

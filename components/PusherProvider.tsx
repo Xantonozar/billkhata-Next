@@ -157,6 +157,33 @@ export const PusherProvider: React.FC<PusherProviderProps> = ({
             refreshNotifications();
         });
 
+        // Unified Listener for all notifications coming from notificationService
+        userChannel.bind('notification', (data: any) => {
+            // 1. Play Sound
+            try {
+                const audio = new Audio('/notification.mp3');
+                audio.play().catch(e => console.log('Audio play failed (interaction required):', e));
+            } catch (e) {
+                console.error('Audio setup failed:', e);
+            }
+
+            // 2. Show Toast
+            // Determine type for styling if needed, default to info
+            addToast({
+                type: 'info',
+                title: data.title || 'Notification',
+                message: data.message
+            });
+
+            // 2. Refresh Notification List
+            refreshNotifications();
+
+            // 3. Update Pending Counts if relevant
+            if (['new-deposit', 'new-expense', 'new-join-request'].includes(data.type)) {
+                onPendingCountUpdate?.();
+            }
+        });
+
         // Cleanup
         return () => {
             channelsRef.current.forEach(channelName => {
