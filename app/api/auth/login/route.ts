@@ -58,7 +58,10 @@ export async function POST(req: NextRequest) {
                 email: user.email,
                 role: user.role,
                 roomStatus: user.roomStatus,
-                khataId: user.khataId
+                khataId: user.khataId,
+                avatarUrl: user.avatarUrl,
+                whatsapp: user.whatsapp,
+                facebook: user.facebook
             }
         });
 
