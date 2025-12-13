@@ -32,7 +32,8 @@ axiosInstance.interceptors.response.use(
     (error) => {
         if (typeof window !== 'undefined') {
             const isAuthEndpoint = error.config?.url?.includes('/auth/login') ||
-                error.config?.url?.includes('/auth/signup');
+                error.config?.url?.includes('/auth/signup') ||
+                error.config?.url?.includes('/auth/me');
 
             if (error.response?.status === 401 && !isAuthEndpoint) {
                 localStorage.removeItem('token');
