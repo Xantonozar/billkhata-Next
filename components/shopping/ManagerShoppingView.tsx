@@ -170,16 +170,16 @@ const ManagerShoppingView: React.FC = () => {
                     <h3 className="font-semibold text-lg mb-3 text-slate-900 dark:text-white">Fund Status</h3>
                     <div className="border-t border-slate-200 dark:border-slate-700 pt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                         <div className="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-md flex justify-between sm:block">
-                            <p className="text-sm text-slate-500 dark:text-slate-400">Total Deposits</p><p className="font-bold text-lg text-slate-800 dark:text-white">৳{fundStatus.totalDeposits.toLocaleString()}</p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">Total Deposits</p><p className="font-bold text-lg text-slate-800 dark:text-white">৳{fundStatus.totalDeposits.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                         </div>
                         <div className="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-md flex justify-between sm:block">
-                            <p className="text-sm text-slate-500 dark:text-slate-400">Total Shopping</p><p className="font-bold text-lg text-slate-800 dark:text-white">৳{fundStatus.totalShopping.toLocaleString()}</p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">Total Shopping</p><p className="font-bold text-lg text-slate-800 dark:text-white">৳{fundStatus.totalShopping.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                         </div>
                         <div className="p-3 bg-green-50 dark:bg-green-500/10 rounded-md flex justify-between sm:block">
-                            <p className="text-sm text-green-600 dark:text-green-300">Fund Balance</p><p className="font-bold text-lg text-green-600 dark:text-green-300">{fundStatus.balance >= 0 ? '+' : ''}৳{fundStatus.balance.toLocaleString()}</p>
+                            <p className="text-sm text-green-600 dark:text-green-300">Fund Balance</p><p className="font-bold text-lg text-green-600 dark:text-green-300">{fundStatus.balance >= 0 ? '+' : ''}৳{fundStatus.balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                         </div>
                         <div className="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-md flex justify-between sm:block">
-                            <p className="text-sm text-slate-500 dark:text-slate-400">Current Rate</p><p className="font-bold text-lg text-slate-800 dark:text-white">৳{fundStatus.rate}/qty</p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">Current Rate</p><p className="font-bold text-lg text-slate-800 dark:text-white">৳{fundStatus.rate.toFixed(2)}/qty</p>
                         </div>
                     </div>
                 </div>
@@ -191,7 +191,7 @@ const ManagerShoppingView: React.FC = () => {
                             <h4 className="font-semibold mb-2 text-slate-800 dark:text-slate-200">💰 Deposits ({pendingDeposits.length})</h4>
                             {pendingDeposits.map(d => (
                                 <div key={d._id} className="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
-                                    <p className="font-bold text-slate-900 dark:text-white">{d.userName} - ৳{d.amount} - {d.paymentMethod}</p>
+                                    <p className="font-bold text-slate-900 dark:text-white">{d.userName} - ৳{d.amount.toFixed(2)} - {d.paymentMethod}</p>
                                     <p className="text-xs text-slate-500 dark:text-slate-400">{new Date(d.createdAt).toLocaleDateString()} • {d.transactionId || 'No TRX ID'}</p>
                                     <div className="flex flex-wrap justify-end gap-2 mt-2">
                                         <button className="text-xs font-semibold text-primary-600 hover:underline dark:text-primary-400 mr-auto sm:mr-0">View Screenshot</button>
@@ -205,7 +205,7 @@ const ManagerShoppingView: React.FC = () => {
                             <h4 className="font-semibold mb-2 text-slate-800 dark:text-slate-200">🛒 Shopping Expenses ({pendingExpenses.length})</h4>
                             {pendingExpenses.map(e => (
                                 <div key={e._id} className="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
-                                    <p className="font-bold text-slate-900 dark:text-white">{e.userName} - ৳{e.amount}</p>
+                                    <p className="font-bold text-slate-900 dark:text-white">{e.userName} - ৳{e.amount.toFixed(2)}</p>
                                     <p className="text-xs text-slate-500 dark:text-slate-400">{new Date(e.createdAt).toLocaleDateString()} • {e.items}</p>
                                     <div className="flex flex-wrap justify-end gap-2 mt-2">
                                         <button className="text-xs font-semibold text-primary-600 hover:underline dark:text-primary-400 mr-auto sm:mr-0">View Receipt</button>

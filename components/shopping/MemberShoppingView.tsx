@@ -153,11 +153,11 @@ const MemberShoppingView: React.FC = () => {
                 <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6 grid grid-cols-2 divide-x dark:divide-slate-700 text-center">
                     <div>
                         <p className="text-sm text-slate-500 dark:text-slate-400">Deposit Balance</p>
-                        <p className="text-2xl font-bold text-slate-800 dark:text-white font-numeric">৳{memberSummary.totalDeposits.toLocaleString()}</p>
+                        <p className="text-2xl font-bold text-slate-800 dark:text-white font-numeric">৳{memberSummary.totalDeposits.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                     </div>
                     <div>
                         <p className="text-sm text-slate-500 dark:text-slate-400">Due / Refund</p>
-                        <p className="text-2xl font-bold text-green-600 dark:text-green-400 font-numeric">{memberSummary.refundable >= 0 ? '+' : ''}৳{memberSummary.refundable.toLocaleString()}</p>
+                        <p className="text-2xl font-bold text-green-600 dark:text-green-400 font-numeric">{memberSummary.refundable >= 0 ? '+' : ''}৳{memberSummary.refundable.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                     </div>
                 </div>
                 <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md">
@@ -178,7 +178,7 @@ const MemberShoppingView: React.FC = () => {
                                     <div key={d._id} className="flex justify-between items-center text-sm p-2 bg-slate-50 dark:bg-slate-700/50 rounded-md">
                                         <span className="text-slate-700 dark:text-slate-300">{new Date(d.createdAt).toLocaleDateString()} - {d.paymentMethod}</span>
                                         <span className="font-semibold flex items-center gap-1 text-slate-800 dark:text-white">
-                                            ৳{d.amount.toLocaleString()}
+                                            ৳{d.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                             {d.status === 'Approved' && <CheckCircleIcon className="w-4 h-4 text-green-500" />}
                                             {d.status === 'Pending' && <span className="text-yellow-500 text-xs">⏳ Pending</span>}
                                             {d.status === 'Rejected' && <span className="text-red-500 text-xs">❌ Rejected</span>}
@@ -195,7 +195,7 @@ const MemberShoppingView: React.FC = () => {
                                     <div key={e._id} className="flex justify-between items-center text-sm p-2 bg-slate-50 dark:bg-slate-700/50 rounded-md">
                                         <span className="text-slate-700 dark:text-slate-300">{new Date(e.createdAt).toLocaleDateString()}</span>
                                         <span className="font-semibold flex items-center gap-1 text-slate-800 dark:text-white">
-                                            ৳{e.amount.toLocaleString()}
+                                            ৳{e.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                             {e.status === 'Approved' && <span className="text-green-600 dark:text-green-400 text-xs">✅ Approved</span>}
                                             {e.status === 'Pending' && <span className="text-yellow-600 dark:text-yellow-400 text-xs">⏳ Pending</span>}
                                             {e.status === 'Rejected' && <span className="text-red-600 dark:text-red-400 text-xs">❌ Rejected</span>}
