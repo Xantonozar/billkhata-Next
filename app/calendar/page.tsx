@@ -4,12 +4,18 @@ import React, { useState, useMemo, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { Role } from '@/types';
-import { CalendarIcon, XIcon, PencilIcon } from '@/components/Icons';
+import { CalendarIcon, XIcon, PencilIcon, PlusIcon } from '@/components/Icons';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { api } from '@/services/api';
 import ToastContainer from '@/components/ToastContainer';
 
 const COST_PER_QUANTITY = 45.50;
+
+const getUserId = (userObj: any): string | null => {
+    if (!userObj) return null;
+    if (typeof userObj === 'string') return userObj;
+    return userObj._id || userObj.id || null;
+};
 
 // --- MODALS ---
 
@@ -38,10 +44,10 @@ const LogMealsModal: React.FC<LogMealsModalProps> = ({ date, onClose, onSubmit, 
         <div>
             <label className="font-semibold text-lg text-slate-900 dark:text-white">{icon} {label}</label>
             <div className="flex items-center gap-x-4 mt-2">
-                {[0, 0.5, 1, 2].map(q => (
+                {[0, 0.50, 1.00, 2.00].map(q => (
                     <label key={q} className="flex items-center gap-2 cursor-pointer text-slate-700 dark:text-slate-300">
                         <input type="radio" name={label} value={q} checked={value === q} onChange={() => onChange(q)} className="w-5 h-5 text-primary-600 focus:ring-primary-500" />
-                        <span>{q}</span>
+                        <span>{q.toFixed(2)}</span>
                     </label>
                 ))}
             </div>
@@ -87,13 +93,19 @@ interface ManageMealsModalProps {
     onClose: () => void;
     mealsForDay: any[];
     onUpdate: (userId: string, meals: any) => Promise<void>;
+    members: any[];
 }
 
-const ManageMealsModal: React.FC<ManageMealsModalProps> = ({ date, onClose, mealsForDay, onUpdate }) => {
+const ManageMealsModal: React.FC<ManageMealsModalProps> = ({ date, onClose, mealsForDay, onUpdate, members }) => {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editValue, setEditValue] = useState<number>(0);
     const [editType, setEditType] = useState<'breakfast' | 'lunch' | 'dinner' | null>(null);
     const [loading, setLoading] = useState(false);
+
+    // Adding new entry state
+    const [isAddingMode, setIsAddingMode] = useState(false);
+    const [newMealMemberId, setNewMealMemberId] = useState('');
+    const [newMealData, setNewMealData] = useState({ breakfast: 0, lunch: 0, dinner: 0 });
 
     // Process data for the view
     const dayDetails = useMemo(() => {
@@ -101,10 +113,11 @@ const ManageMealsModal: React.FC<ManageMealsModalProps> = ({ date, onClose, meal
         const userMap = new Map();
 
         mealsForDay.forEach(m => {
-            if (m.userId) {
-                userMap.set(m.userId, {
-                    userId: m.userId,
-                    name: m.userName || 'Unknown Members',
+            const uid = getUserId(m.userId);
+            if (uid) {
+                userMap.set(uid, {
+                    userId: uid,
+                    name: m.userName || (typeof m.userId === 'object' ? m.userId.name : 'Unknown Members'),
                     breakfast: m.breakfast || 0,
                     lunch: m.lunch || 0,
                     dinner: m.dinner || 0,
@@ -121,20 +134,20 @@ const ManageMealsModal: React.FC<ManageMealsModalProps> = ({ date, onClose, meal
 
         const total = users.reduce((acc, curr) => acc + curr.breakfast + curr.lunch + curr.dinner, 0);
 
-        return { total, breakfast, lunch, dinner };
+        return { total, breakfast, lunch, dinner, userMap };
     }, [mealsForDay]);
 
     const handleEditClick = (item: any, type: 'breakfast' | 'lunch' | 'dinner') => {
         setEditingId(item.userId);
         setEditType(type);
         setEditValue(item.qty);
+        setIsAddingMode(false);
     };
 
     const handleSave = async (userId: string, original: any) => {
         if (!editType) return;
         setLoading(true);
         try {
-            // Construct the update object. We must preserve other meal types.
             const updatedMeals = {
                 breakfast: original.breakfast || 0,
                 lunch: original.lunch || 0,
@@ -151,6 +164,21 @@ const ManageMealsModal: React.FC<ManageMealsModalProps> = ({ date, onClose, meal
             setLoading(false);
         }
     };
+
+    const handleAddNewMeal = async () => {
+        if (!newMealMemberId) return;
+        setLoading(true);
+        try {
+            await onUpdate(newMealMemberId, newMealData);
+            setIsAddingMode(false);
+            setNewMealData({ breakfast: 0, lunch: 0, dinner: 0 });
+            setNewMealMemberId('');
+        } catch (error) {
+            console.error("Failed to add meal", error);
+        } finally {
+            setLoading(false);
+        }
+    }
 
     const MealTable: React.FC<{ title: string, data: any[], type: 'breakfast' | 'lunch' | 'dinner' }> = ({ title, data, type }) => (
         <div>
@@ -176,13 +204,13 @@ const ManageMealsModal: React.FC<ManageMealsModalProps> = ({ date, onClose, meal
                                             className="px-1 py-1 rounded border border-primary-500 bg-white dark:bg-slate-800 text-sm w-16"
                                             onClick={e => e.stopPropagation()}
                                         >
-                                            {[0, 0.5, 1, 1.5, 2, 2.5, 3].map(val => (
-                                                <option key={val} value={val}>{val}</option>
+                                            {[0, 0.50, 1.00, 1.50, 2.00, 2.50, 3.00].map(val => (
+                                                <option key={val} value={val}>{val.toFixed(2)}</option>
                                             ))}
                                         </select>
                                     </div>
                                 ) : (
-                                    member.qty.toFixed(1)
+                                    member.qty.toFixed(2)
                                 )}
                             </div>
                             <div className="text-right">
@@ -226,14 +254,84 @@ const ManageMealsModal: React.FC<ManageMealsModalProps> = ({ date, onClose, meal
                     <h2 className="text-xl font-bold font-sans text-slate-900 dark:text-white">Meals - {date.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric' })} (Total: {dayDetails.total} Meals)</h2>
                     <button onClick={onClose} className="p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700"><XIcon className="w-5 h-5 text-slate-500" /></button>
                 </div>
+
                 <div className="border-t my-4 border-slate-200 dark:border-slate-700"></div>
+
+                {/* Add New Meal Section */}
+                <div className="mb-6">
+                    {!isAddingMode ? (
+                        <button
+                            onClick={() => setIsAddingMode(true)}
+                            className="w-full py-2 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg text-slate-600 dark:text-slate-400 hover:border-primary-500 hover:text-primary-500 transition-colors flex items-center justify-center gap-2"
+                        >
+                            <PlusIcon className="w-5 h-5" /> Add Member Meal
+                        </button>
+                    ) : (
+                        <div className="bg-slate-50 dark:bg-slate-700/30 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
+                            <h3 className="font-bold text-slate-900 dark:text-white mb-3">Add Entry</h3>
+                            <div className="space-y-3">
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Select Member</label>
+                                    <select
+                                        className="w-full p-2 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                                        value={newMealMemberId}
+                                        onChange={(e) => {
+                                            const selectedId = e.target.value;
+                                            setNewMealMemberId(selectedId);
+                                            // If member already has data, prefill it
+                                            if (dayDetails.userMap.has(selectedId)) {
+                                                const existing = dayDetails.userMap.get(selectedId);
+                                                setNewMealData({
+                                                    breakfast: existing.breakfast,
+                                                    lunch: existing.lunch,
+                                                    dinner: existing.dinner
+                                                });
+                                            } else {
+                                                setNewMealData({ breakfast: 0, lunch: 0, dinner: 0 });
+                                            }
+                                        }}
+                                    >
+                                        <option value="">-- Select Member --</option>
+                                        {members.map(m => (
+                                            <option key={m.id} value={m.id}>
+                                                {m.name} {dayDetails.userMap.has(m.id) ? '(Update)' : ''}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {['breakfast', 'lunch', 'dinner'].map((type) => (
+                                        <div key={type}>
+                                            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1 capitalize">{type}</label>
+                                            <select
+                                                className="w-full p-2 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm"
+                                                value={newMealData[type as keyof typeof newMealData]}
+                                                onChange={e => setNewMealData({ ...newMealData, [type]: parseFloat(e.target.value) })}
+                                            >
+                                                {[0, 0.50, 1.00, 1.50, 2.00, 2.50, 3.00].map(v => <option key={v} value={v}>{v.toFixed(2)}</option>)}
+                                            </select>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="flex gap-2 pt-2">
+                                    <button onClick={() => setIsAddingMode(false)} className="flex-1 py-1.5 text-sm text-slate-600 hover:bg-slate-200 rounded">Cancel</button>
+                                    <button
+                                        onClick={handleAddNewMeal}
+                                        disabled={!newMealMemberId || loading}
+                                        className="flex-1 py-1.5 text-sm bg-primary-600 text-white rounded hover:bg-primary-700 disabled:opacity-50"
+                                    >
+                                        Save
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
                 <div className="space-y-6">
                     <MealTable title="🥣 Breakfast" data={dayDetails.breakfast} type="breakfast" />
                     <MealTable title="🍛 Lunch" data={dayDetails.lunch} type="lunch" />
                     <MealTable title="🍜 Dinner" data={dayDetails.dinner} type="dinner" />
-                </div>
-                <div className="mt-6 text-center text-xs text-slate-500">
-                    <p>Tip: You can edit quantities directly from here.</p>
                 </div>
             </div>
         </div>
@@ -249,6 +347,7 @@ export default function CalendarPage() {
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [monthlyMeals, setMonthlyMeals] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
+    const [members, setMembers] = useState<any[]>([]);
 
     const handlePrevMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
     const handleNextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
@@ -280,7 +379,6 @@ export default function CalendarPage() {
                 const startDate = new Date(year, month, 1);
                 const endDate = new Date(year, month + 1, 0);
 
-                // Adjust to ISO string for API
                 const startStr = startDate.toISOString();
                 const endStr = endDate.toISOString();
 
@@ -297,12 +395,34 @@ export default function CalendarPage() {
         fetchMonthlyMeals();
     }, [currentDate, user?.khataId, addToast]);
 
+    // Fetch members if manager
+    useEffect(() => {
+        const fetchMembers = async () => {
+            if (user?.role === Role.Manager && user.khataId) {
+                try {
+                    const data = await api.getMembersForRoom(user.khataId);
+                    setMembers(data);
+                } catch (error) {
+                    console.error("Failed to fetch members", error);
+                }
+            }
+        };
+        fetchMembers();
+    }, [user?.role, user?.khataId]);
+
+    const formatDateForApi = (date: Date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
     const handleSubmitMealEntry = async (data: any) => {
         if (!user?.khataId) return;
 
         try {
             await api.submitMeal(user.khataId, {
-                date: data.date.toISOString(),
+                date: formatDateForApi(data.date),
                 breakfast: data.meals.breakfast,
                 lunch: data.meals.lunch,
                 dinner: data.meals.dinner
@@ -320,9 +440,15 @@ export default function CalendarPage() {
     const handleManagerUpdateMeal = async (targetUserId: string, meals: any) => {
         if (!user?.khataId || !selectedDate) return;
 
+        // Find existing meal for this user on this day to merge if we are only updating one field
+        // But here 'meals' usually comes from the edit modal as specific field or full object
+        // If it comes from 'Add New', it is full object.
+        // If it comes from 'Edit Row', it is full object constructed in handleSave.
+        // So we can just send it.
+
         try {
             await api.submitMeal(user.khataId, {
-                date: selectedDate.toISOString(),
+                date: formatDateForApi(selectedDate),
                 userId: targetUserId,
                 breakfast: meals.breakfast,
                 lunch: meals.lunch,
@@ -339,7 +465,6 @@ export default function CalendarPage() {
 
     // Helper to get meals for a specific day
     const getMealsForDay = (day: number) => {
-        const targetDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
         return monthlyMeals.filter(meal => {
             const mealDate = new Date(meal.date);
             return mealDate.getDate() === day &&
@@ -351,7 +476,7 @@ export default function CalendarPage() {
     // Helper to get current user's meal for a specific day
     const getUserMealForDay = (day: number) => {
         const dayMeals = getMealsForDay(day);
-        return dayMeals.find(m => m.userId === user?.id);
+        return dayMeals.find(m => getUserId(m.userId) === user?.id);
     };
 
     const calendarGrid = useMemo(() => {
@@ -378,7 +503,7 @@ export default function CalendarPage() {
                 displayCount = dayMeals.reduce((acc, curr) => acc + (curr.breakfast || 0) + (curr.lunch || 0) + (curr.dinner || 0), 0);
             } else {
                 // Member sees only their own meals
-                const myMeal = dayMeals.find(m => m.userId === user?.id);
+                const myMeal = dayMeals.find(m => getUserId(m.userId) === user?.id);
                 if (myMeal) {
                     displayCount = (myMeal.breakfast || 0) + (myMeal.lunch || 0) + (myMeal.dinner || 0);
                 }
@@ -444,6 +569,7 @@ export default function CalendarPage() {
                     onClose={() => setSelectedDate(null)}
                     mealsForDay={getMealsForDay(selectedDate.getDate())}
                     onUpdate={handleManagerUpdateMeal}
+                    members={members}
                 />
             )}
 
