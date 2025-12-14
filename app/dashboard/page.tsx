@@ -99,7 +99,7 @@ const ManagerDashboard: React.FC<{ initialData?: any, loading?: boolean, user?: 
             const total = initialData.priorityActions.expenses.reduce((sum: number, e: any) => sum + e.amount, 0);
             actions.push({
                 title: `🛒 ${count} Shopping Approval${count > 1 ? 's' : ''}`,
-                details: `Total: ৳${total}`,
+                details: `Total: ৳${total.toFixed(2)}`,
                 page: '/shopping'
             });
         }
@@ -109,7 +109,7 @@ const ManagerDashboard: React.FC<{ initialData?: any, loading?: boolean, user?: 
             const total = initialData.priorityActions.deposits.reduce((sum: number, d: any) => sum + d.amount, 0);
             actions.push({
                 title: `💵 ${count} Deposit Approval${count > 1 ? 's' : ''}`,
-                details: `Total: ৳${total}`,
+                details: `Total: ৳${total.toFixed(2)}`,
                 page: '/shopping'
             });
         }
@@ -198,9 +198,9 @@ const ManagerDashboard: React.FC<{ initialData?: any, loading?: boolean, user?: 
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
-                <StatCard title="💰 Total Bills" value={`৳${stats.totalBillsAmount.toLocaleString()}`} subtitle={`${stats.totalBillsCount} bills`} isLoading={loading} />
+                <StatCard title="💰 Total Bills" value={`৳${stats.totalBillsAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} subtitle={`${stats.totalBillsCount} bills`} isLoading={loading} />
                 <StatCard title="🔔 Approvals" value={`${stats.pendingApprovals} items`} subtitle="Pending action" isLoading={loading} />
-                <StatCard title="💵 Fund" value={`+৳${stats.fundBalance.toLocaleString()}`} subtitle="Current balance" isLoading={loading} />
+                <StatCard title="💵 Fund" value={`+৳${stats.fundBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} subtitle="Current balance" isLoading={loading} />
                 <StatCard title="👥 Members" value={`${stats.activeMembers}`} subtitle="Active users" isLoading={loading} />
             </div>
 
@@ -308,11 +308,11 @@ const MemberDashboard: React.FC<{ initialData?: any, loading?: boolean, user?: a
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-2 gap-3 sm:gap-6">
-                <StatCard title="💰 Bills Due" value={`৳${billsDueAmount.toFixed(0)}`} subtitle={`${billsDueCount} pending`} isLoading={loading} />
-                <StatCard title="🍽️ Meals" value={`${totalMealCount}`} subtitle="This month" isLoading={loading} />
+                <StatCard title="💰 Bills Due" value={`৳${billsDueAmount.toFixed(2)}`} subtitle={`${billsDueCount} pending`} isLoading={loading} />
+                <StatCard title="🍽️ Meals" value={`${totalMealCount.toFixed(2)}`} subtitle="This month" isLoading={loading} />
                 <StatCard
                     title="💵 Refund"
-                    value={`${refundAmount >= 0 ? '+' : ''}৳${refundAmount.toFixed(0)}`}
+                    value={`${refundAmount >= 0 ? '+' : ''}৳${refundAmount.toFixed(2)}`}
                     subtitle="Available"
                     isLoading={loading}
                 />
