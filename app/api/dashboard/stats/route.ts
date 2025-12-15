@@ -78,13 +78,28 @@ export async function GET(req: NextRequest) {
                 pendingUsers
             ] = await Promise.all([
                 Bill.find({ khataId: user.khataId }).lean(),
-                User.countDocuments({ khataId: user.khataId, roomStatus: RoomStatus.Approved }),
+                User.countDocuments({ khataId: user.khataId, roomStatus: RoomStatus.Approved, role: { $ne: Role.Manager } }),
                 Deposit.find({ khataId: user.khataId, status: 'Pending' }).lean(),
                 Expense.find({ khataId: user.khataId, status: 'Pending' }).lean(),
                 User.countDocuments({ khataId: user.khataId, roomStatus: RoomStatus.Pending })
             ]);
 
             const totalBillsAmount = bills.reduce((acc, bill) => acc + bill.totalAmount, 0);
+
+            // Count pending bill payments (shares with 'Pending Approval' status)
+            const pendingBillPayments: any[] = [];
+            bills.forEach((bill: any) => {
+                bill.shares?.forEach((share: any) => {
+                    if (share.status === 'Pending Approval') {
+                        pendingBillPayments.push({
+                            billTitle: bill.title,
+                            userName: share.userName,
+                            amount: share.amount,
+                            billId: bill._id
+                        });
+                    }
+                });
+            });
 
             const approvedDeposits = await Deposit.find({ khataId: user.khataId, status: 'Approved' }).lean();
             const approvedExpenses = await Expense.find({ khataId: user.khataId, status: 'Approved' }).lean();
@@ -96,14 +111,15 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({
                 totalBillsAmount,
                 totalBillsCount: bills.length,
-                pendingApprovals: pendingDeposits.length + pendingExpenses.length,
+                pendingApprovals: pendingDeposits.length + pendingExpenses.length + pendingBillPayments.length,
                 fundBalance,
                 activeMembers: activeMembersCount,
                 todaysMenu,
                 pendingJoinRequestsCount: pendingUsers,
                 priorityActions: {
                     expenses: pendingExpenses,
-                    deposits: pendingDeposits
+                    deposits: pendingDeposits,
+                    billPayments: pendingBillPayments
                 }
             });
 
