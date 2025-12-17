@@ -52,7 +52,7 @@ const MockExpense = () => (
         <div className="space-y-3">
             <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
                 <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">🛒</div>
+                    <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">🛒 </div>
                     <div>
                         <p className="text-sm font-bold text-slate-800 dark:text-white">Groceries</p>
                         <p className="text-xs text-slate-500">Shared by 4</p>
