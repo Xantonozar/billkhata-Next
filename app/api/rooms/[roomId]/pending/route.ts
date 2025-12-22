@@ -26,7 +26,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ room
         }
 
         const pendingMembers = room.members
-            .filter((m: any) => m.status === 'Pending')
+            .filter((m: any) => m.status === 'Pending' && m.user)
             .map((m: any) => ({
                 id: m.user._id,
                 name: m.user.name,

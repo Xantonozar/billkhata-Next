@@ -3,9 +3,9 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/services/api';
-import { useTheme } from '@/contexts/ThemeContext';
+
 import {
-    UserCircleIcon, BellIcon, MoonIcon, LogoutIcon,
+    UserCircleIcon, BellIcon, LogoutIcon,
     KeyIcon, CreditCardIcon, MenuBookIcon, PhoneIcon
 } from '@/components/Icons';
 import AppLayout from '@/components/AppLayout';
@@ -240,7 +240,6 @@ function PushNotificationSettings() {
 
 export default function SettingsPage() {
     const { user, logout, setUser } = useAuth();
-    const { theme, toggleTheme } = useTheme();
     const { addToast } = useNotifications();
     const [name, setName] = useState(user?.name || '');
     const [whatsapp, setWhatsapp] = useState(user?.whatsapp || '');
@@ -449,6 +448,8 @@ export default function SettingsPage() {
                         </div>
                     </div>
                 </div>
+
+
 
                 {/* Notification Settings */}
                 <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">

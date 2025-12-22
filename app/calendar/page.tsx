@@ -366,9 +366,9 @@ export default function CalendarPage() {
         }
     };
 
-    // Fetch meals for the displayed month
+    // Fetch meals and members in parallel for better performance
     useEffect(() => {
-        const fetchMonthlyMeals = async () => {
+        const fetchCalendarData = async () => {
             if (!user?.khataId) return;
 
             setLoading(true);
@@ -382,33 +382,27 @@ export default function CalendarPage() {
                 const startStr = startDate.toISOString();
                 const endStr = endDate.toISOString();
 
-                const meals = await api.getMeals(user.khataId, startStr, endStr);
+                // Fetch meals and members in parallel
+                const isManager = user.role === Role.Manager;
+                const [meals, membersData] = await Promise.all([
+                    api.getMeals(user.khataId, startStr, endStr),
+                    isManager ? api.getMembersForRoom(user.khataId) : Promise.resolve([])
+                ]);
+
                 setMonthlyMeals(meals);
+                if (isManager) {
+                    setMembers(membersData);
+                }
             } catch (error) {
-                console.error("Failed to fetch meals", error);
+                console.error("Failed to fetch calendar data", error);
                 addToast({ type: 'error', title: 'Error', message: 'Failed to load calendar data' });
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchMonthlyMeals();
-    }, [currentDate, user?.khataId, addToast]);
-
-    // Fetch members if manager
-    useEffect(() => {
-        const fetchMembers = async () => {
-            if (user?.role === Role.Manager && user.khataId) {
-                try {
-                    const data = await api.getMembersForRoom(user.khataId);
-                    setMembers(data);
-                } catch (error) {
-                    console.error("Failed to fetch members", error);
-                }
-            }
-        };
-        fetchMembers();
-    }, [user?.role, user?.khataId]);
+        fetchCalendarData();
+    }, [currentDate, user?.khataId, user?.role, addToast]);
 
     const formatDateForApi = (date: Date) => {
         const year = date.getFullYear();

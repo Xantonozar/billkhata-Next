@@ -98,87 +98,102 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ khat
         }));
 
 
-        // 6. Trend Data (Last 6 Months)
+        // 6. Trend Data (Last 6 Months) - OPTIMIZED: Single aggregation per collection instead of loop
         const performTrendAggregation = async () => {
-            const trendData = [];
-
-            // 1. Get all unique bill categories used in the last 6 months
             const sixMonthsAgo = new Date();
             sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
             sixMonthsAgo.setDate(1);
+            sixMonthsAgo.setHours(0, 0, 0, 0);
 
-            const distinctCategories = await Bill.distinct('category', {
-                khataId,
-                dueDate: { $gte: sixMonthsAgo }
-            });
+            // Run ALL aggregations in parallel - 4 queries instead of 24+
+            const [distinctCategories, monthlyExpenses, monthlyBills, monthlyBillsByCategory, monthlyDeposits] = await Promise.all([
+                // Get distinct bill categories
+                Bill.distinct('category', { khataId, dueDate: { $gte: sixMonthsAgo } }),
+                // Monthly Shopping Expenses
+                Expense.aggregate([
+                    { $match: { khataId, status: 'Approved', createdAt: { $gte: sixMonthsAgo } } },
+                    { $group: { 
+                        _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } },
+                        total: { $sum: '$amount' }
+                    }}
+                ]),
+                // Monthly Bills Total
+                Bill.aggregate([
+                    { $match: { khataId, dueDate: { $gte: sixMonthsAgo } } },
+                    { $group: { 
+                        _id: { year: { $year: '$dueDate' }, month: { $month: '$dueDate' } },
+                        total: { $sum: '$totalAmount' }
+                    }}
+                ]),
+                // Monthly Bills by Category
+                Bill.aggregate([
+                    { $match: { khataId, dueDate: { $gte: sixMonthsAgo } } },
+                    { $group: { 
+                        _id: { year: { $year: '$dueDate' }, month: { $month: '$dueDate' }, category: '$category' },
+                        total: { $sum: '$totalAmount' }
+                    }}
+                ]),
+                // Monthly Deposits
+                Deposit.aggregate([
+                    { $match: { khataId, status: 'Approved', createdAt: { $gte: sixMonthsAgo } } },
+                    { $group: { 
+                        _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } },
+                        total: { $sum: '$amount' }
+                    }}
+                ])
+            ]);
 
             // Color palette for dynamic categories
             const categoryColors: Record<string, string> = {};
             const availableColors = ['#f59e0b', '#ec4899', '#6366f1', '#14b8a6', '#84cc16', '#06b6d4', '#d946ef', '#f43f5e'];
-            distinctCategories.forEach((cat, index) => {
+            distinctCategories.forEach((cat: string, index: number) => {
                 categoryColors[cat] = availableColors[index % availableColors.length];
             });
 
+            // Helper to find aggregation result for a given year/month
+            const findMonthData = (data: any[], year: number, month: number) => {
+                return data.find(d => d._id.year === year && d._id.month === month)?.total || 0;
+            };
+
+            const findCategoryData = (year: number, month: number, category: string) => {
+                return monthlyBillsByCategory.find(
+                    (d: any) => d._id.year === year && d._id.month === month && d._id.category === category
+                )?.total || 0;
+            };
+
+            // Build trend data for each of the last 6 months
+            const trendData = [];
             for (let i = 5; i >= 0; i--) {
                 const d = new Date();
                 d.setMonth(d.getMonth() - i);
-                const month = d.getMonth();
                 const year = d.getFullYear();
+                const month = d.getMonth() + 1; // MongoDB $month is 1-indexed
                 const label = d.toLocaleDateString('en-US', { month: 'short' });
 
-                const startOfMonth = new Date(year, month, 1);
-                const endOfMonth = new Date(year, month + 1, 0, 23, 59, 59);
-
-                // Run parallel aggregations
-                const [monthShopping, monthBillsTotal, monthBillsByCategory, monthDeposits] = await Promise.all([
-                    // Shopping Expenses (Only from Expense model)
-                    Expense.aggregate([
-                        { $match: { khataId, status: 'Approved', createdAt: { $gte: startOfMonth, $lte: endOfMonth } } },
-                        { $group: { _id: null, total: { $sum: '$amount' } } }
-                    ]),
-                    // Total Bills
-                    Bill.aggregate([
-                        { $match: { khataId, dueDate: { $gte: startOfMonth, $lte: endOfMonth } } },
-                        { $group: { _id: null, total: { $sum: '$totalAmount' } } }
-                    ]),
-                    // Bills by Category
-                    Bill.aggregate([
-                        { $match: { khataId, dueDate: { $gte: startOfMonth, $lte: endOfMonth } } },
-                        { $group: { _id: '$category', total: { $sum: '$totalAmount' } } }
-                    ]),
-                    // Deposits
-                    Deposit.aggregate([
-                        { $match: { khataId, status: 'Approved', createdAt: { $gte: startOfMonth, $lte: endOfMonth } } },
-                        { $group: { _id: null, total: { $sum: '$amount' } } }
-                    ])
-                ]);
-
-                // Construct values array
                 const values = [
                     {
                         name: 'Deposits',
-                        value: monthDeposits[0]?.total || 0,
-                        color: '#10b981' // Green
+                        value: findMonthData(monthlyDeposits, year, month),
+                        color: '#10b981'
                     },
                     {
                         name: 'Shopping',
-                        value: monthShopping[0]?.total || 0,
-                        color: '#ef4444' // Red
+                        value: findMonthData(monthlyExpenses, year, month),
+                        color: '#ef4444'
                     },
                     {
                         name: 'All Bills',
-                        value: monthBillsTotal[0]?.total || 0,
-                        color: '#3b82f6' // Blue
+                        value: findMonthData(monthlyBills, year, month),
+                        color: '#3b82f6'
                     }
                 ];
 
-                // Add dynamic bill categories (ensure all distinct categories exist for every month)
-                distinctCategories.forEach(cat => {
-                    const found = monthBillsByCategory.find((c: any) => c._id === cat);
+                // Add dynamic bill categories
+                distinctCategories.forEach((cat: string) => {
                     values.push({
-                        name: cat as string,
-                        value: found ? found.total : 0,
-                        color: categoryColors[cat as string] || '#94a3b8'
+                        name: cat,
+                        value: findCategoryData(year, month, cat),
+                        color: categoryColors[cat] || '#94a3b8'
                     });
                 });
 

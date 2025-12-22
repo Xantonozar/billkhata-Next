@@ -75,13 +75,17 @@ export async function GET(req: NextRequest) {
                 activeMembersCount,
                 pendingDeposits,
                 pendingExpenses,
-                pendingUsers
+                pendingUsers,
+                approvedDeposits,
+                approvedExpenses
             ] = await Promise.all([
                 Bill.find({ khataId: user.khataId }).lean(),
                 User.countDocuments({ khataId: user.khataId, roomStatus: RoomStatus.Approved, role: { $ne: Role.Manager } }),
                 Deposit.find({ khataId: user.khataId, status: 'Pending' }).lean(),
                 Expense.find({ khataId: user.khataId, status: 'Pending' }).lean(),
-                User.countDocuments({ khataId: user.khataId, roomStatus: RoomStatus.Pending })
+                User.countDocuments({ khataId: user.khataId, roomStatus: RoomStatus.Pending }),
+                Deposit.find({ khataId: user.khataId, status: 'Approved' }).lean(),
+                Expense.find({ khataId: user.khataId, status: 'Approved' }).lean()
             ]);
 
             const totalBillsAmount = bills.reduce((acc, bill) => acc + bill.totalAmount, 0);
@@ -100,9 +104,6 @@ export async function GET(req: NextRequest) {
                     }
                 });
             });
-
-            const approvedDeposits = await Deposit.find({ khataId: user.khataId, status: 'Approved' }).lean();
-            const approvedExpenses = await Expense.find({ khataId: user.khataId, status: 'Approved' }).lean();
 
             const totalIn = approvedDeposits.reduce((acc, d) => acc + d.amount, 0);
             const totalOut = approvedExpenses.reduce((acc, e) => acc + e.amount, 0);

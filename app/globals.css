@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Force dark mode to be class-based, overriding default media query */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   /* Primary Colors */
   --color-primary-50: #fbf5ff;
@@ -197,12 +200,7 @@
   --foreground: #171717;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+
 
 body {
   background: var(--color-light-cyan-50);

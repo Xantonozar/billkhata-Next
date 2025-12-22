@@ -23,7 +23,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ khat
         }
 
         const approvedMembers = room.members
-            .filter((m: any) => m.status === 'Approved')
+            .filter((m: any) => m.status === 'Approved' && m.user)
             .map((m: any) => ({
                 id: m.user._id,
                 name: m.user.name
