@@ -19,6 +19,7 @@ export interface User {
     avatarUrl?: string;
     whatsapp?: string;
     facebook?: string;
+    isVerified?: boolean;
 }
 
 export type PaymentStatus = 'Unpaid' | 'Pending Approval' | 'Paid' | 'Overdue';

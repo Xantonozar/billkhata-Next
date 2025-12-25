@@ -115,6 +115,58 @@ const api = {
         }
     },
 
+    // Email Verification
+    verifyEmail: async (email: string, otp: string): Promise<{ message: string; isVerified: boolean }> => {
+        try {
+            const response = await axiosInstance.post('/auth/verify-email', { email, otp });
+            return response.data;
+        } catch (error: any) {
+            const message = error.response?.data?.message || 'Verification failed';
+            throw new Error(message);
+        }
+    },
+
+    resendOTP: async (email: string): Promise<{ message: string }> => {
+        try {
+            const response = await axiosInstance.post('/auth/resend-otp', { email });
+            return response.data;
+        } catch (error: any) {
+            const message = error.response?.data?.message || 'Failed to resend OTP';
+            throw new Error(message);
+        }
+    },
+
+    // Password Management
+    forgotPassword: async (email: string): Promise<{ message: string }> => {
+        try {
+            const response = await axiosInstance.post('/auth/forgot-password', { email });
+            return response.data;
+        } catch (error: any) {
+            const message = error.response?.data?.message || 'Failed to send reset email';
+            throw new Error(message);
+        }
+    },
+
+    resetPassword: async (email: string, otp: string, newPassword: string): Promise<{ message: string }> => {
+        try {
+            const response = await axiosInstance.post('/auth/reset-password', { email, otp, newPassword });
+            return response.data;
+        } catch (error: any) {
+            const message = error.response?.data?.message || 'Password reset failed';
+            throw new Error(message);
+        }
+    },
+
+    changePassword: async (currentPassword: string, newPassword: string): Promise<{ message: string }> => {
+        try {
+            const response = await axiosInstance.post('/user/change-password', { currentPassword, newPassword });
+            return response.data;
+        } catch (error: any) {
+            const message = error.response?.data?.message || 'Password change failed';
+            throw new Error(message);
+        }
+    },
+
     // Dashboard
     getDashboardStats: async (): Promise<any> => {
         try {
@@ -594,6 +646,21 @@ const api = {
         } catch (error) {
             console.error('Delete notification error:', error);
             return false;
+        }
+    },
+
+    // Reminders
+    sendReminder: async (khataId: string, type: 'add_meal' | 'pay_bill' | 'approve_deposit' | 'approve_expense' | 'shopping', options?: { targetUserIds?: string[]; billId?: string; message?: string }): Promise<{ sent: number; message: string }> => {
+        try {
+            const response = await axiosInstance.post('/reminders/send', {
+                khataId,
+                type,
+                ...options
+            });
+            return response.data;
+        } catch (error: any) {
+            const message = error.response?.data?.message || 'Failed to send reminder';
+            throw new Error(message);
         }
     },
 

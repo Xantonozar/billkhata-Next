@@ -45,6 +45,20 @@ const userSchema = new mongoose.Schema({
     facebook: {
         type: String,
         default: null
+    },
+    isVerified: {
+        type: Boolean,
+        default: false
+    },
+    otp: {
+        type: String,
+        default: null,
+        select: false // Don't return OTP by default
+    },
+    otpExpires: {
+        type: Date,
+        default: null,
+        select: false // Don't return OTP expiry by default
     }
 }, {
     timestamps: true
