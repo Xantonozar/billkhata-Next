@@ -6,7 +6,9 @@ import { api } from '@/services/api';
 
 import {
     UserCircleIcon, BellIcon, LogoutIcon,
-    KeyIcon, CreditCardIcon, MenuBookIcon, PhoneIcon
+    KeyIcon, CreditCardIcon, MenuBookIcon, PhoneIcon,
+    ShieldCheckIcon, EyeIcon, EyeOffIcon, SpinnerIcon,
+    CheckCircleIcon, MailIcon
 } from '@/components/Icons';
 import AppLayout from '@/components/AppLayout';
 import { useNotifications } from '@/contexts/NotificationContext';
@@ -238,6 +240,125 @@ function PushNotificationSettings() {
     );
 }
 
+function ChangePasswordSection() {
+    const { addToast } = useNotifications();
+    const [currentPassword, setCurrentPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [showPasswords, setShowPasswords] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+
+    const handleChangePassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+
+        if (newPassword.length < 6) {
+            setError('New password must be at least 6 characters');
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            setError('Passwords do not match');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const result = await api.changePassword(currentPassword, newPassword);
+            addToast({ type: 'success', title: 'Success', message: result.message || 'Password changed successfully' });
+            setCurrentPassword('');
+            setNewPassword('');
+            setConfirmPassword('');
+        } catch (err: any) {
+            setError(err.message || 'Failed to change password');
+            addToast({ type: 'error', title: 'Error', message: err.message || 'Failed to change password' });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+            <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-slate-700">
+                <h2 className="text-lg font-semibold flex items-center gap-2 text-slate-800 dark:text-white">
+                    <ShieldCheckIcon className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
+                    Security
+                </h2>
+            </div>
+            <form onSubmit={handleChangePassword} className="p-4 sm:p-6 space-y-4">
+                <div>
+                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
+                        Current Password
+                    </label>
+                    <div className="relative">
+                        <input
+                            type={showPasswords ? 'text' : 'password'}
+                            value={currentPassword}
+                            onChange={(e) => setCurrentPassword(e.target.value)}
+                            className="w-full px-4 py-2.5 pr-12 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                            placeholder="Enter current password"
+                            required
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowPasswords(!showPasswords)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                        >
+                            {showPasswords ? <EyeOffIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
+                        </button>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
+                            New Password
+                        </label>
+                        <input
+                            type={showPasswords ? 'text' : 'password'}
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            className="w-full px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                            placeholder="Enter new password"
+                            required
+                            minLength={6}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
+                            Confirm New Password
+                        </label>
+                        <input
+                            type={showPasswords ? 'text' : 'password'}
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            className="w-full px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                            placeholder="Confirm new password"
+                            required
+                        />
+                    </div>
+                </div>
+
+                {error && (
+                    <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm">
+                        {error}
+                    </div>
+                )}
+
+                <button
+                    type="submit"
+                    disabled={loading || !currentPassword || !newPassword || !confirmPassword}
+                    className="px-6 py-2.5 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                    {loading ? <SpinnerIcon className="w-5 h-5" /> : null}
+                    {loading ? 'Changing...' : 'Change Password'}
+                </button>
+            </form>
+        </div>
+    );
+}
+
 export default function SettingsPage() {
     const { user, logout, setUser } = useAuth();
     const { addToast } = useNotifications();
@@ -384,7 +505,23 @@ export default function SettingsPage() {
                                 ) : (
                                     <div className="space-y-1">
                                         <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">{name}</h3>
-                                        <p className="text-slate-500 text-sm sm:text-base">{user.email}</p>
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <p className="text-slate-500 text-sm sm:text-base">{user.email}</p>
+                                            {user.isVerified ? (
+                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                                    <CheckCircleIcon className="w-3 h-3" />
+                                                    Verified
+                                                </span>
+                                            ) : (
+                                                <a
+                                                    href={`/verify-email?email=${encodeURIComponent(user.email)}`}
+                                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-900/40 transition-colors"
+                                                >
+                                                    <MailIcon className="w-3 h-3" />
+                                                    Unverified - Click to verify
+                                                </a>
+                                            )}
+                                        </div>
                                         {(user.whatsapp || user.facebook) && (
                                             <div className="pt-2 space-y-1 text-sm text-slate-600 dark:text-slate-400">
                                                 {user.whatsapp && (
@@ -463,6 +600,9 @@ export default function SettingsPage() {
                         <PushNotificationSettings />
                     </div>
                 </div>
+
+                {/* Security Settings - Change Password */}
+                <ChangePasswordSection />
 
                 {/* Report Issue & Logout */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6">

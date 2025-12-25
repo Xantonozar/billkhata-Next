@@ -6,9 +6,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { RoomStatus, Role } from '@/types';
 import type { TodaysMenu, Bill } from '@/types';
 import AppLayout from '@/components/AppLayout';
-import { PlusIcon, MealIcon, UsersIcon, ChartBarIcon, PencilIcon, XIcon, CheckCircleIcon, BillsIcon } from '@/components/Icons';
+import { PlusIcon, MealIcon, UsersIcon, ChartBarIcon, PencilIcon, XIcon, CheckCircleIcon, BillsIcon, BellIcon } from '@/components/Icons';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { api } from '@/services/api';
+import ReminderButton from '@/components/ReminderButton';
 
 const initialTodaysMenu: TodaysMenu = {
     breakfast: 'Not set',
@@ -251,6 +252,24 @@ const ManagerDashboard: React.FC<{ initialData?: any, loading?: boolean, user?: 
                         <QuickActionButton icon={<UsersIcon className="w-8 h-8 text-yellow-600" />} label="User" onClick={() => router.push('/members')} />
                         <QuickActionButton icon={<ChartBarIcon className="w-8 h-8 text-indigo-500" />} label="Rpt" onClick={() => router.push('/reports')} />
                     </div>
+                </div>
+            </div>
+
+            {/* Send Reminders Section */}
+            <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-xl shadow-md">
+                <div className="flex items-center gap-2 mb-4">
+                    <BellIcon className="w-6 h-6 text-amber-500" />
+                    <h3 className="text-xl font-bold text-slate-800 dark:text-white">Send Reminders</h3>
+                </div>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+                    Send notification reminders to room members
+                </p>
+                <div className="flex flex-wrap gap-2 sm:gap-3">
+                    <ReminderButton type="add_meal" />
+                    <ReminderButton type="pay_bill" />
+                    <ReminderButton type="shopping" />
+                    <ReminderButton type="approve_deposit" />
+                    <ReminderButton type="approve_expense" />
                 </div>
             </div>
         </div>
