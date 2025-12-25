@@ -7,6 +7,8 @@ import {
     setAuthCookies
 } from '@/lib/auth';
 import { SignupSchema, validateBody } from '@/lib/validation';
+import { generateOTP, hashOTP, getOTPExpiry } from '@/lib/otp';
+import { sendVerificationEmail } from '@/lib/brevo';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,14 +38,29 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        // Create user
+        // Generate OTP for email verification
+        const otp = generateOTP();
+        const hashedOtp = await hashOTP(otp);
+        const otpExpires = getOTPExpiry();
+
+        // Create user with unverified status
         const user = await User.create({
             name,
             email,
             password,
             role,
-            roomStatus: 'NoRoom'
+            roomStatus: 'NoRoom',
+            isVerified: false,
+            otp: hashedOtp,
+            otpExpires
         });
+
+        // Send verification email (don't block signup if email fails)
+        sendVerificationEmail(email, otp).catch(err => {
+            console.error('Failed to send verification email:', err);
+        });
+
+        console.log('📧 OTP generated for', email, ':', otp); // Remove in production
 
         // Generate tokens
         const accessToken = generateAccessToken(user._id.toString());
@@ -60,7 +77,8 @@ export async function POST(req: NextRequest) {
                 email: user.email,
                 role: user.role,
                 roomStatus: user.roomStatus,
-                khataId: user.khataId
+                khataId: user.khataId,
+                isVerified: user.isVerified
             }
         }, { status: 201 });
 
@@ -76,3 +94,4 @@ export async function POST(req: NextRequest) {
         );
     }
 }
+

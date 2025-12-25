@@ -61,7 +61,8 @@ export async function POST(req: NextRequest) {
                 khataId: user.khataId,
                 avatarUrl: user.avatarUrl,
                 whatsapp: user.whatsapp,
-                facebook: user.facebook
+                facebook: user.facebook,
+                isVerified: user.isVerified
             }
         });
 

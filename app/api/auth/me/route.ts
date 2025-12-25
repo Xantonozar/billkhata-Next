@@ -29,7 +29,8 @@ export async function GET(req: NextRequest) {
             khataId: user.khataId,
             avatarUrl: user.avatarUrl,
             whatsapp: user.whatsapp,
-            facebook: user.facebook
+            facebook: user.facebook,
+            isVerified: user.isVerified === true // Explicitly convert to boolean, defaults to false for existing users
         });
     } catch (error: any) {
         console.error('❌ Get me error:', error);
@@ -95,7 +96,8 @@ export async function PUT(req: NextRequest) {
             khataId: updatedUser.khataId,
             avatarUrl: updatedUser.avatarUrl,
             whatsapp: updatedUser.whatsapp,
-            facebook: updatedUser.facebook
+            facebook: updatedUser.facebook,
+            isVerified: updatedUser.isVerified
         });
     } catch (error: any) {
         console.error('Update profile error:', error);
