@@ -391,3 +391,11 @@ export const ShieldCheckIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) 
     </svg>
 );
 
+
+export const LeafIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0c0-1.036.84-1.875 1.875-1.875h.375a3.75 3.75 0 0 1 3.75 3.75v0h-3Zm0-3h.008v.008H8.25v-.008Zm0 3v.008h.008v-.008H8.25Zm0 0 .375-3.75h3.75a1.5 1.5 0 0 1 0 3h-3.75ZM12 18.75V12m4.5 4.5V3.75c0-1.036-.84-1.875-1.875-1.875h-.375a3.75 3.75 0 0 0-3.75 3.75v3" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 12.75c1.455.576 2.375 1.737 2.375 3V18m0-13.5A3.75 3.75 0 0 1 12 8.25m6.75 0A3.75 3.75 0 0 1 22.5 12" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5a4.5 4.5 0 0 0-4.5 4.5c0 1.258.91 2.308 2.125 2.625" />
+    </svg>
+);

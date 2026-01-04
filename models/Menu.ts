@@ -41,6 +41,7 @@ const menuSchema = new mongoose.Schema({
 
 // Compound index for efficient queries
 menuSchema.index({ khataId: 1, weekStart: 1 });
+menuSchema.index({ khataId: 1, isPermanent: 1 }); // For dashboard quick menu lookup
 
 const Menu = mongoose.models.Menu || mongoose.model('Menu', menuSchema);
 

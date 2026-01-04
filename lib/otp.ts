@@ -3,10 +3,14 @@ import bcrypt from 'bcryptjs';
 /**
  * Generate a 6-digit OTP
  */
-export function generateOTP(): string {
-    return Math.floor(100000 + Math.random() * 900000).toString();
-}
+import crypto from 'crypto';
 
+/**
+ * Generate a 6-digit OTP
+ */
+export function generateOTP(): string {
+    return crypto.randomInt(100000, 1000000).toString();
+}
 /**
  * Hash OTP for secure storage
  */

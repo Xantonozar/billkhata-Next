@@ -61,4 +61,17 @@ async function connectDB() {
   return cached.conn;
 }
 
+// Pre-warm connection on module load in production
+// This eliminates cold start delays for the first request
+if (typeof window === 'undefined' && process.env.NODE_ENV === 'production') {
+  // Only warm up if we're on the server and in production
+  if (!cached.promise && MONGODB_URI) {
+    // Silent background connect - don't block, just prime the connection
+    connectDB().catch(() => {
+      // Silently ignore errors during warmup
+      // The actual request will retry if needed
+    });
+  }
+}
+
 export default connectDB;

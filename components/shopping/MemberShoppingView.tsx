@@ -17,6 +17,7 @@ const emptyRoster: Roster = {
 
 const initialMemberSummary = {
     totalDeposits: 0,
+    totalBillPayments: 0,
     mealCost: 0,
     refundable: 0,
 };
@@ -121,27 +122,6 @@ const MemberShoppingView: React.FC = () => {
                     <p className="font-semibold text-primary-700 dark:text-primary-300">{dutyText}</p>
                 </div>
 
-                {/* Weekly Shopping Roster */}
-                <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6">
-                    <h3 className="font-semibold text-lg mb-3 text-slate-900 dark:text-white">This Week's Shopping Duty</h3>
-                    <div className="border-t border-slate-200 dark:border-slate-700 pt-3 space-y-2 text-sm">
-                        {Object.entries(roster).map(([day, duty]) => {
-                            const displayName = duty.name || 'None';
-                            const isMyDuty = duty.name === myName;
-                            return (
-                                <div key={day} className={`flex justify-between items-center p-2 rounded ${isMyDuty ? 'bg-primary-50 dark:bg-primary-500/10' : ''}`}>
-                                    <span className={`font-medium ${isMyDuty ? 'text-primary-700 dark:text-primary-300' : 'text-slate-600 dark:text-slate-300'}`}>
-                                        {day}: {displayName} {isMyDuty ? '(You)' : ''}
-                                    </span>
-                                    <span className={`${duty.status === 'Completed' ? 'text-green-600 dark:text-green-400' : 'text-slate-500 dark:text-slate-400'}`}>
-                                        {duty.status === 'Completed' ? `✅ Completed` : duty.status === 'Assigned' ? '🔄 Assigned' : ''}
-                                    </span>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
-
                 <div className="grid grid-cols-2 gap-4">
                     <button onClick={() => setIsDepositModalOpen(true)} className="py-4 text-center bg-white dark:bg-slate-800 rounded-xl shadow-md font-semibold text-slate-700 dark:text-slate-200 hover:scale-105 transition-transform active:scale-95">
                         💰 Add Deposit
@@ -150,15 +130,24 @@ const MemberShoppingView: React.FC = () => {
                         🛒 Add Expense
                     </button>
                 </div>
-                <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6 grid grid-cols-2 divide-x dark:divide-slate-700 text-center">
-                    <div>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">Deposit Balance</p>
-                        <p className="text-2xl font-bold text-slate-800 dark:text-white font-numeric">৳{memberSummary.totalDeposits.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6">
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div className="text-center">
+                            <p className="text-sm text-slate-500 dark:text-slate-400">Deposit Balance</p>
+                            <p className="text-2xl font-bold text-slate-800 dark:text-white font-numeric">৳{memberSummary.totalDeposits.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                        </div>
+                        <div className="text-center">
+                            <p className="text-sm text-slate-500 dark:text-slate-400">Due / Refund</p>
+                            <p className="text-2xl font-bold text-green-600 dark:text-green-400 font-numeric">{memberSummary.refundable >= 0 ? '+' : ''}৳{memberSummary.refundable.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                        </div>
                     </div>
-                    <div>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">Due / Refund</p>
-                        <p className="text-2xl font-bold text-green-600 dark:text-green-400 font-numeric">{memberSummary.refundable >= 0 ? '+' : ''}৳{memberSummary.refundable.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                    </div>
+                    {memberSummary.totalBillPayments > 0 && (
+                        <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Other Costs (Bill Payments)</p>
+                            <p className="text-lg font-bold text-orange-600 dark:text-orange-400 font-numeric">৳{memberSummary.totalBillPayments.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                            <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">Deducted from your meal fund balance</p>
+                        </div>
+                    )}
                 </div>
                 <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md">
                     <div className="p-4 border-b dark:border-slate-700">
@@ -186,7 +175,10 @@ const MemberShoppingView: React.FC = () => {
                                     </div>
                                 ))
                             ) : (
-                                <p className="text-center text-slate-500 dark:text-slate-400 py-4">No deposit history found.</p>
+                                <div className="flex flex-col items-center justify-center py-6 text-center text-slate-500 dark:text-slate-400">
+                                    <p className="mb-2 text-2xl">💰</p>
+                                    <p className="text-sm">No deposit history found.</p>
+                                </div>
                             )
                         )}
                         {historyTab === 'expenses' && (
@@ -203,7 +195,10 @@ const MemberShoppingView: React.FC = () => {
                                     </div>
                                 ))
                             ) : (
-                                <p className="text-center text-slate-500 dark:text-slate-400 py-4">No expense history found.</p>
+                                <div className="flex flex-col items-center justify-center py-6 text-center text-slate-500 dark:text-slate-400">
+                                    <p className="mb-2 text-2xl">🛒</p>
+                                    <p className="text-sm">No expense history found.</p>
+                                </div>
                             )
                         )}
                         <button onClick={() => router.push('/shopping/history')} className="text-sm font-semibold text-primary-600 hover:underline mt-2 w-full text-center p-2 dark:text-primary-400">View All →</button>

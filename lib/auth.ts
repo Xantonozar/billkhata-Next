@@ -227,3 +227,38 @@ export const requireKhataAccess = (user: any, khataId: string): NextResponse | n
     }
     return null;
 };
+
+/**
+ * Check if user is verified
+ */
+export const isVerified = (user: any): boolean => {
+    return user?.isVerified === true;
+};
+
+/**
+ * Require verified user, returns error response if not verified
+ */
+export const requireVerified = (user: any): NextResponse | null => {
+    if (!user) {
+        return NextResponse.json({ message: 'Not authorized' }, { status: 401 });
+    }
+    if (!isVerified(user)) {
+        return NextResponse.json({ 
+            message: 'Email verification required. Please verify your email to access this resource.' 
+        }, { status: 403 });
+    }
+    return null;
+};
+
+/**
+ * Get verified user session - combines getSession and requireVerified
+ * Returns user if verified, or null if not authenticated/verified
+ * Use this for protected routes that require email verification
+ */
+export const getVerifiedSession = async (req: NextRequest) => {
+    const user = await getSession(req);
+    if (!user || !isVerified(user)) {
+        return null;
+    }
+    return user;
+};

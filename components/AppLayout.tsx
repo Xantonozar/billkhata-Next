@@ -33,14 +33,14 @@ const NavLink: React.FC<NavLinkProps> = ({ href, icon, children, isSublink = fal
         <button
             onClick={() => router.push(href)}
             className={`w-full flex items-center text-left ${isSublink ? 'pl-12 pr-3 py-2' : 'px-3 py-2.5'} rounded-md text-sm font-medium transition-all group duration-200 active:scale-[0.98] ${isActive
-                ? 'bg-primary-100 text-primary-600 dark:bg-primary-500/20 dark:text-primary-400'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100'
+                ? 'bg-primary/10 text-primary'
+                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                 }`}
         >
-            {React.cloneElement(icon, { className: `flex-shrink-0 w-6 h-6 mr-3 transition-colors ${isActive ? 'text-primary-500' : 'text-slate-400 dark:text-slate-500 group-hover:text-primary-500 dark:group-hover:text-primary-400'}` })}
+            {React.cloneElement(icon, { className: `flex-shrink-0 w-6 h-6 mr-3 transition-colors ${isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-primary'}` })}
             <span className="flex-grow font-semibold">{children}</span>
             {badgeCount && badgeCount > 0 && (
-                <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${isActive ? 'bg-primary-500 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200'}`}>
+                <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${isActive ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
                     {badgeCount}
                 </span>
             )}
@@ -61,11 +61,11 @@ const BillsNavGroup: React.FC = () => {
                     setIsOpen(!isOpen);
                 }}
                 className={`w-full flex items-center text-left px-3 py-2.5 rounded-md text-sm font-medium transition-all group duration-200 active:scale-[0.98] ${isBillsActive
-                    ? 'bg-primary-100 text-primary-600 dark:bg-primary-500/20 dark:text-primary-400'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100'
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                     }`}
             >
-                <BillsIcon className={`flex-shrink-0 w-6 h-6 mr-3 transition-colors ${isBillsActive ? 'text-primary-500' : 'text-slate-400 dark:text-slate-500 group-hover:text-primary-500 dark:group-hover:text-primary-400'}`} />
+                <BillsIcon className={`flex-shrink-0 w-6 h-6 mr-3 transition-colors ${isBillsActive ? 'text-primary' : 'text-muted-foreground group-hover:text-primary'}`} />
                 <span className="flex-grow font-semibold">Bills</span>
                 <ChevronDownIcon className={`w-5 h-5 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
             </button>
@@ -90,10 +90,10 @@ const SidebarContent: React.FC<{ pendingCount: number }> = ({ pendingCount }) =>
     const { user, logout } = useAuth();
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-slate-800/50 backdrop-blur-sm">
-            <div className="h-16 flex items-center px-4 border-b border-slate-200 dark:border-slate-700">
-                <SparklesIcon className="w-8 h-8 text-primary-500" />
-                <span className="ml-2 font-bold text-2xl text-slate-800 dark:text-white font-sans">BillKhata</span>
+        <div className="flex flex-col h-full bg-card/50 backdrop-blur-sm border-r border-border">
+            <div className="h-16 flex items-center px-4 border-b border-border">
+                <SparklesIcon className="w-8 h-8 text-primary" />
+                <span className="ml-2 font-bold text-2xl text-foreground font-sans">BillKhata</span>
             </div>
             <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
                 <NavLink href="/dashboard" icon={<DashboardIcon />}>Dashboard</NavLink>
@@ -102,7 +102,8 @@ const SidebarContent: React.FC<{ pendingCount: number }> = ({ pendingCount }) =>
                 )}
                 <BillsNavGroup />
                 <NavLink href="/meals" icon={<MealIcon />}>Meal Management</NavLink>
-                <NavLink href="/shopping" icon={<ShoppingCartIcon />}>Shopping</NavLink>
+                <NavLink href="/shopping" icon={<ShoppingCartIcon />}>Fund Management</NavLink>
+                <NavLink href="/duty" icon={<ClipboardCheckIcon />}>Duty</NavLink>
                 <NavLink href="/staff" icon={<BriefcaseIcon />}>Services</NavLink>
                 <NavLink href="/calendar" icon={<CalendarIcon />}>Calendar</NavLink>
                 <NavLink href="/menu" icon={<MenuBookIcon />}>Menu</NavLink>
@@ -115,22 +116,22 @@ const SidebarContent: React.FC<{ pendingCount: number }> = ({ pendingCount }) =>
                 <NavLink href="/settings" icon={<CogIcon />}>Settings</NavLink>
             </nav>
             {user && (
-                <div className="px-4 py-3 border-t border-slate-200 dark:border-slate-700">
+                <div className="px-4 py-3 border-t border-border">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3 transition-transform duration-200 hover:scale-105">
                             {user.avatarUrl ? (
-                                <img src={user.avatarUrl} alt={user.name} className="w-10 h-10 rounded-full object-cover" />
+                                <img src={user.avatarUrl} alt={user.name} className="w-10 h-10 rounded-full object-cover ring-2 ring-border" />
                             ) : (
-                                <UserCircleIcon className="w-10 h-10 text-slate-500" />
+                                <UserCircleIcon className="w-10 h-10 text-muted-foreground" />
                             )}
                             <div className="flex-grow">
-                                <p className="font-semibold text-sm text-slate-800 dark:text-white">{user.name}</p>
-                                <p className="text-xs text-slate-500 dark:text-slate-400">{user.role}</p>
+                                <p className="font-semibold text-sm text-foreground">{user.name}</p>
+                                <p className="text-xs text-muted-foreground">{user.role}</p>
                             </div>
                         </div>
                         <button
                             onClick={logout}
-                            className="p-2 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all active:scale-95 duration-200"
+                            className="p-2 rounded-full text-muted-foreground hover:bg-muted transition-all active:scale-95 duration-200"
                             aria-label="Logout"
                         >
                             <LogoutIcon className="w-5 h-5" />
@@ -154,12 +155,12 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
     return (
         <PusherProvider onPendingCountUpdate={refetchPendingCount}>
-            <div className="h-screen flex overflow-hidden bg-slate-100 dark:bg-slate-900">
+            <div className="h-screen flex overflow-hidden bg-background">
                 {/* Mobile Sidebar */}
                 {sidebarOpen && (
                     <div className="fixed inset-0 flex z-40 md:hidden" role="dialog" aria-modal="true">
-                        <div className="fixed inset-0 bg-slate-600 bg-opacity-75 transition-opacity" aria-hidden="true" onClick={() => setSidebarOpen(false)}></div>
-                        <div className="relative flex-1 flex flex-col max-w-xs w-full animate-slide-in-right">
+                        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm transition-opacity" aria-hidden="true" onClick={() => setSidebarOpen(false)}></div>
+                        <div className="relative flex-1 flex flex-col max-w-xs w-full animate-slide-in-right bg-card border-r border-border">
                             <div className="absolute top-0 right-0 -mr-12 pt-2">
                                 <button
                                     type="button"
@@ -178,18 +179,18 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
                 {/* Desktop Sidebar */}
                 <div className="hidden md:flex md:flex-shrink-0">
-                    <div className="flex flex-col w-64">
-                        <div className="flex flex-col h-0 flex-1 border-r border-slate-200 dark:border-slate-700">
+                    <div className="flex flex-col w-64 bg-card border-r border-border">
+                        <div className="flex flex-col h-0 flex-1">
                             <SidebarContent pendingCount={pendingCount} />
                         </div>
                     </div>
                 </div>
 
                 <div className="flex flex-col w-0 flex-1 overflow-hidden">
-                    <div className="relative z-30 flex-shrink-0 flex h-16 bg-white dark:bg-slate-800 shadow-sm">
+                    <div className="relative z-30 flex-shrink-0 flex h-16 bg-background/80 backdrop-blur-md shadow-sm border-b border-border/40">
                         <button
                             type="button"
-                            className="px-4 border-r border-slate-200 dark:border-slate-700 text-slate-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500 md:hidden"
+                            className="px-4 border-r border-border text-muted-foreground focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary md:hidden"
                             onClick={() => setSidebarOpen(true)}
                         >
                             <span className="sr-only">Open sidebar</span>
@@ -197,22 +198,22 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                         </button>
                         <div className="flex-1 px-4 flex justify-between items-center">
                             <div className="flex items-center md:hidden">
-                                <SparklesIcon className="w-8 h-8 text-primary-500" />
-                                <span className="ml-2 font-bold text-xl text-slate-800 dark:text-white font-sans">BillKhata</span>
+                                <SparklesIcon className="w-8 h-8 text-primary" />
+                                <span className="ml-2 font-bold text-xl text-foreground font-sans">BillKhata</span>
                             </div>
                             <div className="hidden md:block"></div>
                             <div className="flex items-center gap-4">
-                                <button onClick={() => setNotificationsOpen(true)} className="relative p-2 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all active:scale-95">
+                                <button onClick={() => setNotificationsOpen(true)} className="relative p-2 rounded-full text-muted-foreground hover:bg-muted transition-all active:scale-95">
                                     <span className="sr-only">View notifications</span>
                                     <BellIcon className="h-6 w-6" />
                                     {unreadCount > 0 && (
-                                        <span className="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full bg-danger-500 ring-2 ring-white dark:ring-slate-800"></span>
+                                        <span className="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full bg-destructive ring-2 ring-background"></span>
                                     )}
                                 </button>
                             </div>
                         </div>
                     </div>
-                    <main className="flex-1 relative overflow-y-auto focus:outline-none">
+                    <main className="flex-1 relative overflow-y-auto focus:outline-none bg-background">
                         <div className="py-6">
                             <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
                                 {children}

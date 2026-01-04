@@ -32,6 +32,11 @@ const expenseSchema = new mongoose.Schema({
         type: String,
         default: ''
     },
+    category: {
+        type: String,
+        enum: ['Shopping', 'BillPayment', 'Adjustment'],
+        default: 'Shopping'
+    },
     status: {
         type: String,
         enum: ['Pending', 'Approved', 'Rejected'],
@@ -59,6 +64,11 @@ expenseSchema.index({ khataId: 1, status: 1 });
 expenseSchema.index({ khataId: 1, userId: 1 });
 expenseSchema.index({ khataId: 1, createdAt: -1, status: 1 });
 
-const Expense = mongoose.models.Expense || mongoose.model('Expense', expenseSchema);
+// Delete the cached model to force using the updated schema
+if (mongoose.models.Expense) {
+    delete mongoose.models.Expense;
+}
+
+const Expense = mongoose.model('Expense', expenseSchema);
 
 export default Expense;

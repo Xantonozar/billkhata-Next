@@ -29,6 +29,7 @@ const AddBillModal: React.FC<AddBillModalProps> = ({ onClose, onBillAdded, prese
     const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
     const [customAmounts, setCustomAmounts] = useState<Record<string, number>>({});
     const { addToast } = useNotifications();
+    const [autoDeductFromMealFund, setAutoDeductFromMealFund] = useState(false);
 
     useEffect(() => {
         const fetchMembers = async () => {
@@ -134,6 +135,7 @@ const AddBillModal: React.FC<AddBillModalProps> = ({ onClose, onBillAdded, prese
                 dueDate,
                 description,
                 shares: newShares,
+                autoDeductFromMealFund
             };
 
             const success = await api.createBill(billData);
@@ -281,6 +283,26 @@ const AddBillModal: React.FC<AddBillModalProps> = ({ onClose, onBillAdded, prese
                             <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
                                 {renderMemberSplits()}
                             </div>
+                        </div>
+                    )}
+
+                    {/* Auto-deduct from Meal Fund Option - Only for "Others" category */}
+                    {category === 'Others' && selectedMembers.length > 0 && (
+                        <div className="border-t pt-4 dark:border-slate-600">
+                            <label className="flex items-start gap-3 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={autoDeductFromMealFund}
+                                    onChange={(e) => setAutoDeductFromMealFund(e.target.checked)}
+                                    className="h-5 w-5 mt-0.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                                />
+                                <div className="flex-1">
+                                    <span className="font-semibold text-slate-800 dark:text-white">Auto-deduct from Meal Fund</span>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                        Automatically deduct from all members' meal funds and mark as paid. Members may have negative balances if insufficient funds.
+                                    </p>
+                                </div>
+                            </label>
                         </div>
                     )}
 

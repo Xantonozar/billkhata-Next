@@ -83,7 +83,9 @@ const api = {
             });
             const { token, user } = response.data;
 
-            if (typeof window !== 'undefined') {
+            // Token is no longer returned from signup - tokens are issued after email verification
+            // Only set token if it exists (for backward compatibility during migration)
+            if (token && typeof window !== 'undefined') {
                 localStorage.setItem('token', token);
             }
 
@@ -116,9 +118,21 @@ const api = {
     },
 
     // Email Verification
-    verifyEmail: async (email: string, otp: string): Promise<{ message: string; isVerified: boolean }> => {
+    verifyEmail: async (email: string | undefined, otp: string): Promise<{ message: string; isVerified: boolean; token?: string; user?: User }> => {
         try {
-            const response = await axiosInstance.post('/auth/verify-email', { email, otp });
+            // Only include email in body if provided (server will use session if not provided)
+            const body: { otp: string; email?: string } = { otp };
+            if (email) {
+                body.email = email;
+            }
+            const response = await axiosInstance.post('/auth/verify-email', body);
+            const { token, user } = response.data;
+
+            // Set token in localStorage after successful verification
+            if (token && typeof window !== 'undefined') {
+                localStorage.setItem('token', token);
+            }
+
             return response.data;
         } catch (error: any) {
             const message = error.response?.data?.message || 'Verification failed';
@@ -126,9 +140,14 @@ const api = {
         }
     },
 
-    resendOTP: async (email: string): Promise<{ message: string }> => {
+    resendOTP: async (email?: string): Promise<{ message: string }> => {
         try {
-            const response = await axiosInstance.post('/auth/resend-otp', { email });
+            // Only include email in body if provided (server will use session if not provided)
+            const body: { email?: string } = {};
+            if (email) {
+                body.email = email;
+            }
+            const response = await axiosInstance.post('/auth/resend-otp', body);
             return response.data;
         } catch (error: any) {
             const message = error.response?.data?.message || 'Failed to resend OTP';
@@ -282,10 +301,11 @@ const api = {
         }
     },
 
-    updateBillShareStatus: async (billId: string, userId: string, newStatus: PaymentStatus): Promise<Bill | null> => {
+    updateBillShareStatus: async (billId: string, userId: string, newStatus: PaymentStatus, paidFromMealFund?: boolean): Promise<Bill | null> => {
         try {
             const response = await axiosInstance.put(`/bills/${billId}/share/${userId}`, {
-                status: newStatus
+                status: newStatus,
+                paidFromMealFund
             });
 
             // Return the updated bill directly from the response
@@ -364,6 +384,16 @@ const api = {
         return { balance: 3540 };
     },
 
+    getMealBalance: async (userId: string): Promise<{ balance: number; totalDeposits: number; totalExpenses: number }> => {
+        try {
+            const response = await axiosInstance.get(`/user/${userId}/meal-balance`);
+            return response.data;
+        } catch (error) {
+            console.error('Get meal balance error:', error);
+            return { balance: 0, totalDeposits: 0, totalExpenses: 0 };
+        }
+    },
+
     // Menu
     getMenu: async (khataId: string): Promise<any[]> => {
         try {
@@ -433,6 +463,26 @@ const api = {
         } catch (error) {
             console.error('Get shopping summary error:', error);
             return null;
+        }
+    },
+
+    getMemberBalances: async (khataId: string): Promise<any> => {
+        try {
+            const response = await axiosInstance.get(`/shopping/${khataId}/balances`);
+            return response.data;
+        } catch (error) {
+            console.error('Get member balances error:', error);
+            return null;
+        }
+    },
+
+    adjustMemberFund: async (khataId: string, data: { userId: string; type: 'ADD' | 'DEDUCT'; amount: number; reason: string }): Promise<boolean> => {
+        try {
+            await axiosInstance.post(`/shopping/${khataId}/adjust`, data);
+            return true;
+        } catch (error: any) {
+            console.error('Adjust fund error:', error.response?.data?.message || error.message);
+            return false;
         }
     },
 

@@ -63,7 +63,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const newUser = await api.signup(name, email, pass, role);
         if (newUser) {
             setUser(newUser);
-            router.push('/dashboard');
+            // Redirect to email verification page instead of dashboard
+            // Tokens will be issued after email verification
+            router.push('/verify-email');
         }
         return newUser;
     };
@@ -81,14 +83,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     };
 
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-900">
-                <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-primary-500"></div>
-            </div>
-        );
-    }
-
+    // No blocking spinner - always render children
+    // Components use 'loading' state from context to show their own skeletons
     return (
         <AuthContext.Provider value={{ user, setUser, loading, login, signup, logout }}>
             {children}
@@ -103,3 +99,4 @@ export const useAuth = () => {
     }
     return context;
 };
+

@@ -12,7 +12,14 @@ export default function UnverifiedBanner() {
     useEffect(() => {
         // Check localStorage for dismissed state
         if (typeof window !== 'undefined' && user && !user.isVerified) {
-            const dismissedUntil = localStorage.getItem('unverified_banner_dismissed');
+            const userIdentifier = user.id || user.email;
+            if (!userIdentifier) {
+                // No stable identifier available, show banner
+                setDismissed(false);
+                return;
+            }
+            const storageKey = `unverified_banner_dismissed_${userIdentifier}`;
+            const dismissedUntil = localStorage.getItem(storageKey);
             if (dismissedUntil) {
                 // Check if dismissal is still valid (within 24 hours)
                 const dismissedTime = parseInt(dismissedUntil, 10);
@@ -24,11 +31,17 @@ export default function UnverifiedBanner() {
             setDismissed(false);
         }
     }, [user]);
-
     const handleDismiss = () => {
         // Dismiss for 24 hours
+        const userIdentifier = user?.id || user?.email;
+        if (!userIdentifier) {
+            // No stable identifier available, just hide without persisting
+            setDismissed(true);
+            return;
+        }
+        const storageKey = `unverified_banner_dismissed_${userIdentifier}`;
         const dismissUntil = Date.now() + (24 * 60 * 60 * 1000);
-        localStorage.setItem('unverified_banner_dismissed', dismissUntil.toString());
+        localStorage.setItem(storageKey, dismissUntil.toString());
         setDismissed(true);
     };
 
@@ -45,7 +58,7 @@ export default function UnverifiedBanner() {
                     <p className="text-sm font-medium">
                         Your email is not verified.{' '}
                         <Link
-                            href={`/verify-email?email=${encodeURIComponent(user.email)}`}
+                            href="/verify-email"
                             className="underline hover:no-underline font-semibold"
                         >
                             Verify now

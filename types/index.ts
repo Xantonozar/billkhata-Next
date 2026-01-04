@@ -29,6 +29,7 @@ export interface BillShare {
     userName: string;
     amount: number;
     status: PaymentStatus;
+    paidFromMealFund?: boolean;
 }
 
 export interface Bill {

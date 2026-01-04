@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
+import { MIN_PASSWORD_LENGTH } from '../lib/passwordConfig';
 
 const userSchema = new mongoose.Schema({
     name: {
@@ -17,7 +18,7 @@ const userSchema = new mongoose.Schema({
     password: {
         type: String,
         required: [true, 'Password is required'],
-        minlength: 6,
+        minlength: MIN_PASSWORD_LENGTH,
         select: false // Don't return password by default
     },
     role: {
@@ -64,14 +65,19 @@ const userSchema = new mongoose.Schema({
     timestamps: true
 });
 
-// Hash password before saving
+// Hash password and OTP before saving
 userSchema.pre('save', async function () {
-    if (!this.isModified('password')) {
-        return;
+    // Hash password if modified
+    if (this.isModified('password')) {
+        const salt = await bcrypt.genSalt(10);
+        this.password = await bcrypt.hash(this.password as string, salt);
     }
 
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password as string, salt);
+    // Hash OTP if modified and not null
+    if (this.isModified('otp') && this.otp !== null && this.otp !== undefined) {
+        const salt = await bcrypt.genSalt(10);
+        this.otp = await bcrypt.hash(this.otp as string, salt);
+    }
 });
 
 // Method to compare password
@@ -79,10 +85,20 @@ userSchema.methods.comparePassword = async function (candidatePassword: string) 
     return await bcrypt.compare(candidatePassword, this.password);
 };
 
-// Remove password from JSON output
+// Method to compare OTP
+userSchema.methods.compareOTP = async function (plainOtp: string) {
+    if (!this.otp) {
+        return false;
+    }
+    return await bcrypt.compare(plainOtp, this.otp);
+};
+
+// Remove password and OTP fields from JSON output
 userSchema.methods.toJSON = function () {
     const obj = this.toObject();
     delete obj.password;
+    delete obj.otp;
+    delete obj.otpExpires;
     return obj;
 };
 

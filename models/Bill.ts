@@ -18,6 +18,10 @@ const billShareSchema = new mongoose.Schema({
         type: String,
         enum: ['Unpaid', 'Pending Approval', 'Paid', 'Overdue'],
         default: 'Unpaid'
+    },
+    paidFromMealFund: {
+        type: Boolean,
+        default: false
     }
 }, { _id: false });
 

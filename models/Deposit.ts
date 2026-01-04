@@ -22,7 +22,7 @@ const depositSchema = new mongoose.Schema({
     },
     paymentMethod: {
         type: String,
-        enum: ['bKash', 'Nagad', 'Rocket', 'Cash', 'Bank Transfer'],
+        enum: ['bKash', 'Nagad', 'Rocket', 'Cash', 'Bank Transfer', 'Manager Adjustment'],
         required: true
     },
     transactionId: {

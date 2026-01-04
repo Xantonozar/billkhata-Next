@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import mongoose from 'mongoose';
+import { MIN_PASSWORD_LENGTH } from './passwordConfig';
 
 // ============================================
 // COMMON VALIDATORS
@@ -16,7 +17,7 @@ export const EmailSchema = z.string()
     .trim();
 
 export const PasswordSchema = z.string()
-    .min(6, 'Password must be at least 6 characters')
+    .min(MIN_PASSWORD_LENGTH, `Password must be at least ${MIN_PASSWORD_LENGTH} characters`)
     .max(100, 'Password too long');
 
 export const KhataIdSchema = z.string()
@@ -86,7 +87,8 @@ export const CreateBillSchema = z.object({
     }),
     description: z.string().max(1000).optional(),
     imageUrl: z.string().url().optional().nullable(),
-    shares: z.array(BillShareSchema).min(1, 'At least one share is required')
+    shares: z.array(BillShareSchema).min(1, 'At least one share is required'),
+    autoDeductFromMealFund: z.boolean().optional()
 });
 
 // ============================================
