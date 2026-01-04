@@ -8,6 +8,7 @@ import { MenuBookIcon, PencilIcon } from '@/components/Icons';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { api } from '@/services/api';
 import ToastContainer from '@/components/ToastContainer';
+import { MenuSkeleton } from '@/components/skeletons/MenuSkeleton';
 
 // Types
 interface Menu {
@@ -70,14 +71,14 @@ const EditMenuModal: React.FC<{
     if (isPermanentEdit) {
         return (
             <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 animate-fade-in p-4" onClick={onClose}>
-                <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                    <h2 className="text-xl font-bold font-sans mb-4 text-slate-900 dark:text-white">
+                <div className="bg-card rounded-xl shadow-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                    <h2 className="text-xl font-bold font-sans mb-4 text-card-foreground">
                         Edit Permanent Menu Template
                     </h2>
                     <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
                         This will set the default menu for all weeks. You can override specific days later.
                     </p>
-                    <div className="border-t my-4 border-slate-200 dark:border-slate-700"></div>
+                    <div className="border-t my-4 border-border"></div>
 
                     <div className="space-y-6">
                         {permanentMenuData.map((item) => (
@@ -127,11 +128,11 @@ const EditMenuModal: React.FC<{
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 animate-fade-in p-4" onClick={onClose}>
-            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl p-6 w-full max-w-lg" onClick={e => e.stopPropagation()}>
-                <h2 className="text-xl font-bold font-sans text-slate-900 dark:text-white">
+            <div className="bg-card rounded-xl shadow-2xl p-6 w-full max-w-lg" onClick={e => e.stopPropagation()}>
+                <h2 className="text-xl font-bold font-sans text-card-foreground">
                     Edit Menu for: {editingDay}
                 </h2>
-                <div className="border-t my-4 border-slate-200 dark:border-slate-700"></div>
+                <div className="border-t my-4 border-border"></div>
 
                 <div className="space-y-4">
                     <div>
@@ -249,53 +250,54 @@ export default function MenuPage() {
             <div className="space-y-6 animate-fade-in">
                 <div className="flex items-center gap-3 sm:gap-4">
                     <MenuBookIcon className="w-6 h-6 sm:w-8 sm:h-8 text-primary-500" />
-                    <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">This Week's Menu</h1>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-card-foreground">This Week's Menu</h1>
                 </div>
 
                 {loading ? (
-                    <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-8 text-center">
-                        <div className="flex justify-center items-center space-x-2">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
-                            <span className="text-slate-600 dark:text-slate-300">Loading menu...</span>
-                        </div>
-                    </div>
+                    <MenuSkeleton />
                 ) : (
-                    <>
-                        {/* Mobile Card View */}
-                        <div className="block lg:hidden space-y-4">
+                    <div className="space-y-6">
+                        {/* Unified Responsive Grid View */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                             {weeklyMenu.map(item => (
-                                <div key={item.day} className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-4">
-                                    <div className="flex justify-between items-center mb-3 pb-2 border-b dark:border-slate-700">
-                                        <h3 className="text-lg font-bold text-slate-800 dark:text-white">{item.day}</h3>
+                                <div key={item.day} className="bg-card rounded-xl shadow-md p-4 flex flex-col h-full transition-all hover:shadow-lg hover:scale-[1.02]">
+                                    <div className="flex justify-between items-center mb-3 pb-2 border-b border-border">
+                                        <h3 className="text-lg font-bold font-sans text-card-foreground">{item.day}</h3>
                                         {user?.role === Role.Manager && (
                                             <button
                                                 onClick={() => setEditingDay(item.day)}
-                                                className="text-sm font-semibold text-primary-600 dark:text-primary-400 flex items-center gap-1 bg-primary-50 dark:bg-primary-900/20 px-2 py-1 rounded"
+                                                className="text-xs sm:text-sm font-semibold text-primary-600 dark:text-primary-400 flex items-center gap-1 bg-primary-50 dark:bg-primary-500/10 px-2 py-1 rounded-md hover:bg-primary-100 dark:hover:bg-primary-500/20 transition-colors"
                                             >
-                                                <PencilIcon className="w-4 h-4" /> Edit
+                                                <PencilIcon className="w-3 h-3 sm:w-4 sm:h-4" /> Edit
                                             </button>
                                         )}
                                     </div>
-                                    <div className="space-y-3">
+                                    <div className="space-y-4 flex-grow">
                                         <div className="flex items-start gap-3">
-                                            <span className="text-xl">🍳</span>
+                                            <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-500/20 flex items-center justify-center flex-shrink-0">
+                                                <span className="text-sm">🍳</span>
+                                            </div>
                                             <div>
-                                                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Breakfast</p>
-                                                <p className="text-slate-700 dark:text-slate-300">{item.breakfast || <span className="text-slate-400 italic">Not set</span>}</p>
+                                                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Breakfast</p>
+                                                <p className="text-sm font-medium text-slate-700 dark:text-slate-200 mt-0.5">{item.breakfast || <span className="text-slate-400 italic font-normal">Not set</span>}</p>
                                             </div>
                                         </div>
                                         <div className="flex items-start gap-3">
-                                            <span className="text-xl">🍛</span>
+                                            <div className="w-8 h-8 rounded-full bg-yellow-100 dark:bg-yellow-500/20 flex items-center justify-center flex-shrink-0">
+                                                <span className="text-sm">🍛</span>
+                                            </div>
                                             <div>
-                                                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Lunch</p>
-                                                <p className="text-slate-700 dark:text-slate-300">{item.lunch || <span className="text-slate-400 italic">Not set</span>}</p>
+                                                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Lunch</p>
+                                                <p className="text-sm font-medium text-slate-700 dark:text-slate-200 mt-0.5">{item.lunch || <span className="text-slate-400 italic font-normal">Not set</span>}</p>
                                             </div>
                                         </div>
                                         <div className="flex items-start gap-3">
-                                            <span className="text-xl">🌙</span>
+                                            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                                                <span className="text-sm">🌙</span>
+                                            </div>
                                             <div>
-                                                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Dinner</p>
-                                                <p className="text-slate-700 dark:text-slate-300">{item.dinner || <span className="text-slate-400 italic">Not set</span>}</p>
+                                                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Dinner</p>
+                                                <p className="text-sm font-medium text-slate-700 dark:text-slate-200 mt-0.5">{item.dinner || <span className="text-slate-400 italic font-normal">Not set</span>}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -303,45 +305,18 @@ export default function MenuPage() {
                             ))}
                         </div>
 
-                        {/* Desktop Table View */}
-                        <div className="hidden lg:block bg-white dark:bg-slate-800 rounded-xl shadow-md p-4 overflow-x-auto">
-                            <table className="w-full min-w-max text-sm text-left">
-                                <thead className="border-b dark:border-slate-700">
-                                    <tr>
-                                        <th className="p-3 text-slate-900 dark:text-white font-semibold">Day</th>
-                                        <th className="p-3 text-slate-900 dark:text-white font-semibold">Breakfast</th>
-                                        <th className="p-3 text-slate-900 dark:text-white font-semibold">Lunch</th>
-                                        <th className="p-3 text-slate-900 dark:text-white font-semibold">Dinner</th>
-                                        {user?.role === Role.Manager && <th className="p-3 text-center text-slate-900 dark:text-white font-semibold">Edit</th>}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {weeklyMenu.map(item => (
-                                        <tr key={item.day} className="border-b dark:border-slate-700 last:border-b-0 hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                                            <td className="p-3 font-semibold text-slate-800 dark:text-slate-100">{item.day}</td>
-                                            <td className="p-3 text-slate-600 dark:text-slate-300">{item.breakfast || '-'}</td>
-                                            <td className="p-3 text-slate-600 dark:text-slate-300">{item.lunch || '-'}</td>
-                                            <td className="p-3 text-slate-600 dark:text-slate-300">{item.dinner || '-'}</td>
-                                            {user?.role === Role.Manager && (
-                                                <td className="p-3 text-center">
-                                                    <button onClick={() => setEditingDay(item.day)} className="p-1 rounded-md hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
-                                                        <PencilIcon className="w-5 h-5 text-primary-500" />
-                                                    </button>
-                                                </td>
-                                            )}
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                            {user?.role === Role.Manager && (
-                                <div className="mt-4 pt-4 border-t dark:border-slate-700 text-right">
-                                    <button onClick={() => setEditingDay('Permanent')} className="px-4 py-2 text-sm font-semibold bg-primary-100 text-primary-600 dark:bg-primary-500/20 dark:text-primary-400 rounded-md hover:bg-primary-200 dark:hover:bg-primary-500/30 transition-colors">
-                                        Edit Permanent Menu
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    </>
+                        {user?.role === Role.Manager && (
+                            <div className="flex justify-end pt-4 border-t border-slate-200 dark:border-slate-800">
+                                <button
+                                    onClick={() => setEditingDay('Permanent')}
+                                    className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-primary-700 bg-primary-50 dark:bg-primary-500/10 dark:text-primary-300 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-500/20 transition-all active:scale-95"
+                                >
+                                    <MenuBookIcon className="w-5 h-5" />
+                                    Edit Permanent Menu Template
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 )}
             </div>
 

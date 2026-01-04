@@ -7,16 +7,16 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Role } from '@/types';
 import { ShoppingCartIcon, SpinnerIcon } from '@/components/Icons';
 import ToastContainer from '@/components/ToastContainer';
+import { ShoppingSkeleton } from '@/components/skeletons/ShoppingSkeleton';
 
 // Code Splitting: Dynamic imports
-// Loading state uses a spinner
+// Code Splitting: Dynamic imports with skeleton loading states
 const ManagerShoppingView = dynamic(() => import('@/components/shopping/ManagerShoppingView'), {
-    loading: () => <div className="flex justify-center p-12"><SpinnerIcon className="w-8 h-8 text-primary-500 animate-spin" /></div>,
-    ssr: false // Client-side only
+    loading: () => <ShoppingSkeleton />, ssr: false // Client-side only
 });
 
 const MemberShoppingView = dynamic(() => import('@/components/shopping/MemberShoppingView'), {
-    loading: () => <div className="flex justify-center p-12"><SpinnerIcon className="w-8 h-8 text-primary-500 animate-spin" /></div>,
+    loading: () => <ShoppingSkeleton />,
     ssr: false
 });
 
@@ -31,7 +31,7 @@ export default function ShoppingPage() {
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3 sm:gap-4">
                         <ShoppingCartIcon className="w-6 h-6 sm:w-8 sm:h-8 text-primary-500" />
-                        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">Shopping & Funds</h1>
+                        <h1 className="text-2xl sm:text-3xl font-bold text-card-foreground">Fund Management</h1>
                     </div>
                 </div>
 

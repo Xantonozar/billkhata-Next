@@ -2,18 +2,17 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { api } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { SpinnerIcon, HomeIcon, CheckCircleIcon, MailIcon } from '@/components/Icons';
 
 export default function VerifyEmailPage() {
     const router = useRouter();
-    const searchParams = useSearchParams();
     const { user, setUser } = useAuth();
-    const emailParam = searchParams.get('email') || '';
 
-    const [email, setEmail] = useState(emailParam);
+    // Get email from AuthContext instead of query params
+    const [email, setEmail] = useState(user?.email || '');
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
@@ -22,6 +21,23 @@ export default function VerifyEmailPage() {
     const [countdown, setCountdown] = useState(0);
 
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+    const navigationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const isMountedRef = useRef(true);
+
+    useEffect(() => {
+        isMountedRef.current = true;
+        // Update email from user context when available
+        if (user?.email) {
+            setEmail(user.email);
+        }
+        return () => {
+            isMountedRef.current = false;
+            if (navigationTimeoutRef.current) {
+                clearTimeout(navigationTimeoutRef.current);
+                navigationTimeoutRef.current = null;
+            }
+        };
+    }, [user]);
 
     useEffect(() => {
         if (countdown > 0) {
@@ -80,17 +96,42 @@ export default function VerifyEmailPage() {
 
         setLoading(true);
         try {
-            const result = await api.verifyEmail(email, otpString);
+            // Pass email only if not available from user context
+            const result = await api.verifyEmail(user?.email ? undefined : email, otpString);
             setSuccess(result.message || 'Email verified successfully!');
 
             // Update user state in AuthContext to reflect verification
-            if (user) {
+            // Security: Only update user if the API response user ID matches the current authenticated user ID
+            if (result.user) {
+                // Verify that the returned user matches the currently authenticated user
+                if (user?.id && result.user.id && result.user.id === user.id) {
+                    // IDs match - safe to replace with API response
+                    setUser(result.user);
+                } else if (user?.id && result.user.id && result.user.id !== user.id) {
+                    // IDs don't match - potential security issue, log warning and only update verified flag
+                    console.warn('Security: API returned user with different ID. Only updating verification status.');
+                    setUser({ ...user, isVerified: true });
+                } else if (user) {
+                    // No ID comparison possible (missing IDs), but we have a current user - update verified flag only
+                    setUser({ ...user, isVerified: true });
+                } else {
+                    // No current user but API returned one - this shouldn't happen in normal flow, but accept it
+                    setUser(result.user);
+                }
+            } else if (user) {
+                // No user in API response, just update verification status
                 setUser({ ...user, isVerified: true });
             }
 
-            setTimeout(() => {
+            // Clear any existing timeout
+            if (navigationTimeoutRef.current) {
+                clearTimeout(navigationTimeoutRef.current);
+            }
+
+            // Redirect to dashboard immediately after verification
+            if (isMountedRef.current) {
                 router.push('/dashboard');
-            }, 2000);
+            }
         } catch (err: any) {
             setError(err.message || 'Verification failed');
         } finally {
@@ -102,9 +143,9 @@ export default function VerifyEmailPage() {
         if (countdown > 0 || !email) return;
 
         setResending(true);
-        setError('');
         try {
-            await api.resendOTP(email);
+            // Pass email only if not available from user context
+            await api.resendOTP(user?.email ? undefined : email);
             setSuccess('A new verification code has been sent to your email');
             setCountdown(60); // 60 second cooldown
             setOtp(['', '', '', '', '', '']);
@@ -136,7 +177,7 @@ export default function VerifyEmailPage() {
                 </div>
 
                 <form className="space-y-6" onSubmit={handleVerify}>
-                    {!emailParam && (
+                    {!user?.email && (
                         <div className="space-y-2">
                             <label htmlFor="email" className="text-sm font-medium text-slate-300 ml-1">
                                 Email address
@@ -169,6 +210,7 @@ export default function VerifyEmailPage() {
                                     value={digit}
                                     onChange={(e) => handleOtpChange(index, e.target.value)}
                                     onKeyDown={(e) => handleKeyDown(index, e)}
+                                    aria-label={`OTP digit ${index + 1}`}
                                     className="w-12 h-14 text-center text-xl font-bold rounded-xl bg-slate-900/50 border border-slate-700 text-white focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/50 transition-all"
                                 />
                             ))}

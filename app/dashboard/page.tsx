@@ -9,7 +9,7 @@ import AppLayout from '@/components/AppLayout';
 import { PlusIcon, MealIcon, UsersIcon, ChartBarIcon, PencilIcon, XIcon, CheckCircleIcon, BillsIcon, BellIcon } from '@/components/Icons';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { api } from '@/services/api';
-import ReminderButton from '@/components/ReminderButton';
+import AuthSkeleton from '@/components/AuthSkeleton';
 
 const initialTodaysMenu: TodaysMenu = {
     breakfast: 'Not set',
@@ -18,31 +18,31 @@ const initialTodaysMenu: TodaysMenu = {
 };
 
 const StatCard: React.FC<{ title: string; value: string; subtitle: string, isLoading?: boolean }> = ({ title, value, subtitle, isLoading }) => (
-    <div className="bg-white dark:bg-slate-800 p-3 sm:p-5 rounded-xl shadow-md transition-all duration-300 hover:scale-[1.02] hover:shadow-lg">
-        <h3 className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400 truncate">{title}</h3>
+    <div className="bg-card p-3 sm:p-5 rounded-xl shadow-md transition-all duration-300 hover:scale-[1.02] hover:shadow-lg">
+        <h3 className="text-xs sm:text-sm font-semibold text-muted-foreground truncate">{title}</h3>
         {isLoading ? (
-            <div className="mt-2 h-6 sm:h-8 w-3/4 rounded bg-slate-200 dark:bg-slate-700 animate-pulse"></div>
+            <div className="mt-2 h-6 sm:h-8 w-3/4 rounded bg-muted animate-pulse"></div>
         ) : (
-            <p className="text-xl sm:text-3xl font-bold text-slate-800 dark:text-white mt-1 truncate">{value}</p>
+            <p className="text-xl sm:text-3xl font-bold text-card-foreground mt-1 truncate">{value}</p>
         )}
-        <p className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500 mt-1 truncate">{subtitle}</p>
+        <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 truncate">{subtitle}</p>
     </div>
 );
 
 const PriorityActionCard: React.FC<{ title: string; details: string; onView?: () => void }> = ({ title, details, onView }) => (
-    <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+    <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
         <div>
-            <p className="font-semibold text-slate-800 dark:text-white">{title}</p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">{details}</p>
+            <p className="font-semibold text-foreground">{title}</p>
+            <p className="text-sm text-muted-foreground">{details}</p>
         </div>
         <button onClick={onView} className="text-sm font-semibold text-primary-600 hover:underline dark:text-primary-400">View →</button>
     </div>
 );
 
 const QuickActionButton: React.FC<{ icon: React.ReactNode; label: string, onClick: () => void }> = ({ icon, label, onClick }) => (
-    <button onClick={onClick} className="flex flex-col items-center justify-center p-2 sm:p-4 bg-slate-100 dark:bg-slate-700/50 rounded-xl shadow-sm space-y-1 sm:space-y-2 transition-all hover:bg-slate-200 dark:hover:bg-slate-700 hover:scale-[1.02] active:scale-[0.98]">
+    <button onClick={onClick} className="flex flex-col items-center justify-center p-2 sm:p-4 bg-muted rounded-xl shadow-sm space-y-1 sm:space-y-2 transition-all hover:bg-accent hover:scale-[1.02] active:scale-[0.98]">
         <div className="scale-75 sm:scale-100 transform origin-center">{icon}</div>
-        <span className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 text-center leading-tight">{label}</span>
+        <span className="text-xs sm:text-sm font-semibold text-muted-foreground text-center leading-tight">{label}</span>
     </button>
 );
 
@@ -155,20 +155,20 @@ const ManagerDashboard: React.FC<{ initialData?: any, loading?: boolean, user?: 
     const renderMealRow = (meal: keyof TodaysMenu, label: string) => {
         if (editingMeal === meal) {
             return (
-                <tr className="border-b dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50">
-                    <td className="p-3 font-semibold text-slate-800 dark:text-slate-100">{label}</td>
+                <tr className="border-b border-border bg-muted">
+                    <td className="p-3 font-semibold text-foreground">{label}</td>
                     <td className="p-3">
                         <input
                             type="text"
                             value={editText}
                             onChange={(e) => setEditText(e.target.value)}
-                            className="w-full px-2 py-1 bg-white dark:bg-slate-600 border-2 border-primary-500 rounded-md focus:outline-none text-slate-900 dark:text-white"
+                            className="w-full px-2 py-1 bg-background border-2 border-primary-500 rounded-md focus:outline-none text-foreground"
                             autoFocus
                         />
                     </td>
                     <td className="p-3 text-right">
                         <div className="flex justify-end gap-2">
-                            <button onClick={handleCancel} className="p-2 rounded-full text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-600"><XIcon className="w-5 h-5" /></button>
+                            <button onClick={handleCancel} className="p-2 rounded-full text-muted-foreground hover:bg-muted"><XIcon className="w-5 h-5" /></button>
                             <button onClick={handleSave} className="p-2 rounded-full text-green-500 hover:bg-green-100 dark:hover:bg-green-500/20"><CheckCircleIcon className="w-5 h-5" /></button>
                         </div>
                     </td>
@@ -177,11 +177,11 @@ const ManagerDashboard: React.FC<{ initialData?: any, loading?: boolean, user?: 
         }
 
         return (
-            <tr className="border-b dark:border-slate-700">
-                <td className="p-3 font-semibold text-slate-800 dark:text-slate-100">{label}</td>
-                <td className="p-3 text-slate-600 dark:text-slate-300">{menu[meal]}</td>
+            <tr className="border-b border-border">
+                <td className="p-3 font-semibold text-foreground">{label}</td>
+                <td className="p-3 text-muted-foreground">{menu[meal]}</td>
                 <td className="p-3 text-right">
-                    <button onClick={() => handleEditClick(meal)} className="p-2 rounded-md hover:bg-slate-200 dark:hover:bg-slate-600">
+                    <button onClick={() => handleEditClick(meal)} className="p-2 rounded-md hover:bg-muted">
                         <PencilIcon className="w-5 h-5 text-primary-500" />
                     </button>
                 </td>
@@ -194,8 +194,8 @@ const ManagerDashboard: React.FC<{ initialData?: any, loading?: boolean, user?: 
     return (
         <div className="space-y-8 animate-fade-in">
             <div>
-                <h1 className="text-3xl font-bold text-slate-800 dark:text-white">Assalamu Alaikum, {user?.name} 👋</h1>
-                <p className="text-slate-500 dark:text-slate-400 text-base">{currentDate}</p>
+                <h1 className="text-3xl font-bold text-foreground">Assalamu Alaikum, {user?.name} 👋</h1>
+                <p className="text-muted-foreground text-base">{currentDate}</p>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
@@ -205,15 +205,15 @@ const ManagerDashboard: React.FC<{ initialData?: any, loading?: boolean, user?: 
                 <StatCard title="👥 Members" value={`${stats.activeMembers}`} subtitle="Active users" isLoading={loading} />
             </div>
 
-            <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-md">
-                <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-4">🆕 Today's Menu ({todayName})</h3>
+            <div className="bg-card p-6 rounded-xl shadow-md">
+                <h3 className="text-xl font-bold text-card-foreground mb-4">🆕 Today's Menu ({todayName})</h3>
                 <div className="overflow-x-auto">
                     <table className="w-full min-w-max text-sm text-left">
                         <thead>
-                            <tr className="border-b dark:border-slate-700">
-                                <th className="p-3 w-32 text-slate-700 dark:text-slate-300">Meal</th>
-                                <th className="p-3 text-slate-700 dark:text-slate-300">What Will Be Cooked</th>
-                                <th className="p-3 text-right w-28 text-slate-700 dark:text-slate-300">Edit</th>
+                            <tr className="border-b border-border">
+                                <th className="p-3 w-32 text-muted-foreground">Meal</th>
+                                <th className="p-3 text-muted-foreground">What Will Be Cooked</th>
+                                <th className="p-3 text-right w-28 text-muted-foreground">Edit</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -226,11 +226,11 @@ const ManagerDashboard: React.FC<{ initialData?: any, loading?: boolean, user?: 
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-xl shadow-md">
-                    <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-4">Priority Actions</h3>
+                <div className="lg:col-span-2 bg-card p-6 rounded-xl shadow-md">
+                    <h3 className="text-2xl font-bold text-card-foreground mb-4">Priority Actions</h3>
                     <div className="space-y-4">
                         {priorityActions.length === 0 ? (
-                            <p className="text-slate-500 dark:text-slate-400">No pending actions. Great job! 🎉</p>
+                            <p className="text-muted-foreground">No pending actions. Great job! 🎉</p>
                         ) : (
                             priorityActions.map((action, index) => (
                                 <PriorityActionCard
@@ -244,32 +244,14 @@ const ManagerDashboard: React.FC<{ initialData?: any, loading?: boolean, user?: 
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-xl shadow-md">
-                    <h3 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-white mb-3 sm:mb-4">Quick Actions</h3>
+                <div className="bg-card p-4 sm:p-6 rounded-xl shadow-md">
+                    <h3 className="text-xl sm:text-2xl font-bold text-card-foreground mb-3 sm:mb-4">Quick Actions</h3>
                     <div className="grid grid-cols-4 gap-2 sm:gap-4">
                         <QuickActionButton icon={<PlusIcon className="w-8 h-8 text-primary-500" />} label="Bill" onClick={() => router.push('/bills')} />
                         <QuickActionButton icon={<MealIcon className="w-8 h-8 text-green-600" />} label="Meal" onClick={() => router.push('/meals')} />
                         <QuickActionButton icon={<UsersIcon className="w-8 h-8 text-yellow-600" />} label="User" onClick={() => router.push('/members')} />
                         <QuickActionButton icon={<ChartBarIcon className="w-8 h-8 text-indigo-500" />} label="Rpt" onClick={() => router.push('/reports')} />
                     </div>
-                </div>
-            </div>
-
-            {/* Send Reminders Section */}
-            <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-xl shadow-md">
-                <div className="flex items-center gap-2 mb-4">
-                    <BellIcon className="w-6 h-6 text-amber-500" />
-                    <h3 className="text-xl font-bold text-slate-800 dark:text-white">Send Reminders</h3>
-                </div>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                    Send notification reminders to room members
-                </p>
-                <div className="flex flex-wrap gap-2 sm:gap-3">
-                    <ReminderButton type="add_meal" />
-                    <ReminderButton type="pay_bill" />
-                    <ReminderButton type="shopping" />
-                    <ReminderButton type="approve_deposit" />
-                    <ReminderButton type="approve_expense" />
                 </div>
             </div>
         </div>
@@ -322,8 +304,8 @@ const MemberDashboard: React.FC<{ initialData?: any, loading?: boolean, user?: a
     return (
         <div className="space-y-8 animate-fade-in">
             <div>
-                <h1 className="text-3xl font-bold text-slate-800 dark:text-white">Assalamu Alaikum, {user?.name} 👋</h1>
-                <p className="text-slate-500 dark:text-slate-400 text-base">{currentDate}</p>
+                <h1 className="text-3xl font-bold text-foreground">Assalamu Alaikum, {user?.name} 👋</h1>
+                <p className="text-muted-foreground text-base">{currentDate}</p>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-2 gap-3 sm:gap-6">
@@ -338,22 +320,22 @@ const MemberDashboard: React.FC<{ initialData?: any, loading?: boolean, user?: a
                 <StatCard title="📅 Next Bill" value={nextBillDueText} subtitle={daysLeftText} isLoading={loading} />
             </div>
 
-            <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-md">
-                <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-4">🆕 Today's Menu ({todayName})</h3>
+            <div className="bg-card p-6 rounded-xl shadow-md">
+                <h3 className="text-xl font-bold text-card-foreground mb-4">🆕 Today's Menu ({todayName})</h3>
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left">
                         <tbody>
-                            <tr className="border-b dark:border-slate-700">
-                                <td className="p-3 font-semibold text-slate-800 dark:text-slate-100 w-32">Breakfast</td>
-                                <td className="p-3 text-slate-600 dark:text-slate-300">{menu.breakfast}</td>
+                            <tr className="border-b border-border">
+                                <td className="p-3 font-semibold text-foreground w-32">Breakfast</td>
+                                <td className="p-3 text-muted-foreground">{menu.breakfast}</td>
                             </tr>
-                            <tr className="border-b dark:border-slate-700">
-                                <td className="p-3 font-semibold text-slate-800 dark:text-slate-100">Lunch</td>
-                                <td className="p-3 text-slate-600 dark:text-slate-300">{menu.lunch}</td>
+                            <tr className="border-b border-border">
+                                <td className="p-3 font-semibold text-foreground">Lunch</td>
+                                <td className="p-3 text-muted-foreground">{menu.lunch}</td>
                             </tr>
                             <tr>
-                                <td className="p-3 font-semibold text-slate-800 dark:text-slate-100">Dinner</td>
-                                <td className="p-3 text-slate-600 dark:text-slate-300">{menu.dinner}</td>
+                                <td className="p-3 font-semibold text-foreground">Dinner</td>
+                                <td className="p-3 text-muted-foreground">{menu.dinner}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -361,7 +343,7 @@ const MemberDashboard: React.FC<{ initialData?: any, loading?: boolean, user?: a
             </div>
 
             <div>
-                <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-4">Quick Actions</h3>
+                <h3 className="text-xl font-bold text-foreground mb-4">Quick Actions</h3>
                 <div className="grid grid-cols-4 gap-2 sm:gap-4">
                     <QuickActionButton icon={<MealIcon className="w-8 h-8 text-primary-500" />} label="Meal" onClick={() => router.push('/meals')} />
                     <QuickActionButton icon={<BillsIcon className="w-8 h-8 text-green-600" />} label="Pay" onClick={() => router.push('/bills')} />
@@ -371,18 +353,18 @@ const MemberDashboard: React.FC<{ initialData?: any, loading?: boolean, user?: a
             </div>
 
             <div>
-                <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-4">Recent Activity</h3>
+                <h3 className="text-xl font-bold text-foreground mb-4">Recent Activity</h3>
                 <div className="space-y-3">
                     {notifications.length === 0 ? (
-                        <p className="text-slate-500 dark:text-slate-400">No recent activity.</p>
+                        <p className="text-muted-foreground">No recent activity.</p>
                     ) : (
                         notifications.slice(0, 8).map((notification) => (
-                            <div key={notification.id} className="p-3 bg-white dark:bg-slate-800 rounded-lg shadow-sm">
+                            <div key={notification.id} className="p-3 bg-card rounded-lg shadow-sm">
                                 <div className="flex justify-between items-start gap-3">
                                     <div className="flex-1">
-                                        <p className="text-sm font-medium text-slate-800 dark:text-white">{notification.title}</p>
-                                        <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">{notification.message}</p>
-                                        <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">{notification.timestamp}</p>
+                                        <p className="text-sm font-medium text-foreground">{notification.title}</p>
+                                        <p className="text-xs text-muted-foreground mt-1">{notification.message}</p>
+                                        <p className="text-xs text-muted-foreground mt-1">{notification.timestamp}</p>
                                     </div>
                                     {!notification.read && (
                                         <span className="inline-block w-2 h-2 rounded-full bg-primary-500 flex-shrink-0 mt-1" />
@@ -444,12 +426,14 @@ export default function DashboardPage() {
     // No, we need 'user' object for names and roles. 
     // BUT 'stats' loading happens in parallel.
 
-    if (authLoading || !user) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-light-cyan-50 dark:bg-slate-900">
-                <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-primary-500"></div>
-            </div>
-        );
+    // Show skeleton while auth is loading
+    if (authLoading) {
+        return <AuthSkeleton />;
+    }
+
+    // Redirect if not logged in (after auth check completes)
+    if (!user) {
+        return null; // Will redirect via useEffect
     }
 
     return (

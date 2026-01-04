@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api } from '@/services/api';
@@ -12,6 +12,16 @@ export default function ForgotPasswordPage() {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [loading, setLoading] = useState(false);
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Cleanup timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+        };
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -23,13 +33,19 @@ export default function ForgotPasswordPage() {
             return;
         }
 
+        // Clear any existing timeout before setting a new one
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+        }
+
         setLoading(true);
         try {
             const result = await api.forgotPassword(email);
             setSuccess(result.message);
             // Redirect to reset password page after short delay
-            setTimeout(() => {
+            timeoutRef.current = setTimeout(() => {
                 router.push(`/reset-password?email=${encodeURIComponent(email)}`);
+                timeoutRef.current = null;
             }, 1500);
         } catch (err: any) {
             setError(err.message || 'Something went wrong');

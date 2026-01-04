@@ -10,6 +10,7 @@ import { Role } from '@/types';
 import {
     BriefcaseIcon, PlusIcon, PhoneIcon, PencilIcon, TrashIcon, XIcon, SpinnerIcon
 } from '@/components/Icons';
+import { StaffSkeleton } from '@/components/skeletons/StaffSkeleton';
 
 interface StaffMember {
     _id: string;
@@ -126,14 +127,14 @@ export default function StaffPage() {
         window.open(`tel:${number}`);
     };
 
-    if (loading) return <AppLayout><div className="flex justify-center p-10"><SpinnerIcon className="w-8 h-8 text-primary-500" /></div></AppLayout>;
+    if (loading) return <AppLayout><StaffSkeleton /></AppLayout>;
 
     return (
         <AppLayout>
             <div className="space-y-6 animate-fade-in relative">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-card p-6 rounded-xl shadow-sm border border-border">
                     <div>
-                        <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <h1 className="text-2xl font-bold text-card-foreground flex items-center gap-2">
                             <BriefcaseIcon className="w-8 h-8 text-primary-500" />
                             Household Services
                         </h1>
@@ -153,9 +154,9 @@ export default function StaffPage() {
                 </div>
 
                 {staff.length === 0 ? (
-                    <div className="text-center py-12 bg-white dark:bg-slate-800 rounded-xl border border-dashed border-slate-300 dark:border-slate-700">
+                    <div className="text-center py-12 bg-card rounded-xl border border-dashed border-border">
                         <BriefcaseIcon className="w-16 h-16 mx-auto text-slate-300 mb-4" />
-                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">No services added yet</h3>
+                        <h3 className="text-lg font-semibold text-card-foreground">No services added yet</h3>
                         <p className="text-slate-500">
                             {user?.role === Role.Manager ? "Add your maid, cook, or utility contacts here." : "Ask your manager to add service contacts."}
                         </p>
@@ -163,7 +164,7 @@ export default function StaffPage() {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {staff.map((person) => (
-                            <div key={person._id} className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-5 hover:shadow-md transition-shadow">
+                            <div key={person._id} className="bg-card rounded-xl shadow-sm border border-border p-5 hover:shadow-md transition-shadow">
                                 <div className="flex justify-between items-start">
                                     <div className="flex items-center gap-3">
                                         <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-2xl">
@@ -174,7 +175,7 @@ export default function StaffPage() {
                                                         person.designation === 'Plumber' ? '🔧' : '👷'}
                                         </div>
                                         <div>
-                                            <h3 className="font-bold text-lg text-slate-900 dark:text-white">{person.name}</h3>
+                                            <h3 className="font-bold text-lg text-card-foreground">{person.name}</h3>
                                             <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
                                                 {person.designation}
                                             </span>
@@ -191,7 +192,7 @@ export default function StaffPage() {
                                         </div>
                                     )}
                                 </div>
-                                <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                                <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
                                     <div className="text-base font-mono text-slate-600 dark:text-slate-300">
                                         {person.phone}
                                     </div>
@@ -212,9 +213,9 @@ export default function StaffPage() {
             {/* Modal */}
             {modalOpen && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-fade-in" onClick={handleCloseModal}>
-                    <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl w-full max-w-md overflow-hidden" onClick={e => e.stopPropagation()}>
-                        <div className="p-4 border-b dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
-                            <h3 className="font-bold text-lg text-slate-900 dark:text-white">
+                    <div className="bg-card rounded-xl shadow-xl w-full max-w-md overflow-hidden" onClick={e => e.stopPropagation()}>
+                        <div className="p-4 border-b border-border flex justify-between items-center bg-muted/50">
+                            <h3 className="font-bold text-lg text-card-foreground">
                                 {editingStaff ? 'Edit Staff' : 'Add New Staff'}
                             </h3>
                             <button onClick={handleCloseModal} className="p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700">

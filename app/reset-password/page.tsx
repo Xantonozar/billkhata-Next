@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { api } from '@/services/api';
 import { SpinnerIcon, HomeIcon, LockIcon, EyeIcon, EyeOffIcon, CheckCircleIcon } from '@/components/Icons';
+import { MIN_PASSWORD_LENGTH } from '@/lib/passwordConfig';
 
 export default function ResetPasswordPage() {
     const router = useRouter();
@@ -22,6 +23,23 @@ export default function ResetPasswordPage() {
     const [step, setStep] = useState<'otp' | 'password'>('otp');
 
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+    const timeoutIdRef = useRef<number | NodeJS.Timeout | null>(null);
+
+    // Cleanup timeout on unmount or when success changes
+    useEffect(() => {
+        if (success) {
+            timeoutIdRef.current = setTimeout(() => {
+                router.push('/login');
+            }, 2000);
+        }
+
+        return () => {
+            if (timeoutIdRef.current !== null) {
+                clearTimeout(timeoutIdRef.current);
+                timeoutIdRef.current = null;
+            }
+        };
+    }, [success, router]);
 
     const handleOtpChange = (index: number, value: string) => {
         if (!/^\d*$/.test(value)) return;
@@ -52,8 +70,8 @@ export default function ResetPasswordPage() {
     };
 
     const validatePassword = () => {
-        if (newPassword.length < 6) {
-            setError('Password must be at least 6 characters long');
+        if (newPassword.length < MIN_PASSWORD_LENGTH) {
+            setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters long`);
             return false;
         }
         if (newPassword !== confirmPassword) {
@@ -91,9 +109,6 @@ export default function ResetPasswordPage() {
         try {
             const result = await api.resetPassword(email, otpString, newPassword);
             setSuccess(result.message || 'Password reset successfully!');
-            setTimeout(() => {
-                router.push('/login');
-            }, 2000);
         } catch (err: any) {
             setError(err.message || 'Password reset failed');
         } finally {

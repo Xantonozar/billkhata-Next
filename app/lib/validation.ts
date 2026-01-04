@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import mongoose from 'mongoose';
+import { MIN_PASSWORD_LENGTH } from '@/lib/passwordConfig';
 
 // ============================================
 // COMMON VALIDATORS
@@ -16,7 +17,7 @@ export const EmailSchema = z.string()
     .trim();
 
 export const PasswordSchema = z.string()
-    .min(6, 'Password must be at least 6 characters')
+    .min(MIN_PASSWORD_LENGTH, `Password must be at least ${MIN_PASSWORD_LENGTH} characters`)
     .max(100, 'Password too long');
 
 export const KhataIdSchema = z.string()

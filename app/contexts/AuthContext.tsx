@@ -63,7 +63,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const newUser = await api.signup(name, email, pass, role);
         if (newUser) {
             setUser(newUser);
-            router.push('/dashboard');
+            // Redirect to email verification page instead of dashboard
+            // Tokens will be issued after email verification
+            router.push('/verify-email');
         }
         return newUser;
     };

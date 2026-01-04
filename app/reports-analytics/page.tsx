@@ -12,28 +12,28 @@ import ToastContainer from '@/components/ToastContainer';
 // --- Components ---
 
 const SummaryCard: React.FC<{ icon: React.ReactNode; title: string; value: string; subtitle: string; colorClass: string }> = ({ icon, title, value, subtitle, colorClass }) => (
-    <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-700/50 flex items-start gap-5 hover:transform hover:scale-[1.02] transition-all duration-300">
+    <div className="bg-card p-6 rounded-2xl shadow-lg border border-border flex items-start gap-5 hover:transform hover:scale-[1.02] transition-all duration-300">
         <div className={`flex-shrink-0 w-14 h-14 flex items-center justify-center rounded-2xl ${colorClass} shadow-inner`}>
             {icon}
         </div>
         <div>
-            <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{title}</h3>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{value}</p>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 font-medium">{subtitle}</p>
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{title}</h3>
+            <p className="text-2xl font-bold text-card-foreground mt-1">{value}</p>
+            <p className="text-xs text-muted-foreground mt-1 font-medium">{subtitle}</p>
         </div>
     </div>
 );
 
 const ChartContainer: React.FC<{ title: string; children: React.ReactNode; footer?: string }> = ({ title, children, footer }) => (
-    <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-700/50 h-full flex flex-col">
-        <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-6 flex items-center gap-2">
+    <div className="bg-card p-6 rounded-2xl shadow-lg border border-border h-full flex flex-col">
+        <h3 className="font-bold text-lg text-card-foreground mb-6 flex items-center gap-2">
             <span className="w-1 h-6 bg-primary-500 rounded-full"></span>
             {title}
         </h3>
         <div className="flex-grow flex items-center justify-center w-full">
             {children}
         </div>
-        {footer && <p className="text-xs text-center text-slate-400 dark:text-slate-500 mt-4 pt-4 border-t border-slate-100 dark:border-slate-700/50">{footer}</p>}
+        {footer && <p className="text-xs text-center text-muted-foreground mt-4 pt-4 border-t border-border">{footer}</p>}
     </div>
 );
 
@@ -81,8 +81,7 @@ const DonutChart: React.FC<{ data: { label: string; value: number; color: string
                     })}
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <span className="text-xs text-slate-400 font-medium">Total</span>
-                    <span className="text-xl font-bold text-slate-800 dark:text-white">৳{total.toFixed(0)}</span>
+                    <span className="text-xs text-muted-foreground font-medium">Total</span>                    <span className="text-xl font-bold text-card-foreground">৳{total.toFixed(0)}</span>
                 </div>
             </div>
             <div className="space-y-3 text-sm w-full max-w-[200px]">
@@ -90,9 +89,9 @@ const DonutChart: React.FC<{ data: { label: string; value: number; color: string
                     <div key={idx} className="flex items-center justify-between group/item">
                         <div className="flex items-center gap-2">
                             <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: item.color }}></div>
-                            <span className="text-slate-600 dark:text-slate-300 font-medium">{item.label}</span>
+                            <span className="text-muted-foreground font-medium">{item.label}</span>
                         </div>
-                        <span className="text-slate-900 dark:text-white font-bold">{((item.value / total) * 100).toFixed(1)}%</span>
+                        <span className="text-card-foreground font-bold">{((item.value / total) * 100).toFixed(1)}%</span>
                     </div>
                 ))}
             </div>
@@ -124,12 +123,12 @@ const BarChart: React.FC<{ data: { label: string; value: number; color: string }
                                 transitionDelay: `${i * 100}ms`
                             }}
                         >
-                            <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none">
+                            <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-popover text-popover-foreground text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none">
                                 ৳{item.value.toLocaleString()}
                             </div>
                         </div>
                     </div>
-                    <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 truncate w-full text-center" title={item.label}>
+                    <span className="text-[10px] font-medium text-muted-foreground truncate w-full text-center" title={item.label}>
                         {item.label}
                     </span>
                 </div>
@@ -180,7 +179,7 @@ const LineChart: React.FC<{ data: { label: string; values: { name: string; value
                 {/* Grid Lines */}
                 {[0, 0.25, 0.5, 0.75, 1].map(ratio => {
                     const y = chartBottom - (ratio * chartHeight);
-                    return <line key={ratio} x1="0" y1={y} x2={width} y2={y} stroke="currentColor" className="text-slate-100 dark:text-slate-700" strokeWidth="0.2" />;
+                    return <line key={ratio} x1="0" y1={y} x2={width} y2={y} stroke="currentColor" className="text-border" strokeWidth="0.2" />;
                 })}
 
                 {/* Paths */}
@@ -226,9 +225,9 @@ const LineChart: React.FC<{ data: { label: string; values: { name: string; value
 
             <div className="flex flex-wrap justify-center gap-6 text-xs">
                 {series.map((serie, idx) => (
-                    <div key={idx} className="flex items-center gap-2 bg-slate-50 dark:bg-slate-700/50 px-3 py-1.5 rounded-full border border-slate-100 dark:border-slate-600">
+                    <div key={idx} className="flex items-center gap-2 bg-muted px-3 py-1.5 rounded-full border border-border">
                         <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: serie.color }}></div>
-                        <span className="text-slate-600 dark:text-slate-300 font-medium">{serie.name}</span>
+                        <span className="text-muted-foreground font-medium">{serie.name}</span>
                     </div>
                 ))}
             </div>
@@ -326,26 +325,26 @@ export default function ReportsAnalyticsPage() {
                                 <span className="text-2xl sm:text-3xl">📈</span>
                             </div>
                             <div>
-                                <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Reports & Analytics</h1>
-                                <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mt-1">Deep dive into your financial data</p>
+                                <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">Reports & Analytics</h1>
+                                <p className="text-muted-foreground text-xs sm:text-sm mt-1">Deep dive into your financial data</p>
                             </div>
                         </div>
                         <div className="flex flex-col sm:flex-row items-stretch sm:items-center flex-wrap gap-2 sm:gap-3">
-                            <div className="bg-white dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700 flex shadow-sm w-full sm:w-auto">
+                            <div className="bg-card p-1 rounded-lg border border-border flex shadow-sm w-full sm:w-auto">
                                 {['This Month', 'Last 6 Months'].map(range => (
                                     <button
                                         key={range}
                                         onClick={() => setActiveDateRange(range)}
                                         className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold rounded-md transition-all ${activeDateRange === range
                                             ? 'bg-primary-500 text-white shadow-md'
-                                            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
+                                            : 'text-muted-foreground hover:bg-muted'
                                             }`}
                                     >
                                         {range}
                                     </button>
                                 ))}
                             </div>
-                            <button className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-slate-700 dark:text-slate-200 w-full sm:w-auto">
+                            <button className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold bg-card border border-border rounded-lg shadow-sm hover:bg-muted transition-colors text-muted-foreground w-full sm:w-auto">
                                 <ExportIcon className="w-4 h-4" />Export
                             </button>
                         </div>
@@ -391,7 +390,7 @@ export default function ReportsAnalyticsPage() {
                                     <select
                                         value={sortCategoryBy}
                                         onChange={(e) => setSortCategoryBy(e.target.value as any)}
-                                        className="text-xs border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 focus:outline-none"
+                                        className="text-xs border border-border rounded-md px-2 py-1 bg-muted text-muted-foreground focus:outline-none"
                                     >
                                         <option value="amount">Sort by Amount</option>
                                         <option value="name">Sort by Name</option>
@@ -414,26 +413,26 @@ export default function ReportsAnalyticsPage() {
 
                     {/* Stats Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
-                        <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-700/50 flex items-center justify-between">
+                        <div className="bg-card p-4 sm:p-6 rounded-2xl shadow-lg border border-border flex items-center justify-between">
                             <div>
-                                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">Total Bills</p>
-                                <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-1">{reportData.totalBills}</p>
+                                <p className="text-xs sm:text-sm text-muted-foreground font-medium">Total Bills</p>
+                                <p className="text-xl sm:text-2xl font-bold text-card-foreground mt-1">{reportData.totalBills}</p>
                             </div>
-                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-lg sm:text-xl">📄</div>
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-muted flex items-center justify-center text-lg sm:text-xl">📄</div>
                         </div>
-                        <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-700/50 flex items-center justify-between">
+                        <div className="bg-card p-4 sm:p-6 rounded-2xl shadow-lg border border-border flex items-center justify-between">
                             <div>
-                                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">Total Meals Served</p>
-                                <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-1">{reportData.totalMealsCount || 0}</p>
+                                <p className="text-xs sm:text-sm text-muted-foreground font-medium">Total Meals Served</p>
+                                <p className="text-xl sm:text-2xl font-bold text-card-foreground mt-1">{reportData.totalMealsCount || 0}</p>
                             </div>
-                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-lg sm:text-xl">🍛</div>
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-muted flex items-center justify-center text-lg sm:text-xl">🍛</div>
                         </div>
-                        <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-700/50 flex items-center justify-between">
+                        <div className="bg-card p-4 sm:p-6 rounded-2xl shadow-lg border border-border flex items-center justify-between">
                             <div>
-                                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">Active Members</p>
-                                <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-1">{reportData.activeMembers}</p>
+                                <p className="text-xs sm:text-sm text-muted-foreground font-medium">Active Members</p>
+                                <p className="text-xl sm:text-2xl font-bold text-card-foreground mt-1">{reportData.activeMembers}</p>
                             </div>
-                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-lg sm:text-xl">👥</div>
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-muted flex items-center justify-center text-lg sm:text-xl">👥</div>
                         </div>
                     </div>
                 </div>

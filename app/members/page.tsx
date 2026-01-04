@@ -13,6 +13,7 @@ import { api } from '@/services/api';
 import { useNotifications } from '@/contexts/NotificationContext';
 import AppLayout from '@/components/AppLayout';
 import ToastContainer from '@/components/ToastContainer';
+import { MemberSkeleton } from '@/components/skeletons/MemberSkeleton';
 
 interface Member extends User {
     phone?: string;
@@ -44,10 +45,9 @@ const ConfirmModal: React.FC<{
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 animate-fade-in p-4" onClick={onCancel}>
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md p-6" onClick={e => e.stopPropagation()}>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{title}</h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-6">{message}</p>
-                <div className="flex gap-3 justify-end">
+            <div className="bg-card rounded-xl shadow-2xl w-full max-w-md p-6" onClick={e => e.stopPropagation()}>
+                <h3 className="text-xl font-bold text-card-foreground mb-2">{title}</h3>
+                <p className="text-muted-foreground mb-6">{message}</p>                <div className="flex gap-3 justify-end">
                     <button
                         onClick={onCancel}
                         disabled={loading}
@@ -74,17 +74,17 @@ const MemberHistoryModal: React.FC<{ member: Member | null, onClose: () => void 
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 animate-fade-in p-4" onClick={onClose}>
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                <div className="sticky top-0 bg-white dark:bg-gray-800 z-10 p-4 border-b dark:border-gray-700">
+            <div className="bg-card rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                <div className="sticky top-0 bg-card z-10 p-4 border-b border-border">
                     <div className="flex justify-between items-center">
-                        <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                        <h3 className="text-xl font-bold text-card-foreground">
                             {member.name}'s Profile
                         </h3>
                         <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"><XIcon className="w-5 h-5" /></button>
                     </div>
                 </div>
                 <div className="p-6 space-y-6">
-                    <div className="p-4 border rounded-lg dark:border-gray-700">
+                    <div className="p-4 border rounded-lg border-border">
                         <h4 className="font-bold text-lg mb-2">Member Information</h4>
                         <div className="space-y-2 text-sm">
                             <div><strong>Name:</strong> {member.name}</div>
@@ -95,7 +95,7 @@ const MemberHistoryModal: React.FC<{ member: Member | null, onClose: () => void 
                         </div>
                     </div>
 
-                    <div className="p-4 border rounded-lg dark:border-gray-700">
+                    <div className="p-4 border rounded-lg border-border">
                         <h4 className="font-bold text-lg mb-2">Contact Details</h4>
                         <div className="space-y-2 text-sm">
                             <div><strong>Phone:</strong> {member.phone || 'Not added'}</div>
@@ -137,7 +137,7 @@ const MemberCard: React.FC<{ member: Member, onHistoryClick: () => void }> = ({ 
     };
 
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-5">
+        <div className="bg-card rounded-xl shadow-md p-5">
             <div className="flex items-center gap-4">
                 {member.avatarUrl ? (
                     <img src={member.avatarUrl} alt={member.name} className="w-12 h-12 rounded-full object-cover flex-shrink-0" />
@@ -145,13 +145,13 @@ const MemberCard: React.FC<{ member: Member, onHistoryClick: () => void }> = ({ 
                     <UserCircleIcon className="w-12 h-12 text-gray-400 flex-shrink-0" />
                 )}
                 <div>
-                    <h3 className="font-bold text-lg text-gray-900 dark:text-white flex items-center gap-2">
+                    <h3 className="font-bold text-lg text-card-foreground flex items-center gap-2">
                         {member.name} {isManager && <CrownIcon className="w-5 h-5 text-yellow-500" />}
                     </h3>
                     <p className="text-sm text-gray-500 dark:text-gray-400">{member.email}</p>
                 </div>
             </div>
-            <div className="border-t my-3 border-gray-200 dark:border-gray-700"></div>
+            <div className="border-t my-3 border-border"></div>
             <div className="space-y-1 text-sm text-gray-600 dark:text-gray-300">
                 <p>📞 {member.phone || 'Phone not added'}</p>
                 {member.whatsapp ? (
@@ -165,12 +165,12 @@ const MemberCard: React.FC<{ member: Member, onHistoryClick: () => void }> = ({ 
                     <p className="text-gray-400">📘 Facebook not added</p>
                 )}
             </div>
-            <div className="border-t my-3 border-gray-200 dark:border-gray-700"></div>
+            <div className="border-t my-3 border-border"></div>
             <div className="space-y-1 text-sm text-gray-500 dark:text-gray-400">
                 <p><strong>Role:</strong> {member.role}</p>
                 <p><strong>Status:</strong> {member.roomStatus}</p>
             </div>
-            <div className="border-t my-3 border-gray-200 dark:border-gray-700"></div>
+            <div className="border-t my-3 border-border"></div>
             <div className="flex flex-wrap gap-2 text-sm font-semibold">
                 {user?.role === Role.Manager && member.id !== user.id ? (
                     <button onClick={onHistoryClick} className="text-primary hover:underline">View Profile</button>
@@ -329,9 +329,7 @@ export default function RoomMembersPage() {
     if (loading) {
         return (
             <AppLayout>
-                <div className="flex items-center justify-center min-h-[400px]">
-                    <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-primary-500"></div>
-                </div>
+                <MemberSkeleton />
             </AppLayout>
         );
     }
@@ -342,10 +340,10 @@ export default function RoomMembersPage() {
                 <div className="space-y-6 animate-fade-in">
 
                     {/* Room Details Header */}
-                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+                    <div className="bg-card rounded-xl shadow-md p-6">
                         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                             <div>
-                                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                <h1 className="text-2xl sm:text-3xl font-bold text-card-foreground flex items-center gap-2">
                                     <UsersIcon className="w-8 h-8 text-primary-500" />
                                     {roomDetails?.name || 'My Room'}
                                 </h1>
@@ -380,7 +378,7 @@ export default function RoomMembersPage() {
                     </div>
 
                     {members.length === 0 ? (
-                        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-8 text-center">
+                        <div className="bg-card rounded-xl shadow-md p-8 text-center">
                             <UsersIcon className="w-16 h-16 mx-auto text-gray-400 mb-4" />
                             <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">No members yet</h3>
                             <p className="text-gray-500 dark:text-gray-400">
@@ -402,10 +400,10 @@ export default function RoomMembersPage() {
                             <h2 className="text-xl font-bold mb-3 text-gray-800 dark:text-white">🔔 Pending Join Requests ({pendingRequests.length})</h2>
                             <div className="space-y-4">
                                 {pendingRequests.map(req => (
-                                    <div key={req.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-5">
-                                        <h4 className="font-bold text-lg text-gray-900 dark:text-white">{req.name}</h4>
-                                        <p className="text-sm text-gray-500 dark:text-gray-400">{req.email}</p>
-                                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Requested: {new Date(req.requestedAt).toLocaleString()}</p>
+                                    <div key={req.id} className="bg-card rounded-xl shadow-md p-5">
+                                        <h4 className="font-bold text-lg text-card-foreground">{req.name}</h4>
+                                        <p className="text-sm text-muted-foreground">{req.email}</p>
+                                        <p className="text-xs text-muted-foreground mt-1">Requested: {new Date(req.requestedAt).toLocaleString()}</p>
                                         <div className="flex gap-2 justify-end mt-3">
                                             <button
                                                 onClick={() => handleApproveMember(req.id)}
@@ -421,7 +419,7 @@ export default function RoomMembersPage() {
                     )}
 
                     {/* Leave Room / Delete Room Section */}
-                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border-2 border-red-200 dark:border-red-900/50">
+                    <div className="bg-card rounded-xl shadow-md p-6 border-2 border-red-200 dark:border-red-900/50">
                         <h3 className="text-lg font-bold text-red-600 dark:text-red-400 mb-2">⚠️ Danger Zone</h3>
                         <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                             {user?.role === Role.Manager
