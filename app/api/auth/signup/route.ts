@@ -1,13 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import User from '@/models/User';
 import connectDB from '@/lib/db';
-import {
-    generateAccessToken,
-    generateRefreshToken,
-    setAuthCookies
-} from '@/lib/auth';
 import { SignupSchema, validateBody } from '@/lib/validation';
-import { generateOTP, hashOTP, getOTPExpiry } from '@/lib/otp';
+import { generateOTP, getOTPExpiry } from '@/lib/otp';
 import { sendVerificationEmail } from '@/lib/brevo';
 
 export const dynamic = 'force-dynamic';
@@ -40,10 +35,9 @@ export async function POST(req: NextRequest) {
 
         // Generate OTP for email verification
         const otp = generateOTP();
-        const hashedOtp = await hashOTP(otp);
         const otpExpires = getOTPExpiry();
 
-        // Create user with unverified status
+        // Create user with unverified status (pre-save hook will hash the OTP)
         const user = await User.create({
             name,
             email,
@@ -51,7 +45,7 @@ export async function POST(req: NextRequest) {
             role,
             roomStatus: 'NoRoom',
             isVerified: false,
-            otp: hashedOtp,
+            otp: otp,
             otpExpires
         });
 
@@ -60,17 +54,17 @@ export async function POST(req: NextRequest) {
             console.error('Failed to send verification email:', err);
         });
 
-        console.log('📧 OTP generated for', email, ':', otp); // Remove in production
+        // Log OTP generation (development only, without exposing the actual OTP)
+        if (process.env.NODE_ENV === 'development') {
+            console.log('📧 OTP generated for', email);
+        }
 
-        // Generate tokens
-        const accessToken = generateAccessToken(user._id.toString());
-        const refreshToken = generateRefreshToken(user._id.toString());
+        console.log('✅ Signup successful for:', email, '- Email verification required');
 
-        console.log('✅ Signup successful for:', email);
-
-        // Create response
-        const response = NextResponse.json({
-            token: accessToken,
+        // Return success response without tokens
+        // Tokens will be issued only after email verification
+        return NextResponse.json({
+            message: 'Account created successfully. Please verify your email to continue.',
             user: {
                 id: user._id,
                 name: user.name,
@@ -81,11 +75,6 @@ export async function POST(req: NextRequest) {
                 isVerified: user.isVerified
             }
         }, { status: 201 });
-
-        // Set HttpOnly cookies
-        setAuthCookies(response, accessToken, refreshToken);
-
-        return response;
     } catch (error: any) {
         console.error('❌ Signup error:', error);
         return NextResponse.json(

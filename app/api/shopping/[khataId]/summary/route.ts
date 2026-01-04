@@ -23,8 +23,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ khat
         const [
             depositStats,
             expenseStats,
+            billPaymentStats,
             mealStats,
             memberDepositStats,
+            memberExpenseStats,
             memberMealStats
         ] = await Promise.all([
             // 1. Total Deposits (Approved only)
@@ -32,22 +34,51 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ khat
                 { $match: { khataId, status: 'Approved' } },
                 { $group: { _id: null, total: { $sum: '$amount' } } }
             ]),
-            // 2. Total Shopping (Approved only)
+            // 2. Total Shopping (Approved only, excluding bill payments)
             Expense.aggregate([
-                { $match: { khataId, status: 'Approved' } },
+                {
+                    $match: {
+                        khataId,
+                        status: 'Approved',
+                        $or: [
+                            { category: 'Shopping' },
+                            { category: { $exists: false } }  // Old expenses without category
+                        ]
+                    }
+                },
                 { $group: { _id: null, total: { $sum: '$amount' } } }
             ]),
-            // 3. Total meals for all members
+            // 3. Total Bill Payments (Approved only)
+            Expense.aggregate([
+                { $match: { khataId, status: 'Approved', category: 'BillPayment' } },
+                { $group: { _id: null, total: { $sum: '$amount' } } }
+            ]),
+            // 4. Total meals for all members
             Meal.aggregate([
                 { $match: { khataId } },
                 { $group: { _id: null, total: { $sum: '$totalMeals' } } }
             ]),
-            // 4. Member specific deposits
+            // 5. Member specific deposits
             Deposit.aggregate([
                 { $match: { khataId, userId: user._id, status: 'Approved' } },
                 { $group: { _id: null, total: { $sum: '$amount' } } }
             ]),
-            // 5. Member's total meals
+            // 6. Member specific expenses (excluding bill payments)
+            Expense.aggregate([
+                {
+                    $match: {
+                        khataId,
+                        userId: user._id,
+                        status: 'Approved',
+                        $or: [
+                            { category: 'Shopping' },
+                            { category: { $exists: false } }  // Old expenses without category
+                        ]
+                    }
+                },
+                { $group: { _id: null, total: { $sum: '$amount' } } }
+            ]),
+            // 7. Member's total meals
             Meal.aggregate([
                 { $match: { khataId, userId: user._id } },
                 { $group: { _id: null, total: { $sum: '$totalMeals' } } }
@@ -56,28 +87,46 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ khat
 
         const totalDeposits = depositStats.length > 0 ? depositStats[0].total : 0;
         const totalShopping = expenseStats.length > 0 ? expenseStats[0].total : 0;
-        const balance = totalDeposits - totalShopping;
+        const totalBillPayments = billPaymentStats.length > 0 ? billPaymentStats[0].total : 0;
+        const balance = totalDeposits - totalShopping - totalBillPayments;
         const totalMeals = mealStats.length > 0 ? mealStats[0].total : 0;
 
-        // Calculate rate - total shopping / total meals
+        // Calculate rate - total shopping / total meals (excluding bill payments)
         const rate = totalMeals > 0 ? (totalShopping / totalMeals) : 0;
 
         const memberTotalDeposits = memberDepositStats.length > 0 ? memberDepositStats[0].total : 0;
+        const memberTotalExpenses = memberExpenseStats.length > 0 ? memberExpenseStats[0].total : 0;
         const memberTotalMeals = memberMealStats.length > 0 ? memberMealStats[0].total : 0;
 
         // Member meal cost = rate * member's total meals
         const memberMealCost = rate * memberTotalMeals;
-        const memberRefundable = memberTotalDeposits - memberMealCost;
+
+        // Refundable = Deposits - Meal Cost - Shopping Expenses (Bill Payments)
+        // Note: memberTotalExpenses contains ONLY Shopping expenses (excluding bills) based on query #6
+        // We need to fetch member's bill payments to subtract them too
+
+        // 8. Member's Bill Payments
+        const memberBillPaymentStats = await Expense.aggregate([
+            { $match: { khataId, userId: user._id, status: 'Approved', category: 'BillPayment' } },
+            { $group: { _id: null, total: { $sum: '$amount' } } }
+        ]);
+        const memberTotalBillPayments = memberBillPaymentStats.length > 0 ? memberBillPaymentStats[0].total : 0;
+
+        const memberRefundable = memberTotalDeposits - memberMealCost - memberTotalBillPayments;
 
         return NextResponse.json({
             fundStatus: {
                 totalDeposits,
                 totalShopping,
+                totalBillPayments,
                 balance,
+                totalMeals,
                 rate
             },
             memberSummary: {
                 totalDeposits: memberTotalDeposits,
+                totalExpenses: memberTotalExpenses, // Shopping only
+                totalBillPayments: memberTotalBillPayments, // New field
                 mealCost: memberMealCost,
                 refundable: memberRefundable
             }

@@ -42,10 +42,10 @@ const LogMealsModal: React.FC<LogMealsModalProps> = ({ date, onClose, onSubmit, 
 
     const MealRadioSelector: React.FC<{ label: string, icon: string, value: number, onChange: (val: number) => void }> = ({ label, icon, value, onChange }) => (
         <div>
-            <label className="font-semibold text-lg text-slate-900 dark:text-white">{icon} {label}</label>
+            <label className="font-semibold text-lg text-foreground">{icon} {label}</label>
             <div className="flex items-center gap-x-4 mt-2">
                 {[0, 0.50, 1.00, 2.00].map(q => (
-                    <label key={q} className="flex items-center gap-2 cursor-pointer text-slate-700 dark:text-slate-300">
+                    <label key={q} className="flex items-center gap-2 cursor-pointer text-muted-foreground">
                         <input type="radio" name={label} value={q} checked={value === q} onChange={() => onChange(q)} className="w-5 h-5 text-primary-600 focus:ring-primary-500" />
                         <span>{q.toFixed(2)}</span>
                     </label>
@@ -56,9 +56,9 @@ const LogMealsModal: React.FC<LogMealsModalProps> = ({ date, onClose, onSubmit, 
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 animate-fade-in p-4" onClick={onClose}>
-            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
-                <h2 className="text-xl font-bold font-sans text-slate-900 dark:text-white">Log Meals - {date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</h2>
-                <div className="border-t my-4 border-slate-200 dark:border-slate-700"></div>
+            <div className="bg-card rounded-xl shadow-2xl p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
+                <h2 className="text-xl font-bold font-sans text-card-foreground">Log Meals - {date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</h2>
+                <div className="border-t my-4 border-border"></div>
 
                 <div className="space-y-4">
                     <MealRadioSelector label="Breakfast" icon="☕" value={meals.breakfast} onChange={v => setMeals(p => ({ ...p, breakfast: v }))} />
@@ -66,20 +66,20 @@ const LogMealsModal: React.FC<LogMealsModalProps> = ({ date, onClose, onSubmit, 
                     <MealRadioSelector label="Dinner" icon="🍜" value={meals.dinner} onChange={v => setMeals(p => ({ ...p, dinner: v }))} />
                 </div>
 
-                <div className="border-t my-4 border-slate-200 dark:border-slate-700"></div>
-                <div className="text-center font-semibold text-slate-800 dark:text-slate-200">
+                <div className="border-t my-4 border-border"></div>
+                <div className="text-center font-semibold text-foreground">
                     <p>Total: {totalMeals} meals</p>
                     <p>Cost: ৳{totalCost.toFixed(2)} (@ ৳{COST_PER_QUANTITY.toFixed(2)}/meal)</p>
                 </div>
-                <div className="border-t my-4 border-slate-200 dark:border-slate-700"></div>
+                <div className="border-t my-4 border-border"></div>
 
                 <div>
-                    <label className="font-semibold text-sm text-slate-700 dark:text-slate-300">Notes (optional):</label>
-                    <input type="text" value={notes} onChange={e => setNotes(e.target.value)} className="w-full mt-1 px-3 py-2 bg-slate-100 dark:bg-slate-700 border-2 border-transparent rounded-lg focus:outline-none focus:border-primary-500 transition-colors text-slate-900 dark:text-white" />
+                    <label className="font-semibold text-sm text-muted-foreground">Notes (optional):</label>
+                    <input type="text" value={notes} onChange={e => setNotes(e.target.value)} className="w-full mt-1 px-3 py-2 bg-muted border-2 border-transparent rounded-lg focus:outline-none focus:border-primary-500 transition-colors text-foreground" />
                 </div>
 
                 <div className="flex gap-3 mt-6">
-                    <button onClick={onClose} className="flex-1 py-2.5 bg-slate-200 dark:bg-slate-600 font-semibold rounded-lg hover:bg-slate-300 dark:hover:bg-slate-500 text-slate-800 dark:text-white">Cancel</button>
+                    <button onClick={onClose} className="flex-1 py-2.5 bg-muted font-semibold rounded-lg hover:bg-muted/80 text-foreground">Cancel</button>
                     <button onClick={handleSubmit} className="flex-1 py-2.5 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700">Save Entry</button>
                 </div>
             </div>
@@ -182,18 +182,18 @@ const ManageMealsModal: React.FC<ManageMealsModalProps> = ({ date, onClose, meal
 
     const MealTable: React.FC<{ title: string, data: any[], type: 'breakfast' | 'lunch' | 'dinner' }> = ({ title, data, type }) => (
         <div>
-            <h3 className="font-bold text-lg mb-2 text-slate-900 dark:text-white">{title}</h3>
-            <div className="border rounded-lg overflow-hidden border-slate-200 dark:border-slate-700">
-                <div className="grid grid-cols-3 bg-slate-50 dark:bg-slate-700/50 p-2 font-semibold text-sm text-slate-700 dark:text-slate-300">
+            <h3 className="font-bold text-lg mb-2 text-foreground">{title}</h3>
+            <div className="border rounded-lg overflow-hidden border-border">
+                <div className="grid grid-cols-3 bg-muted p-2 font-semibold text-sm text-muted-foreground">
                     <div>Member Name</div>
                     <div className="text-center">Quantity</div>
                     <div className="text-right">Action</div>
                 </div>
                 {data.length === 0 ? (
-                    <div className="p-4 text-center text-slate-500 dark:text-slate-400 text-sm">No meals recorded</div>
+                    <div className="p-4 text-center text-muted-foreground text-sm">No meals recorded</div>
                 ) : (
                     data.map((member, idx) => (
-                        <div key={`${member.userId}-${idx}`} className="grid grid-cols-3 p-2 border-t border-slate-200 dark:border-slate-700 items-center text-slate-800 dark:text-slate-200">
+                        <div key={`${member.userId}-${idx}`} className="grid grid-cols-3 p-2 border-t border-border items-center text-foreground">
                             <div>{member.name}</div>
                             <div className="text-center">
                                 {editingId === member.userId && editType === type ? (
@@ -201,7 +201,7 @@ const ManageMealsModal: React.FC<ManageMealsModalProps> = ({ date, onClose, meal
                                         <select
                                             value={editValue}
                                             onChange={e => setEditValue(parseFloat(e.target.value))}
-                                            className="px-1 py-1 rounded border border-primary-500 bg-white dark:bg-slate-800 text-sm w-16"
+                                            className="px-1 py-1 rounded border border-primary-500 bg-background text-sm w-16"
                                             onClick={e => e.stopPropagation()}
                                         >
                                             {[0, 0.50, 1.00, 1.50, 2.00, 2.50, 3.00].map(val => (
@@ -218,7 +218,7 @@ const ManageMealsModal: React.FC<ManageMealsModalProps> = ({ date, onClose, meal
                                     <div className="flex justify-end gap-2">
                                         <button
                                             onClick={(e) => { e.stopPropagation(); setEditingId(null); }}
-                                            className="text-slate-500 hover:text-slate-700"
+                                            className="text-muted-foreground hover:text-foreground"
                                             disabled={loading}
                                         >
                                             <XIcon className="w-4 h-4" />
@@ -249,31 +249,31 @@ const ManageMealsModal: React.FC<ManageMealsModalProps> = ({ date, onClose, meal
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 animate-fade-in p-4" onClick={onClose}>
-            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="bg-card rounded-xl shadow-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
                 <div className="flex justify-between items-center">
-                    <h2 className="text-xl font-bold font-sans text-slate-900 dark:text-white">Meals - {date.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric' })} (Total: {dayDetails.total} Meals)</h2>
-                    <button onClick={onClose} className="p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700"><XIcon className="w-5 h-5 text-slate-500" /></button>
+                    <h2 className="text-xl font-bold font-sans text-card-foreground">Meals - {date.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric' })} (Total: {dayDetails.total} Meals)</h2>
+                    <button onClick={onClose} className="p-1 rounded-full hover:bg-muted"><XIcon className="w-5 h-5 text-muted-foreground" /></button>
                 </div>
 
-                <div className="border-t my-4 border-slate-200 dark:border-slate-700"></div>
+                <div className="border-t my-4 border-border"></div>
 
                 {/* Add New Meal Section */}
                 <div className="mb-6">
                     {!isAddingMode ? (
                         <button
                             onClick={() => setIsAddingMode(true)}
-                            className="w-full py-2 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg text-slate-600 dark:text-slate-400 hover:border-primary-500 hover:text-primary-500 transition-colors flex items-center justify-center gap-2"
+                            className="w-full py-2 border-2 border-dashed border-border rounded-lg text-muted-foreground hover:border-primary-500 hover:text-primary-500 transition-colors flex items-center justify-center gap-2"
                         >
                             <PlusIcon className="w-5 h-5" /> Add Member Meal
                         </button>
                     ) : (
-                        <div className="bg-slate-50 dark:bg-slate-700/30 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
-                            <h3 className="font-bold text-slate-900 dark:text-white mb-3">Add Entry</h3>
+                        <div className="bg-muted p-4 rounded-lg border border-border">
+                            <h3 className="font-bold text-foreground mb-3">Add Entry</h3>
                             <div className="space-y-3">
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Select Member</label>
+                                    <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Select Member</label>
                                     <select
-                                        className="w-full p-2 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                                        className="w-full p-2 rounded-md border border-border bg-card text-foreground"
                                         value={newMealMemberId}
                                         onChange={(e) => {
                                             const selectedId = e.target.value;
@@ -302,9 +302,9 @@ const ManageMealsModal: React.FC<ManageMealsModalProps> = ({ date, onClose, meal
                                 <div className="grid grid-cols-3 gap-2">
                                     {['breakfast', 'lunch', 'dinner'].map((type) => (
                                         <div key={type}>
-                                            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1 capitalize">{type}</label>
+                                            <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1 capitalize">{type}</label>
                                             <select
-                                                className="w-full p-2 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm"
+                                                className="w-full p-2 rounded-md border border-border bg-card text-foreground text-sm"
                                                 value={newMealData[type as keyof typeof newMealData]}
                                                 onChange={e => setNewMealData({ ...newMealData, [type]: parseFloat(e.target.value) })}
                                             >
@@ -314,7 +314,7 @@ const ManageMealsModal: React.FC<ManageMealsModalProps> = ({ date, onClose, meal
                                     ))}
                                 </div>
                                 <div className="flex gap-2 pt-2">
-                                    <button onClick={() => setIsAddingMode(false)} className="flex-1 py-1.5 text-sm text-slate-600 hover:bg-slate-200 rounded">Cancel</button>
+                                    <button onClick={() => setIsAddingMode(false)} className="flex-1 py-1.5 text-sm text-foreground hover:bg-background rounded">Cancel</button>
                                     <button
                                         onClick={handleAddNewMeal}
                                         disabled={!newMealMemberId || loading}
@@ -506,11 +506,10 @@ export default function CalendarPage() {
             days.push(
                 <div
                     key={day}
-                    className="border-r border-b border-slate-200 dark:border-slate-700 p-1 sm:p-2 min-h-[60px] sm:min-h-[80px] cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors flex flex-col items-center sm:items-start"
-                    onClick={() => setSelectedDate(new Date(year, month, day))}
+                    className="border-r border-b border-border p-1 sm:p-2 min-h-[60px] sm:min-h-[80px] cursor-pointer hover:bg-muted transition-colors flex flex-col items-center sm:items-start"                    onClick={() => setSelectedDate(new Date(year, month, day))}
                 >
-                    <span className={`font-semibold text-xs sm:text-base ${isToday ? 'bg-primary-500 text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center' : 'text-slate-700 dark:text-slate-300'}`}>{day}</span>
-                    {displayCount !== undefined && displayCount > 0 && <div className="text-xs mt-1 text-slate-600 dark:text-slate-400">🍽️{displayCount}</div>}
+                    <span className={`font-semibold text-xs sm:text-base ${isToday ? 'bg-primary-500 text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center' : 'text-foreground'}`}>{day}</span>
+                    {displayCount !== undefined && displayCount > 0 && <div className="text-xs mt-1 text-muted-foreground">🍽️{displayCount}</div>}
                 </div>
             );
         }
@@ -524,28 +523,28 @@ export default function CalendarPage() {
             <div className="space-y-4 animate-fade-in">
                 <div className="flex items-center gap-3 sm:gap-4">
                     <CalendarIcon className="w-6 h-6 sm:w-8 sm:h-8 text-primary-500" />
-                    <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">Meal Calendar</h1>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Meal Calendar</h1>
                 </div>
 
-                <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-4">
+                <div className="bg-card rounded-xl shadow-md p-4">
                     <div className="flex justify-between items-center mb-4">
-                        <button onClick={handlePrevMonth} className="px-2 sm:px-3 py-1 text-sm sm:text-base font-semibold rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300">{"< Prev"}</button>
-                        <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white text-center">{currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</h2>
-                        <button onClick={handleNextMonth} className="px-2 sm:px-3 py-1 text-sm sm:text-base font-semibold rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300">{"Next >"}</button>
+                        <button onClick={handlePrevMonth} className="px-2 sm:px-3 py-1 text-sm sm:text-base font-semibold rounded-md hover:bg-muted text-muted-foreground">{"< Prev"}</button>
+                        <h2 className="text-lg sm:text-xl font-bold text-card-foreground text-center">{currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</h2>
+                        <button onClick={handleNextMonth} className="px-2 sm:px-3 py-1 text-sm sm:text-base font-semibold rounded-md hover:bg-muted text-muted-foreground">{"Next >"}</button>
                     </div>
 
                     {loading ? (
-                        <div className="py-10 text-center text-slate-500 dark:text-slate-400">Loading calendar data...</div>
+                        <div className="py-10 text-center text-muted-foreground">Loading calendar data...</div>
                     ) : (
-                        <div className="grid grid-cols-7 text-center font-semibold text-sm text-slate-600 dark:text-slate-300 border-t border-l border-slate-200 dark:border-slate-700">
+                        <div className="grid grid-cols-7 text-center font-semibold text-sm text-muted-foreground border-t border-l border-border">
                             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                                <div key={day} className="py-2 border-r border-b border-slate-200 dark:border-slate-700 text-xs sm:text-sm">{day.slice(0, 3)}</div>
+                                <div key={day} className="py-2 border-r border-b border-border text-xs sm:text-sm">{day.slice(0, 3)}</div>
                             ))}
                             {calendarGrid}
                         </div>
                     )}
 
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">Legend: {user?.role === Role.Manager ? 'Total meal count per day (all members)' : 'Your meal count per day'}</p>
+                    <p className="text-xs text-muted-foreground mt-2">Legend: {user?.role === Role.Manager ? 'Total meal count per day (all members)' : 'Your meal count per day'}</p>
                 </div>
             </div>
 

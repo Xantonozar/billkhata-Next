@@ -12,7 +12,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ bill
         if (!user) return NextResponse.json({ message: 'Not authorized' }, { status: 401 });
 
         const { billId, userId } = await params;
-        const { status } = await req.json();
+        const { status, paidFromMealFund } = await req.json();
 
         if (!['Unpaid', 'Pending Approval', 'Paid', 'Overdue'].includes(status)) {
             return NextResponse.json({ message: 'Invalid status' }, { status: 400 });
@@ -38,8 +38,34 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ bill
             return NextResponse.json({ message: 'Share not found' }, { status: 404 });
         }
 
-        // Update status
+        // Update status and paidFromMealFund
         bill.shares[shareIndex].status = status;
+        if (paidFromMealFund !== undefined) {
+            bill.shares[shareIndex].paidFromMealFund = paidFromMealFund;
+        }
+
+        // If paying from meal fund, create an auto-approved expense
+        if (paidFromMealFund && (status === 'Pending Approval' || status === 'Paid')) {
+            try {
+                const Expense = await import('@/models/Expense').then(mod => mod.default);
+                await Expense.create({
+                    khataId: bill.khataId,
+                    userId: userId,
+                    userName: bill.shares[shareIndex].userName,
+                    amount: bill.shares[shareIndex].amount,
+                    items: `Bill Payment: ${bill.title}`,
+                    notes: `Auto-deducted from meal fund for ${bill.category} bill`,
+                    category: 'BillPayment',
+                    status: 'Approved',
+                    approvedBy: userId,
+                    approvedAt: new Date()
+                });
+            } catch (expenseError) {
+                console.error('Error creating expense for meal fund payment:', expenseError);
+                // Continue anyway - we don't want to fail the bill update
+            }
+        }
+
         await bill.save();
 
         // Notification Logic
@@ -142,7 +168,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ bill
                     userId: s.userId.toString(),
                     userName: s.userName,
                     amount: s.amount,
-                    status: s.status
+                    status: s.status,
+                    paidFromMealFund: s.paidFromMealFund || false
                 }))
             }
         });

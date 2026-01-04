@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth';
+import { getSession, requireVerified } from '@/lib/auth';
 import connectDB from '@/lib/db';
 import User from '@/models/User';
 import Bill from '@/models/Bill';
@@ -17,6 +17,12 @@ export async function GET(req: NextRequest) {
         const user = await getSession(req);
         if (!user) {
             return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+        }
+
+        // Require email verification for protected resources
+        const verificationError = requireVerified(user);
+        if (verificationError) {
+            return verificationError;
         }
 
         if (!user.khataId) {

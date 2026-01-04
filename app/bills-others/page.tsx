@@ -45,6 +45,9 @@ export default function RentBillsPage() {
     const [availableMonths] = useState<string[]>(getPastSixMonths());
     const [selectedMonth, setSelectedMonth] = useState<string>(availableMonths[0]);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [paymentMethod, setPaymentMethod] = useState<'normal' | 'mealFund'>('normal');
+    const [mealBalance, setMealBalance] = useState<number | null>(null);
+    const [loadingBalance, setLoadingBalance] = useState(false);
 
     useEffect(() => {
         if (user?.khataId) {
@@ -57,24 +60,44 @@ export default function RentBillsPage() {
                 setLoading(false);
             });
         }
-    }, [user, CATEGORY]);
+    }, [user]);
+
+    // Fetch meal balance when payment modal opens
+    useEffect(() => {
+        if (confirmingPayment && user) {
+            setLoadingBalance(true);
+            api.getMealBalance(user.id).then(data => {
+                setMealBalance(data.balance);
+                setLoadingBalance(false);
+            }).catch(error => {
+                console.error('Error fetching meal balance:', error);
+                setMealBalance(0);
+                setLoadingBalance(false);
+            });
+        } else {
+            setMealBalance(null);
+            setPaymentMethod('normal');
+        }
+    }, [confirmingPayment, user]);
 
     const handleMarkAsPaid = async () => {
         if (!confirmingPayment || !user) return;
         const billId = confirmingPayment.id;
+        const isPaidFromMealFund = paymentMethod === 'mealFund';
+
         setBills(prevBills => prevBills.map(b => {
             if (b.id === billId) {
-                return { ...b, shares: b.shares.map(s => s.userId === user.id ? { ...s, status: 'Pending Approval' as const } : s) };
+                return { ...b, shares: b.shares.map(s => s.userId === user.id ? { ...s, status: 'Pending Approval' as const, paidFromMealFund: isPaidFromMealFund } : s) };
             }
             return b;
         }));
         setConfirmingPayment(null);
-        addToast({ type: 'success', title: 'Payment Submitted', message: 'Your payment is now pending approval.' });
-        const updatedBill = await api.updateBillShareStatus(billId, user.id, 'Pending Approval');
+        addToast({ type: 'success', title: 'Payment Submitted', message: isPaidFromMealFund ? 'Payment deducted from meal fund.' : 'Your payment is now pending approval.' });
+        const updatedBill = await api.updateBillShareStatus(billId, user.id, 'Pending Approval', isPaidFromMealFund);
         if (!updatedBill) {
             setBills(prevBills => prevBills.map(b => {
                 if (b.id === billId) {
-                    return { ...b, shares: b.shares.map(s => s.userId === user.id ? { ...s, status: 'Unpaid' as const } : s) };
+                    return { ...b, shares: b.shares.map(s => s.userId === user.id ? { ...s, status: 'Unpaid' as const, paidFromMealFund: false } : s) };
                 }
                 return b;
             }));
@@ -141,12 +164,12 @@ export default function RentBillsPage() {
         }
     };
 
-    const selectedMonthBill = useMemo(() => {
-        if (!selectedMonth) return null;
+    const selectedMonthBills = useMemo(() => {
+        if (!selectedMonth) return [];
         const [monthStr, yearStr] = selectedMonth.split(' ');
         const year = parseInt(yearStr, 10);
         const monthIndex = new Date(Date.parse(monthStr + " 1, 2012")).getMonth();
-        return bills.find(bill => {
+        return bills.filter(bill => {
             const billDate = new Date(bill.dueDate);
             return billDate.getFullYear() === year && billDate.getMonth() === monthIndex;
         });
@@ -165,7 +188,7 @@ export default function RentBillsPage() {
     const renderManagerView = (bill: Bill) => (
         <div className="space-y-4 sm:space-y-6">
             <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-4 sm:p-6 space-y-3 sm:space-y-4">
-                <h2 className="text-lg sm:text-xl font-bold font-sans text-slate-800 dark:text-white">{selectedMonth} Bill</h2>
+                <h2 className="text-lg sm:text-xl font-bold font-sans text-slate-800 dark:text-white">{bill.title}</h2>
                 <div className="space-y-1 text-xs sm:text-sm text-slate-600 dark:text-slate-300">
                     <p><strong>Total:</strong> <span className="font-numeric text-sm sm:text-base">৳{bill.totalAmount.toFixed(0)}</span></p>
                     <p><strong>Due:</strong> {bill.dueDate}</p>
@@ -208,7 +231,7 @@ export default function RentBillsPage() {
         return (
             <div className="space-y-4 sm:space-y-6">
                 <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-4 sm:p-6 space-y-3 sm:space-y-4">
-                    <h2 className="text-lg sm:text-xl font-bold font-sans text-slate-800 dark:text-white">{selectedMonth}</h2>
+                    <h2 className="text-lg sm:text-xl font-bold font-sans text-slate-800 dark:text-white">{bill.title}</h2>
                     <div className="text-xs sm:text-sm text-slate-600 dark:text-slate-300">
                         <p>Total: <span className="font-semibold text-slate-800 dark:text-white font-numeric">৳{bill.totalAmount.toFixed(0)}</span></p>
                         <p className="text-base sm:text-lg mt-1">Your Share: <span className="font-bold text-lg sm:text-xl text-primary-600 font-numeric">৳{myShare.amount.toFixed(0)}</span></p>
@@ -248,13 +271,19 @@ export default function RentBillsPage() {
                         </select>
                     </div>
 
-                    {!selectedMonthBill ? (
+                    {selectedMonthBills.length === 0 ? (
                         <div className="text-center py-12 bg-white dark:bg-slate-800 rounded-lg shadow-sm">
                             <h3 className="text-lg font-medium font-sans text-slate-900 dark:text-white">No {CATEGORY} bill for {selectedMonth}.</h3>
                             {user.role === Role.Manager && <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Click "Add Bill" to create one.</p>}
                         </div>
                     ) : (
-                        user.role === Role.Manager ? renderManagerView(selectedMonthBill) : renderMemberView(selectedMonthBill)
+                        <div className="space-y-4 sm:space-y-6">
+                            {selectedMonthBills.map((bill) => (
+                                <div key={bill.id}>
+                                    {user.role === Role.Manager ? renderManagerView(bill) : renderMemberView(bill)}
+                                </div>
+                            ))}
+                        </div>
                     )}
                 </div>
             </AppLayout>
@@ -265,10 +294,61 @@ export default function RentBillsPage() {
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-fade-in">
                     <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-6 w-full max-w-sm animate-scale-in">
                         <h3 className="text-lg font-bold font-sans text-slate-900 dark:text-white">Confirm Payment</h3>
-                        <div className="mt-4 mb-6 text-sm text-slate-600 dark:text-slate-300">
+                        <div className="mt-4 mb-6 text-sm text-slate-600 dark:text-slate-300 space-y-3">
                             <p>Bill: <span className="font-semibold">{confirmingPayment.title}</span></p>
                             <p>Amount: <span className="font-semibold font-numeric">৳{confirmingPayment.shares.find(s => s.userId === user?.id)?.amount.toFixed(2)}</span></p>
-                            <p className="mt-4 p-2 bg-warning-500/10 text-warning-600 dark:text-warning-400 rounded-md">⚠️ Sent to manager for approval.</p>
+
+                            {/* Payment Method Selection */}
+                            <div className="pt-2">
+                                <label className="font-semibold block mb-2">Payment Method:</label>
+                                <div className="space-y-2">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            name="paymentMethod"
+                                            value="normal"
+                                            checked={paymentMethod === 'normal'}
+                                            onChange={() => setPaymentMethod('normal')}
+                                            className="h-4 w-4"
+                                        />
+                                        <span>Normal Payment</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            name="paymentMethod"
+                                            value="mealFund"
+                                            checked={paymentMethod === 'mealFund'}
+                                            onChange={() => setPaymentMethod('mealFund')}
+                                            className="h-4 w-4"
+                                        />
+                                        <span>Pay from Meal Fund</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            {/* Meal Balance Info */}
+                            {paymentMethod === 'mealFund' && (
+                                <div className="p-3 bg-slate-100 dark:bg-slate-700 rounded-md space-y-1">
+                                    {loadingBalance ? (
+                                        <p className="text-xs">Loading balance...</p>
+                                    ) : (
+                                        <>
+                                            <p className="text-xs">Current Meal Fund: <span className="font-semibold font-numeric">৳{mealBalance?.toFixed(2) || '0.00'}</span></p>
+                                            <p className="text-xs">After Payment: <span className={`font-semibold font-numeric ${(mealBalance || 0) - (confirmingPayment.shares.find(s => s.userId === user?.id)?.amount || 0) < 0 ? 'text-danger-600' : 'text-success-600'}`}>
+                                                ৳{((mealBalance || 0) - (confirmingPayment.shares.find(s => s.userId === user?.id)?.amount || 0)).toFixed(2)}
+                                            </span></p>
+                                            {(mealBalance || 0) - (confirmingPayment.shares.find(s => s.userId === user?.id)?.amount || 0) < 0 && (
+                                                <p className="text-[10px] text-danger-600 mt-1">⚠️ You will have a negative balance</p>
+                                            )}
+                                        </>
+                                    )}
+                                </div>
+                            )}
+
+                            {paymentMethod === 'normal' && (
+                                <p className="p-2 bg-warning-500/10 text-warning-600 dark:text-warning-400 rounded-md text-xs">⚠️ Sent to manager for approval.</p>
+                            )}
                         </div>
                         <div className="flex justify-end gap-3">
                             <button onClick={() => setConfirmingPayment(null)} className="px-4 py-2 bg-slate-200 dark:bg-slate-600 text-slate-800 dark:text-slate-200 font-semibold rounded-md hover:bg-slate-300 dark:hover:bg-slate-500">Cancel</button>

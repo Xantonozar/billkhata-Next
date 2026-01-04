@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Bill from '@/models/Bill';
 import Room from '@/models/Room';
 import connectDB from '@/lib/db';
-import { getSession } from '@/lib/auth';
+import { getSession, requireVerified } from '@/lib/auth';
 import { CreateBillSchema, validateBody } from '@/lib/validation';
 
 export const dynamic = 'force-dynamic';
@@ -15,6 +15,12 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ message: 'Not authorized' }, { status: 401 });
         }
 
+        // Require email verification for protected resources
+        const verificationError = requireVerified(user);
+        if (verificationError) {
+            return verificationError;
+        }
+
         // Parse and validate body
         const body = await req.json();
         const validation = validateBody(CreateBillSchema, body);
@@ -23,7 +29,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ message: validation.error }, { status: 400 });
         }
 
-        const { title, category, totalAmount, dueDate, description, imageUrl, shares } = validation.data;
+        const { title, category, totalAmount, dueDate, description, imageUrl, shares, autoDeductFromMealFund } = validation.data;
 
         // Verify user has a room
         if (!user.khataId) {
@@ -61,9 +67,39 @@ export async function POST(req: NextRequest) {
                 userId: share.userId,
                 userName: share.userName,
                 amount: share.amount,
-                status: share.status || 'Unpaid'
+                status: (autoDeductFromMealFund && category === 'Others') ? 'Paid' : (share.status || 'Unpaid'),
+                paidFromMealFund: (autoDeductFromMealFund && category === 'Others') || false
             }))
         });
+
+        // If auto-deduct from meal fund, create expenses for all members
+        if (autoDeductFromMealFund && category === 'Others') {
+            try {
+                const Expense = await import('@/models/Expense').then(mod => mod.default);
+                const expensePromises = shares.map(share =>
+                    Expense.create({
+                        khataId: user.khataId,
+                        userId: share.userId,
+                        userName: share.userName,
+                        amount: share.amount,
+                        items: `Bill Payment: ${title}`,
+                        notes: `Auto-deducted from meal fund for ${category} bill`,
+                        category: 'BillPayment',
+                        status: 'Approved',
+                        approvedBy: user._id,
+                        approvedAt: new Date()
+                    })
+                );
+                const createdExpenses = await Promise.all(expensePromises);
+                console.log(`✅ Created ${createdExpenses.length} BillPayment expenses for auto-deduct`);
+                createdExpenses.forEach(exp => {
+                    console.log(`  - Expense ID: ${exp._id}, Category: ${exp.category}, Amount: ৳${exp.amount}`);
+                });
+            } catch (expenseError) {
+                console.error('Error creating expenses for auto-deduct:', expenseError);
+                // Continue anyway - bill is still created
+            }
+        }
 
         // Create notifications for all users involved in the bill
         try {

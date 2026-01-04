@@ -97,7 +97,7 @@ export async function PUT(req: NextRequest) {
             avatarUrl: updatedUser.avatarUrl,
             whatsapp: updatedUser.whatsapp,
             facebook: updatedUser.facebook,
-            isVerified: updatedUser.isVerified
+            isVerified: updatedUser.isVerified === true
         });
     } catch (error: any) {
         console.error('Update profile error:', error);

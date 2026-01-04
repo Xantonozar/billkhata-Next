@@ -1,34 +1,60 @@
 import { NextRequest, NextResponse } from 'next/server';
 import User from '@/models/User';
 import connectDB from '@/lib/db';
-import { generateOTP, hashOTP, getOTPExpiry } from '@/lib/otp';
+import { generateOTP, getOTPExpiry } from '@/lib/otp';
 import { sendVerificationEmail } from '@/lib/brevo';
+import { getSession } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 // Simple in-memory rate limiting (for production, use Redis)
-const rateLimitMap = new Map<string, { count: number; firstRequest: number }>();
+// NOTE: For production or serverless deployments, this should be replaced with a centralized
+// TTL-backed store (Redis) to ensure correctness across instances and prevent memory leaks.
+const rateLimitMap = new Map<string, { count: number; firstRequest: number; expiresAt: number }>();
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
 const MAX_REQUESTS = 3; // Max 3 OTP requests per minute
+const CLEANUP_INTERVAL = 5 * 60 * 1000; // Clean up every 5 minutes
+
+// Periodic cleanup to remove stale entries
+function cleanupStaleEntries() {
+    const now = Date.now();
+    for (const [email, record] of rateLimitMap.entries()) {
+        if (now >= record.expiresAt) {
+            rateLimitMap.delete(email);
+        }
+    }
+}
+
+// Start periodic cleanup
+if (typeof setInterval !== 'undefined') {
+    setInterval(cleanupStaleEntries, CLEANUP_INTERVAL);
+}
 
 function checkRateLimit(email: string): boolean {
     const now = Date.now();
     const record = rateLimitMap.get(email);
 
-    if (!record) {
-        rateLimitMap.set(email, { count: 1, firstRequest: now });
+    // Delete expired entry if found
+    if (record && now >= record.expiresAt) {
+        rateLimitMap.delete(email);
+    }
+
+    // Create new entry if none exists or was just deleted
+    if (!record || now >= record.expiresAt) {
+        rateLimitMap.set(email, {
+            count: 1,
+            firstRequest: now,
+            expiresAt: now + RATE_LIMIT_WINDOW
+        });
         return true;
     }
 
-    if (now - record.firstRequest > RATE_LIMIT_WINDOW) {
-        rateLimitMap.set(email, { count: 1, firstRequest: now });
-        return true;
-    }
-
+    // Check if rate limit exceeded
     if (record.count >= MAX_REQUESTS) {
         return false;
     }
 
+    // Increment count
     record.count++;
     return true;
 }
@@ -37,7 +63,12 @@ export async function POST(req: NextRequest) {
     try {
         await connectDB();
 
-        const { email } = await req.json();
+        // Try to get email from authenticated session first
+        const sessionUser = await getSession(req);
+        const body = await req.json();
+        
+        // Use email from session if available, otherwise from request body
+        const email = sessionUser?.email || body.email;
 
         if (!email) {
             return NextResponse.json(
@@ -73,19 +104,23 @@ export async function POST(req: NextRequest) {
 
         // Generate new OTP
         const otp = generateOTP();
-        const hashedOtp = await hashOTP(otp);
         const otpExpires = getOTPExpiry();
 
-        // Update user with new OTP
-        await User.findByIdAndUpdate(user._id, {
-            otp: hashedOtp,
-            otpExpires
-        });
+        // Update user with new OTP (pre-save hook will hash it)
+        user.otp = otp;
+        user.otpExpires = otpExpires;
+        await user.save();
 
         // Send verification email
         await sendVerificationEmail(email, otp);
 
-        console.log('📧 OTP resent for', email, ':', otp); // Remove in production
+        // Safe debug logging: only in development with DEBUG_OTP flag, and mask the OTP
+        if (process.env.NODE_ENV === 'development' && process.env.DEBUG_OTP === 'true') {
+            const maskedOtp = otp.length > 4 
+                ? `${otp.substring(0, 2)}${'*'.repeat(otp.length - 4)}${otp.substring(otp.length - 2)}`
+                : '****';
+            console.log('📧 OTP resent for', email, ':', maskedOtp);
+        }
 
         return NextResponse.json({
             message: 'Verification code sent to your email'
@@ -93,7 +128,7 @@ export async function POST(req: NextRequest) {
     } catch (error: any) {
         console.error('❌ Resend OTP error:', error);
         return NextResponse.json(
-            { message: error.message || 'Server error' },
+            { message: 'Internal server error' },
             { status: 500 }
         );
     }

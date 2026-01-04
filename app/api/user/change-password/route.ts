@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import User from '@/models/User';
 import connectDB from '@/lib/db';
 import { getSession } from '@/lib/auth';
+import { MIN_PASSWORD_LENGTH } from '@/lib/passwordConfig';
+import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,9 +30,9 @@ export async function POST(req: NextRequest) {
         }
 
         // Validate new password strength
-        if (newPassword.length < 6) {
+        if (newPassword.length < MIN_PASSWORD_LENGTH) {
             return NextResponse.json(
-                { message: 'New password must be at least 6 characters long' },
+                { message: `New password must be at least ${MIN_PASSWORD_LENGTH} characters long` },
                 { status: 400 }
             );
         }
@@ -66,16 +68,31 @@ export async function POST(req: NextRequest) {
         // Update password
         user.password = newPassword;
         await user.save(); // This will trigger the password hashing pre-save hook
-
-        console.log('✅ Password changed for user:', sessionUser._id);
-
+        // Log using hashed user identifier to protect PII
+        const userIdString = sessionUser._id?.toString() || 'unknown';
+        const secret = process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET;
+        if (!secret) {
+            console.warn('⚠️ Missing JWT_SECRET or NEXTAUTH_SECRET - logging user ID without hashing');
+            console.log('✅ Password changed successfully for user:', userIdString);
+            return NextResponse.json({
+                message: 'Password changed successfully'
+            });
+        }
+        const hashedUserId = crypto.createHmac('sha256', secret)
+            .update(userIdString)
+            .digest('hex')
+            .substring(0, 16);
+        console.log('✅ Password changed successfully for user:', hashedUserId);
         return NextResponse.json({
             message: 'Password changed successfully'
         });
     } catch (error: any) {
         console.error('❌ Change password error:', error);
+        if (error.stack) {
+            console.error('Error stack:', error.stack);
+        }
         return NextResponse.json(
-            { message: error.message || 'Server error' },
+            { message: 'Internal server error' },
             { status: 500 }
         );
     }

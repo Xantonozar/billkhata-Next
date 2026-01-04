@@ -88,11 +88,22 @@ export async function POST(req: NextRequest) {
                 if (billId) {
                     // Send to specific bill's unpaid members
                     const bill = await Bill.findById(billId);
-                    if (bill) {
-                        recipients = bill.shares
-                            .filter((s: any) => s.status === 'Unpaid' || s.status === 'Overdue')
-                            .map((s: any) => s.userId.toString());
+                    if (!bill) {
+                        return NextResponse.json(
+                            { message: 'Bill not found' },
+                            { status: 404 }
+                        );
                     }
+                    // Verify the bill belongs to the khataId
+                    if (bill.khataId.toString() !== khataId.toString()) {
+                        return NextResponse.json(
+                            { message: 'Bill does not belong to this room' },
+                            { status: 403 }
+                        );
+                    }
+                    recipients = bill.shares
+                        .filter((s: any) => s.status === 'Unpaid' || s.status === 'Overdue')
+                        .map((s: any) => s.userId.toString());
                 } else {
                     // Send to all members with any unpaid bills
                     const bills = await Bill.find({ khataId });
@@ -127,9 +138,38 @@ export async function POST(req: NextRequest) {
                 break;
         }
 
-        // Use custom targetUserIds if provided
+        // Use custom targetUserIds if provided - but verify they belong to the room
         if (targetUserIds && Array.isArray(targetUserIds) && targetUserIds.length > 0) {
-            recipients = targetUserIds;
+            // Get all valid room member IDs
+            const roomMembers = await User.find({
+                khataId,
+                roomStatus: 'Approved'
+            }).select('_id');
+            const validMemberIds = new Set(roomMembers.map(m => m._id.toString()));
+            
+            // Filter targetUserIds to only include valid room members
+            const filteredTargetUserIds = targetUserIds.filter((id: string) => 
+                validMemberIds.has(id.toString())
+            );
+            
+            // Check if any provided IDs are not valid members
+            const invalidIds = targetUserIds.filter((id: string) => 
+                !validMemberIds.has(id.toString())
+            );
+            
+            if (invalidIds.length > 0) {
+                console.warn(`⚠️ Invalid targetUserIds provided (not room members): ${invalidIds.join(', ')}`);
+                return NextResponse.json(
+                    { 
+                        message: 'One or more target user IDs do not belong to this room',
+                        invalidIds 
+                    },
+                    { status: 403 }
+                );
+            }
+            
+            // Set recipients to filtered list
+            recipients = filteredTargetUserIds;
         }
 
         if (recipients.length === 0) {

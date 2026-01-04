@@ -3,19 +3,94 @@
 /* Force dark mode to be class-based, overriding default media query */
 @custom-variant dark (&:where(.dark, .dark *));
 
+:root {
+  /* Default/Purple Theme Variables */
+  --primary-50: #fbf5ff;
+  --primary-100: #f7ebff;
+  --primary-200: #f2daff;
+  --primary-300: #e9c9ff;
+  --primary-400: #e2a0ff;
+  --primary-500: #d17eff;
+  --primary-600: #b951f7;
+  --primary-700: #a333e0;
+  --primary-800: #8826b9;
+  --primary-900: #702199;
+  --primary-950: #4a0f6b;
+
+  --background-main: #f3fcfd;
+  /* Light Cyan 50 */
+  --text-main: #334155;
+  /* Slate 700 */
+
+  /* Light Theme Semantics */
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --border: #e2e8f0;
+}
+
+.earthy-green {
+  /* Earthy Green Theme Variables */
+  --primary-50: #f4f6f3;
+  --primary-100: #daddd8;
+  /* Alabaster Grey */
+  --primary-200: #d1e0a8;
+  --primary-300: #c7d59f;
+  /* Tea Green */
+  --primary-400: #b7ce63;
+  /* Yellow Green */
+  --primary-500: #a3c24d;
+  --primary-600: #8fb339;
+  /* Lime Moss */
+  --primary-700: #6d8b2a;
+  --primary-800: #4b5842;
+  /* Ebony */
+  --primary-900: #3a4433;
+  --primary-950: #1d2219;
+
+  --background-main: #daddd8;
+  /* Alabaster Grey */
+  --text-main: #3a4433;
+  /* Ebony */
+
+  /* Earthy Green Semantics */
+  --card: #f4f6f3;
+  /* Soft Alabaster for cards, slightly lighter than bg */
+  --card-foreground: #3a4433;
+  --muted: #c7d59f;
+  /* Tea Green */
+  --muted-foreground: #4b5842;
+  --border: #b7ce63;
+  /* Yellow Green */
+}
+
+/* Dark Mode Semantics Override */
+.dark {
+  --card: #1e293b;
+  /* Slate 800 */
+  --card-foreground: #ffffff;
+  --muted: #334155;
+  /* Slate 700 */
+  --muted-foreground: #94a3b8;
+  /* Slate 400 */
+  --border: #334155;
+  /* Slate 700 */
+}
+
 @theme {
-  /* Primary Colors */
-  --color-primary-50: #fbf5ff;
-  --color-primary-100: #f7ebff;
-  --color-primary-200: #f2daff;
-  --color-primary-300: #e9c9ff;
-  --color-primary-400: #e2a0ff;
-  --color-primary-500: #d17eff;
-  --color-primary-600: #b951f7;
-  --color-primary-700: #a333e0;
-  --color-primary-800: #8826b9;
-  --color-primary-900: #702199;
-  --color-primary-950: #4a0f6b;
+  /* Primary Colors Mapped to Variables */
+  --color-primary-50: var(--primary-50);
+  --color-primary-100: var(--primary-100);
+  --color-primary-200: var(--primary-200);
+  --color-primary-300: var(--primary-300);
+  --color-primary-400: var(--primary-400);
+  --color-primary-500: var(--primary-500);
+  --color-primary-600: var(--primary-600);
+  --color-primary-700: var(--primary-700);
+  --color-primary-800: var(--primary-800);
+  --color-primary-900: var(--primary-900);
+  --color-primary-950: var(--primary-950);
 
   /* Success Colors */
   --color-success-50: #f0fff7;
@@ -81,6 +156,14 @@
   --color-light-cyan-800: #2f8d9b;
   --color-light-cyan-900: #2d7481;
   --color-light-cyan-950: #194953;
+
+  /* Semantic Theme Variables */
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+
 
   /* Fonts */
   --font-sans: 'Poppins', sans-serif;
@@ -195,17 +278,16 @@
   background-image: linear-gradient(to right, var(--color-primary-400), var(--color-light-cyan-400));
 }
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+body {
+  background: var(--background-main);
+  color: var(--text-main);
+  font-family: var(--font-body);
 }
 
-
-
-body {
-  background: var(--color-light-cyan-50);
-  color: var(--color-slate-700);
-  font-family: var(--font-body);
+/* Explicit rule for earth green body */
+body:has(.earthy-green) {
+  background: var(--primary-100);
+  color: var(--primary-800);
 }
 
 .dark body {

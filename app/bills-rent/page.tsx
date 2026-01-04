@@ -13,6 +13,7 @@ const EditSharedBillModal = lazy(() => import('@/components/modals/EditSharedBil
 import AppLayout from '@/components/AppLayout';
 import ToastContainer from '@/components/ToastContainer';
 import { useRouter } from 'next/navigation';
+import { BillDetailSkeleton } from '@/components/skeletons/BillCardSkeleton';
 
 const CATEGORY = 'Rent';
 const ICON = <HomeIcon className="w-8 h-8 text-danger-500" />;
@@ -159,7 +160,7 @@ export default function RentBillsPage() {
     if (loading) {
         return (
             <AppLayout>
-                <div className="text-center p-8">Loading {CATEGORY} bills...</div>
+                <div className="animate-fade-in"><BillDetailSkeleton /></div>
             </AppLayout>
         );
     }

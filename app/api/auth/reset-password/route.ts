@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import User from '@/models/User';
 import connectDB from '@/lib/db';
-import { verifyOTP, isOTPExpired } from '@/lib/otp';
+import { isOTPExpired } from '@/lib/otp';
+import { MIN_PASSWORD_LENGTH } from '@/lib/passwordConfig';
+import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,9 +21,9 @@ export async function POST(req: NextRequest) {
         }
 
         // Validate password strength
-        if (newPassword.length < 6) {
+        if (newPassword.length < MIN_PASSWORD_LENGTH) {
             return NextResponse.json(
-                { message: 'Password must be at least 6 characters long' },
+                { message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters long` },
                 { status: 400 }
             );
         }
@@ -52,7 +54,7 @@ export async function POST(req: NextRequest) {
         }
 
         // Verify OTP
-        const isValid = await verifyOTP(otp, user.otp);
+        const isValid = await user.compareOTP(otp);
 
         if (!isValid) {
             return NextResponse.json(
@@ -67,15 +69,36 @@ export async function POST(req: NextRequest) {
         user.otpExpires = null;
         await user.save(); // This will trigger the password hashing pre-save hook
 
-        console.log('✅ Password reset successful for:', email);
+        // Log using non-identifiable user ID (preferred) or hashed email as fallback
+        const logIdentifier = user._id?.toString() || (() => {
+            const secret = process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET;
+            if (secret) {
+                return crypto.createHmac('sha256', secret).update(email).digest('hex').substring(0, 16);
+            }
+            return 'unknown';
+        })();
+        console.log('✅ Password reset successful for user:', logIdentifier);
 
         return NextResponse.json({
             message: 'Password reset successfully. You can now login with your new password.'
         });
     } catch (error: any) {
-        console.error('❌ Reset password error:', error);
+        // Log full error details server-side (including stack trace)
+        console.error('❌ Reset password error:', {
+            message: error.message,
+            stack: error.stack,
+            error
+        });
+        
+        // Return generic error message to client
+        // Only include detailed error in development for debugging
+        const isDevelopment = process.env.NODE_ENV !== 'production';
+        const clientMessage = isDevelopment 
+            ? (error.message || 'Internal server error')
+            : 'Internal server error';
+        
         return NextResponse.json(
-            { message: error.message || 'Server error' },
+            { message: clientMessage },
             { status: 500 }
         );
     }

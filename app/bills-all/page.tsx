@@ -7,13 +7,14 @@ import type { Bill, BillShare } from '@/types';
 import { Role } from '@/types';
 import {
     PlusIcon, MagnifyingGlassIcon, ElectricityIcon, HomeIcon, WaterIcon,
-    GasIcon, WifiIcon, MaidIcon, OtherIcon
+    GasIcon, WifiIcon, MaidIcon, OtherIcon, ExclamationTriangleIcon
 } from '@/components/Icons';
 import AddBillModal from '@/components/modals/AddBillModal';
 import { useNotifications } from '@/contexts/NotificationContext';
 import AppLayout from '@/components/AppLayout';
 import ToastContainer from '@/components/ToastContainer';
 import { useRouter } from 'next/navigation';
+import { BillCardSkeleton } from '@/components/skeletons/BillCardSkeleton';
 
 const categoryIcons: Record<string, React.ReactElement> = {
     'Rent': <HomeIcon className="w-6 h-6 text-danger-500" />,
@@ -86,31 +87,44 @@ const ManagerAllBillsView: React.FC<{ bills: Bill[] }> = ({ bills }) => {
                     />
                 </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
-                {filteredBills.map(bill => {
-                    const paidCount = bill.shares.filter(s => s.status === 'Paid').length;
-                    const totalCount = bill.shares.length;
 
-                    return (
-                        <div key={bill.id} className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-3 sm:p-5 flex flex-row items-center justify-between transition-all hover:shadow-lg hover:scale-[1.02]">
-                            <div className="flex-grow">
-                                <div className="flex items-center gap-2 sm:gap-3 mb-1">
-                                    <div className="scale-90 sm:scale-100">{categoryIcons[bill.category] || <OtherIcon className="w-6 h-6 text-slate-500" />}</div>
-                                    <h3 className="font-bold text-sm sm:text-xl font-sans text-slate-800 dark:text-white truncate">{bill.title}</h3>
+            {filteredBills.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700/50">
+                    <div className="bg-slate-100 dark:bg-slate-700 p-4 rounded-full mb-3">
+                        <MagnifyingGlassIcon className="w-8 h-8 text-slate-400 dark:text-slate-500" />
+                    </div>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">No bills found</h3>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+                        {searchQuery ? `No bills match "${searchQuery}"` : "Try adjusting your filters"}
+                    </p>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
+                    {filteredBills.map(bill => {
+                        const paidCount = bill.shares.filter(s => s.status === 'Paid').length;
+                        const totalCount = bill.shares.length;
+
+                        return (
+                            <div key={bill.id} className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-3 sm:p-5 flex flex-row items-center justify-between transition-all hover:shadow-lg hover:scale-[1.02]">
+                                <div className="flex-grow">
+                                    <div className="flex items-center gap-2 sm:gap-3 mb-1">
+                                        <div className="scale-90 sm:scale-100">{categoryIcons[bill.category] || <OtherIcon className="w-6 h-6 text-slate-500" />}</div>
+                                        <h3 className="font-bold text-sm sm:text-xl font-sans text-slate-800 dark:text-white truncate">{bill.title}</h3>
+                                    </div>
+                                    <p className="text-lg sm:text-2xl font-bold text-primary-600 font-numeric">৳{bill.totalAmount.toFixed(0)}</p>
+                                    <p className="text-[10px] sm:text-sm text-slate-500 dark:text-slate-400">Due: <span className="hidden sm:inline">{bill.dueDate}</span><span className="sm:hidden">{new Date(bill.dueDate).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })}</span></p>
                                 </div>
-                                <p className="text-lg sm:text-2xl font-bold text-primary-600 font-numeric">৳{bill.totalAmount.toFixed(0)}</p>
-                                <p className="text-[10px] sm:text-sm text-slate-500 dark:text-slate-400">Due: <span className="hidden sm:inline">{bill.dueDate}</span><span className="sm:hidden">{new Date(bill.dueDate).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })}</span></p>
-                            </div>
 
-                            <div className="flex flex-col items-end gap-2 ml-2">
-                                <div className="hidden sm:block"><PaymentProgress paid={paidCount} total={totalCount} /></div>
-                                <div className="sm:hidden text-xs text-slate-500 font-numeric mb-1">{paidCount}/{totalCount} Paid</div>
-                                <button onClick={() => router.push(`/bills/${bill.id}`)} className="px-3 py-1.5 text-xs sm:text-sm bg-slate-100 dark:bg-slate-700 rounded-md font-semibold hover:bg-slate-200 dark:hover:bg-slate-600 transition-all active:scale-95">View</button>
+                                <div className="flex flex-col items-end gap-2 ml-2">
+                                    <div className="hidden sm:block"><PaymentProgress paid={paidCount} total={totalCount} /></div>
+                                    <div className="sm:hidden text-xs text-slate-500 font-numeric mb-1">{paidCount}/{totalCount} Paid</div>
+                                    <button onClick={() => router.push(`/bills/${bill.id}`)} className="px-3 py-1.5 text-xs sm:text-sm bg-slate-100 dark:bg-slate-700 rounded-md font-semibold hover:bg-slate-200 dark:hover:bg-slate-600 transition-all active:scale-95">View</button>
+                                </div>
                             </div>
-                        </div>
-                    );
-                })}
-            </div>
+                        );
+                    })}
+                </div>
+            )}
         </div>
     );
 };
@@ -118,7 +132,8 @@ const ManagerAllBillsView: React.FC<{ bills: Bill[] }> = ({ bills }) => {
 const MemberAllBillsView: React.FC<{
     bills: (Bill & { myShare: BillShare })[];
     setConfirmingPayment: (bill: Bill) => void;
-}> = ({ bills, setConfirmingPayment }) => {
+    statusFilter: string;
+}> = ({ bills, setConfirmingPayment, statusFilter }) => {
     const router = useRouter();
 
     const getDueDateStatus = (dueDate: string): { text: string; isOverdue: boolean } => {
@@ -140,54 +155,68 @@ const MemberAllBillsView: React.FC<{
     };
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
-            {bills.map(bill => {
-                const dueDateInfo = getDueDateStatus(bill.dueDate);
-                const status = bill.myShare.status;
+        bills.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700/50 mt-4">
+                <div className="bg-slate-100 dark:bg-slate-700 p-4 rounded-full mb-3">
+                    <ExclamationTriangleIcon className="w-8 h-8 text-slate-400 dark:text-slate-500" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">No bills found</h3>
+                <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+                    {statusFilter === 'History' ? 'No bills in your history yet' : 
+                     statusFilter === 'Due Now' ? 'You are all caught up!' : 
+                     `No ${statusFilter.toLowerCase()} bills`}
+                </p>
+            </div>
+        ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 mt-4">
+                {bills.map(bill => {
+                    const dueDateInfo = getDueDateStatus(bill.dueDate);
+                    const status = bill.myShare.status;
 
-                return (
-                    <div key={bill.id} className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-3 sm:p-5 flex flex-row items-center justify-between transition-all hover:shadow-lg">
-                        <div className="flex-grow space-y-1">
-                            <div className="flex items-center gap-2 sm:gap-3">
-                                <div className="scale-90 sm:scale-100">{categoryIcons[bill.category]}</div>
-                                <h3 className="font-bold text-sm sm:text-lg font-sans text-slate-800 dark:text-white truncate">{bill.title}</h3>
+                    return (
+                        <div key={bill.id} className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-3 sm:p-5 flex flex-row items-center justify-between transition-all hover:shadow-lg">
+                            <div className="flex-grow space-y-1">
+                                <div className="flex items-center gap-2 sm:gap-3">
+                                    <div className="scale-90 sm:scale-100">{categoryIcons[bill.category]}</div>
+                                    <h3 className="font-bold text-sm sm:text-lg font-sans text-slate-800 dark:text-white truncate">{bill.title}</h3>
+                                </div>
+                                <p className="text-slate-600 dark:text-slate-300 text-xs sm:text-base">
+                                    Share: <span className="font-bold text-base sm:text-lg text-slate-800 dark:text-white font-numeric">৳{bill.myShare.amount.toFixed(0)}</span>
+                                </p>
+                                <p className={`text-[10px] sm:text-sm ${dueDateInfo.isOverdue && status !== 'Paid' ? 'text-danger-600 font-semibold' : 'text-slate-500 dark:text-slate-400'}`}>
+                                    Due: {new Date(bill.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                    {status !== 'Paid' && <span className="block sm:inline sm:ml-1 text-[10px] sm:text-xs opacity-80">({dueDateInfo.text})</span>}
+                                </p>
                             </div>
-                            <p className="text-slate-600 dark:text-slate-300 text-xs sm:text-base">
-                                Share: <span className="font-bold text-base sm:text-lg text-slate-800 dark:text-white font-numeric">৳{bill.myShare.amount.toFixed(0)}</span>
-                            </p>
-                            <p className={`text-[10px] sm:text-sm ${dueDateInfo.isOverdue && status !== 'Paid' ? 'text-danger-600 font-semibold' : 'text-slate-500 dark:text-slate-400'}`}>
-                                Due: {new Date(bill.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                                {status !== 'Paid' && <span className="block sm:inline sm:ml-1 text-[10px] sm:text-xs opacity-80">({dueDateInfo.text})</span>}
-                            </p>
-                        </div>
 
-                        <div className="flex flex-col items-end gap-2 ml-3">
-                            <div className="w-full sm:w-auto flex justify-end">
-                                {status === 'Unpaid' || status === 'Overdue' ? (
-                                    <button
-                                        onClick={() => setConfirmingPayment(bill)}
-                                        className="px-3 py-1.5 text-xs sm:text-base text-white font-semibold rounded-md bg-gradient-success hover:shadow-lg transition-all active:scale-[0.98]"
-                                    >
-                                        Pay
-                                    </button>
-                                ) : status === 'Pending Approval' ? (
-                                    <div>
-                                        <p className="text-xs sm:text-sm text-warning-600 dark:text-warning-400 text-right"><span className="font-semibold">⏳ Wait</span></p>
-                                    </div>
-                                ) : (
-                                    <div>
-                                        <p className="text-xs sm:text-sm text-success-600 dark:text-success-400 text-right">✅ Paid</p>
-                                    </div>
-                                )}
+                            <div className="flex flex-col items-end gap-2 ml-3">
+                                <div className="w-full sm:w-auto flex justify-end">
+                                    {status === 'Unpaid' || status === 'Overdue' ? (
+                                        <button
+                                            onClick={() => setConfirmingPayment(bill)}
+                                            className="px-3 py-1.5 text-xs sm:text-base text-white font-semibold rounded-md bg-gradient-success hover:shadow-lg transition-all active:scale-[0.98]"
+                                        >
+                                            Pay
+                                        </button>
+                                    ) : status === 'Pending Approval' ? (
+                                        <div>
+                                            <p className="text-xs sm:text-sm text-warning-600 dark:text-warning-400 text-right"><span className="font-semibold">⏳ Wait</span></p>
+                                        </div>
+                                    ) : (
+                                        <div>
+                                            <p className="text-xs sm:text-sm text-success-600 dark:text-success-400 text-right">✅ Paid</p>
+                                        </div>
+                                    )}
+                                </div>
+                                <button onClick={() => router.push(`/bills/${bill.id}`)} className="text-xs sm:text-sm font-semibold text-primary-600 hover:underline text-right">
+                                    View
+                                </button>
                             </div>
-                            <button onClick={() => router.push(`/bills/${bill.id}`)} className="text-xs sm:text-sm font-semibold text-primary-600 hover:underline text-right">
-                                View
-                            </button>
                         </div>
-                    </div>
-                );
-            })}
-        </div>
+                    );
+                })}
+            </div>
+        )
     );
 };
 
@@ -247,13 +276,8 @@ export default function AllBillsPage() {
     }, [bills, user, statusFilter]);
 
 
-    if (loading) {
-        return (
-            <AppLayout>
-                <div className="text-center p-8">Loading all bills...</div>
-            </AppLayout>
-        );
-    }
+
+
 
     if (!user) return null;
 
@@ -274,25 +298,30 @@ export default function AllBillsPage() {
                             </button>
                         )}
                     </div>
-                    {user.role === Role.Manager
-                        ? <ManagerAllBillsView bills={bills} />
-                        : (
-                            <div className="space-y-4">
-                                <div className="flex-shrink-0 grid grid-cols-2 sm:grid-cols-4 gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
-                                    {['Due Now', 'Paid', 'Pending Approval', 'History'].map(status => (
-                                        <button
-                                            key={status}
-                                            onClick={() => setStatusFilter(status)}
-                                            className={`px-3 py-1.5 text-sm font-semibold rounded-md transition-colors ${statusFilter === status ? 'bg-white dark:bg-slate-700 text-primary-600 shadow' : 'text-slate-600 dark:text-slate-300 hover:bg-white/50'}`}
-                                        >
-                                            {status}
-                                        </button>
-                                    ))}
+                    {loading ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
+                            {[1, 2, 3, 4, 5, 6].map(i => <BillCardSkeleton key={i} />)}
+                        </div>
+                    ) : (
+                        user.role === Role.Manager
+                            ? <ManagerAllBillsView bills={bills} />
+                            : (
+                                <div className="space-y-4">
+                                    <div className="flex-shrink-0 grid grid-cols-2 sm:grid-cols-4 gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+                                        {['Due Now', 'Paid', 'Pending Approval', 'History'].map(status => (
+                                            <button
+                                                key={status}
+                                                onClick={() => setStatusFilter(status)}
+                                                className={`px-3 py-1.5 text-sm font-semibold rounded-md transition-colors ${statusFilter === status ? 'bg-white dark:bg-slate-700 text-primary-600 shadow' : 'text-slate-600 dark:text-slate-300 hover:bg-white/50'}`}
+                                            >
+                                                {status}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <MemberAllBillsView bills={memberFilteredBills} setConfirmingPayment={setConfirmingPayment} statusFilter={statusFilter} />
                                 </div>
-                                <MemberAllBillsView bills={memberFilteredBills} setConfirmingPayment={setConfirmingPayment} />
-                            </div>
-                        )
-                    }
+                            )
+                    )}
                 </div>
             </AppLayout>
 
