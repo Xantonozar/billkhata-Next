@@ -113,6 +113,7 @@ const SidebarContent: React.FC<{ pendingCount: number }> = ({ pendingCount }) =>
                     <NavLink href="/payment-dashboard" icon={<CreditCardIcon />}>Payment Dashboard</NavLink>
                 )}
                 <NavLink href="/reports-analytics" icon={<ChartBarIcon />}>Reports & Analytics</NavLink>
+                <NavLink href="/profile" icon={<UserCircleIcon />}>Profile</NavLink>
                 <NavLink href="/settings" icon={<CogIcon />}>Settings</NavLink>
             </nav>
             {user && (

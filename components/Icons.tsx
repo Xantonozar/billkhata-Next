@@ -12,6 +12,26 @@ export const MoonIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     </svg>
 );
 
+export const SunriseIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-6.364-.386 1.591-1.591M3 12h2.25m.386-6.364 1.591 1.591" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 16a4 4 0 0 0 4-4H8a4 4 0 0 0 4 4z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M4 20h16" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6 16l-2 2" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M18 16l2 2" />
+    </svg>
+);
+
+export const SoupIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 19V6" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19.14 11.16a.46.46 0 0 0 0-.66l-1.3-1.3a.46.46 0 0 0-.66 0l-.6.6 2.56 2.56.6-.6z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M4 19a4 4 0 0 0 16 0v2H4v-2z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M13 14h-2" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5 14h14a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1a2 2 0 0 1 2-2z" />
+    </svg>
+);
+
 export const ChevronRightIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
         <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />

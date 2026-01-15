@@ -60,6 +60,24 @@ const userSchema = new mongoose.Schema({
         type: Date,
         default: null,
         select: false // Don't return OTP expiry by default
+    },
+    foodPreferences: {
+        likes: {
+            type: [String],
+            default: []
+        },
+        dislikes: {
+            type: [String],
+            default: []
+        },
+        avoidance: {
+            type: [String],
+            default: []
+        },
+        notes: {
+            type: String,
+            default: ''
+        }
     }
 }, {
     timestamps: true

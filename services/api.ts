@@ -4,7 +4,7 @@ import { Role } from '../types';
 
 // Create axios instance
 const axiosInstance = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api',
+    baseURL: process.env.NEXT_PUBLIC_API_URL || '/api',
     headers: {
         'Content-Type': 'application/json',
     }
@@ -456,9 +456,11 @@ const api = {
         }
     },
 
-    getShoppingSummary: async (khataId: string): Promise<any> => {
+    getShoppingSummary: async (khataId: string, calculationPeriodId?: string): Promise<any> => {
         try {
-            const response = await axiosInstance.get(`/shopping/${khataId}/summary`);
+            const params: any = {};
+            if (calculationPeriodId) params.calculationPeriodId = calculationPeriodId;
+            const response = await axiosInstance.get(`/shopping/${khataId}/summary`, { params });
             return response.data;
         } catch (error) {
             console.error('Get shopping summary error:', error);
@@ -466,9 +468,11 @@ const api = {
         }
     },
 
-    getMemberBalances: async (khataId: string): Promise<any> => {
+    getMemberBalances: async (khataId: string, calculationPeriodId?: string): Promise<any> => {
         try {
-            const response = await axiosInstance.get(`/shopping/${khataId}/balances`);
+            const params: any = {};
+            if (calculationPeriodId) params.calculationPeriodId = calculationPeriodId;
+            const response = await axiosInstance.get(`/shopping/${khataId}/balances`, { params });
             return response.data;
         } catch (error) {
             console.error('Get member balances error:', error);
@@ -487,11 +491,12 @@ const api = {
     },
 
     // Meals
-    getMeals: async (khataId: string, startDate?: string, endDate?: string): Promise<any[]> => {
+    getMeals: async (khataId: string, startDate?: string, endDate?: string, calculationPeriodId?: string): Promise<any[]> => {
         try {
             const params: any = {};
             if (startDate) params.startDate = startDate;
             if (endDate) params.endDate = endDate;
+            if (calculationPeriodId) params.calculationPeriodId = calculationPeriodId;
             const response = await axiosInstance.get(`/meals/${khataId}`, { params });
             return response.data;
         } catch (error) {
@@ -558,7 +563,7 @@ const api = {
     },
 
     // Deposits
-    getDeposits: async (khataId: string, params: { status?: string, page?: number, limit?: number } = {}): Promise<any[]> => {
+    getDeposits: async (khataId: string, params: { status?: string, page?: number, limit?: number, calculationPeriodId?: string } = {}): Promise<any[]> => {
         try {
             const response = await axiosInstance.get(`/deposits/${khataId}`, { params });
             return response.data;
@@ -604,7 +609,7 @@ const api = {
     },
 
     // Expenses
-    getExpenses: async (khataId: string, params: { status?: string, page?: number, limit?: number } = {}): Promise<any[]> => {
+    getExpenses: async (khataId: string, params: { status?: string, page?: number, limit?: number, calculationPeriodId?: string } = {}): Promise<any[]> => {
         try {
             const response = await axiosInstance.get(`/expenses/${khataId}`, { params });
             return response.data;
@@ -800,10 +805,60 @@ const api = {
 
             return response.data.url;
         } catch (error) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const err = error as any;
-            console.error('Upload image error:', err.response?.data?.message || err.message);
+            console.error('Upload image error:', error);
             return null;
+        }
+    },
+
+    // Calculation Periods
+    getCalculationPeriods: async (): Promise<any[]> => {
+        try {
+            const response = await axiosInstance.get('/calculation-periods');
+            return response.data;
+        } catch (error) {
+            console.error('Get calculation periods error:', error);
+            return [];
+        }
+    },
+
+    getActiveCalculationPeriod: async (): Promise<any | null> => {
+        try {
+            const response = await axiosInstance.get('/calculation-periods/active');
+            return response.data.activePeriod;
+        } catch (error) {
+            console.error('Get active calculation period error:', error);
+            return null;
+        }
+    },
+
+    startCalculationPeriod: async (name: string): Promise<any> => {
+        try {
+            const response = await axiosInstance.post('/calculation-periods', { name });
+            return response.data;
+        } catch (error: any) {
+            const message = error.response?.data?.error || 'Failed to start calculation period';
+            throw new Error(message);
+        }
+    },
+
+    endCalculationPeriod: async (periodId: string): Promise<any> => {
+        try {
+            const response = await axiosInstance.post(`/calculation-periods/${periodId}/end`);
+            return response.data;
+        } catch (error: any) {
+            const message = error.response?.data?.error || 'Failed to end calculation period';
+            throw new Error(message);
+        }
+    },
+
+    // Profile
+    updateUserProfile: async (data: { name?: string; whatsapp?: string; facebook?: string; avatarUrl?: string; foodPreferences?: any }): Promise<any> => {
+        try {
+            const response = await axiosInstance.put('/user/profile', data);
+            return response.data;
+        } catch (error: any) {
+            const message = error.response?.data?.error || 'Failed to update profile';
+            throw new Error(message);
         }
     }
 };

@@ -20,6 +20,12 @@ export interface User {
     whatsapp?: string;
     facebook?: string;
     isVerified?: boolean;
+    foodPreferences?: {
+        likes: string[];
+        dislikes: string[];
+        avoidance: string[];
+        notes: string;
+    };
 }
 
 export type PaymentStatus = 'Unpaid' | 'Pending Approval' | 'Paid' | 'Overdue';
@@ -82,4 +88,17 @@ export interface MealHistory {
     targetUserId?: {
         name: string;
     };
+}
+
+export interface CalculationPeriod {
+    _id: string;
+    khataId: string;
+    name: string;
+    startDate: string;
+    endDate: string | null;
+    status: 'Active' | 'Ended';
+    startedBy: string;
+    endedBy?: string;
+    createdAt: string;
+    updatedAt: string;
 }

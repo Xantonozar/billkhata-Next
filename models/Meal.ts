@@ -20,6 +20,12 @@ const mealSchema = new mongoose.Schema({
         required: true,
         index: true
     },
+    calculationPeriodId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'CalculationPeriod',
+        default: null,
+        index: true
+    },
     breakfast: {
         type: Number,
         default: 0,
@@ -52,6 +58,7 @@ const mealSchema = new mongoose.Schema({
 });
 
 mealSchema.index({ khataId: 1, date: 1 });
+mealSchema.index({ khataId: 1, calculationPeriodId: 1, date: 1 });
 // Compound index for unique user entry per date per room
 mealSchema.index({ khataId: 1, userId: 1, date: 1 }, { unique: true });
 

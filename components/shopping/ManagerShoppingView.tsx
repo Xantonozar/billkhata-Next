@@ -4,6 +4,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { api } from '@/services/api';
 import { FundAdjustmentModal } from './Modals';
+import { Plus, Banknote } from 'lucide-react';
+
+interface ManagerShoppingViewProps {
+    selectedPeriodId: string | null;
+    isActivePeriod: boolean;
+}
 
 const initialFundStatus = {
     totalDeposits: 0,
@@ -14,7 +20,7 @@ const initialFundStatus = {
     rate: 0,
 };
 
-const ManagerShoppingView: React.FC = () => {
+const ManagerShoppingView: React.FC<ManagerShoppingViewProps> = ({ selectedPeriodId, isActivePeriod }) => {
     const { user } = useAuth();
     const { addToast } = useNotifications();
     const [activeTab, setActiveTab] = useState<'overview' | 'manage' | 'history'>('overview');
@@ -27,31 +33,49 @@ const ManagerShoppingView: React.FC = () => {
     const [historyDeposits, setHistoryDeposits] = useState<any[]>([]);
     const [historyExpenses, setHistoryExpenses] = useState<any[]>([]);
     const [historyType, setHistoryType] = useState<'deposits' | 'expenses'>('deposits');
+    const [loading, setLoading] = useState(false);
+    const [showAddExpense, setShowAddExpense] = useState(false);
+    const [showAddDeposit, setShowAddDeposit] = useState(false);
 
     // Modal States
     const [adjustUser, setAdjustUser] = useState<{ id: string; name: string } | null>(null);
 
-    const fetchData = useCallback(() => {
+    const fetchData = useCallback(async () => {
         if (!user?.khataId) return;
 
-        // 1. Overview & Pending Data
-        api.getShoppingSummary(user.khataId).then(data => {
-            if (data?.fundStatus) setFundStatus(data.fundStatus);
-        });
-        api.getDeposits(user.khataId, { status: 'Pending' }).then(setPendingDeposits);
-        api.getExpenses(user.khataId, { status: 'Pending' }).then(setPendingExpenses);
+        setLoading(true);
+        try {
+            // 1. Overview & Pending Data
+            const [summaryData, depositsData, expensesData, balancesData] = await Promise.all([
+                api.getShoppingSummary(user.khataId, selectedPeriodId || undefined),
+                api.getDeposits(user.khataId, { status: 'Pending', calculationPeriodId: selectedPeriodId || undefined }),
+                api.getExpenses(user.khataId, { status: 'Pending', calculationPeriodId: selectedPeriodId || undefined }),
+                api.getMemberBalances(user.khataId, selectedPeriodId || undefined)
+            ]);
 
-        // 2. Member Balances
-        api.getMemberBalances(user.khataId).then(data => {
-            if (data?.balances) setMemberBalances(data.balances);
-        });
+            if (summaryData?.fundStatus) setFundStatus(summaryData.fundStatus);
+            setPendingDeposits(depositsData || []);
+            // Corrected: response.data from api.ts is the array itself
+            setPendingExpenses(expensesData || []);
+            if (balancesData?.balances) setMemberBalances(balancesData.balances);
 
-        // 3. History
-        // Fetch approved deposits and expenses for history
-        api.getDeposits(user.khataId, { status: 'Approved', limit: 50 }).then(setHistoryDeposits);
-        api.getExpenses(user.khataId, { status: 'Approved', limit: 50 }).then(setHistoryExpenses);
+            // 3. History
+            const [histDeposits, histExpenses] = await Promise.all([
+                api.getDeposits(user.khataId, { status: 'Approved', limit: 50, calculationPeriodId: selectedPeriodId || undefined }),
+                api.getExpenses(user.khataId, { status: 'Approved', limit: 50, calculationPeriodId: selectedPeriodId || undefined })
+            ]);
 
-    }, [user?.khataId]);
+            setHistoryDeposits(histDeposits || []);
+            setHistoryExpenses(histExpenses || []);
+
+        } catch (error) {
+            console.error('Error fetching manager data:', error);
+            addToast({ type: 'error', title: 'Error', message: 'Failed to load data' });
+        } finally {
+            setLoading(false);
+        }
+
+    }, [user?.khataId, selectedPeriodId, addToast]);
 
     useEffect(() => {
         fetchData();
@@ -59,6 +83,11 @@ const ManagerShoppingView: React.FC = () => {
 
     const handleDepositAction = async (id: string, action: 'approve' | 'deny') => {
         if (!user?.khataId) return;
+        if (!isActivePeriod) {
+            addToast({ type: 'error', title: 'Operation Failed', message: 'Cannot modify data from a historical period' });
+            return;
+        }
+
         const success = action === 'approve'
             ? await api.approveDeposit(user.khataId, id)
             : await api.rejectDeposit(user.khataId, id, 'Denied by manager');
@@ -73,6 +102,11 @@ const ManagerShoppingView: React.FC = () => {
 
     const handleExpenseAction = async (id: string, action: 'approve' | 'deny') => {
         if (!user?.khataId) return;
+        if (!isActivePeriod) {
+            addToast({ type: 'error', title: 'Operation Failed', message: 'Cannot modify data from a historical period' });
+            return;
+        }
+
         const success = action === 'approve'
             ? await api.approveExpense(user.khataId, id)
             : await api.rejectExpense(user.khataId, id, 'Denied by manager');
@@ -106,7 +140,28 @@ const ManagerShoppingView: React.FC = () => {
                     <div className="space-y-6">
                         {/* Fund Status Cards */}
                         <div className="bg-card rounded-xl shadow-md p-6">
-                            <h3 className="font-semibold text-lg mb-3 text-card-foreground">Fund Status</h3>
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+                                <h3 className="font-semibold text-lg text-card-foreground">Fund Status</h3>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => setShowAddExpense(true)}
+                                        className={`flex items-center justify-center px-4 py-2 rounded-md font-medium transition-colors ${!isActivePeriod ? 'bg-slate-300 text-slate-500 cursor-not-allowed' : 'bg-primary-600 hover:bg-primary-700 text-white shadow-lg hover:shadow-xl'}`}
+                                        disabled={!isActivePeriod}
+                                    >
+                                        <Plus className="w-5 h-5 mr-2" />
+                                        Add Expense
+                                    </button>
+                                    <button
+                                        onClick={() => setShowAddDeposit(true)}
+                                        className={`flex items-center justify-center px-4 py-2 rounded-md font-medium border transition-colors ${!isActivePeriod ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed' : 'border-primary-200 text-primary-700 hover:bg-primary-50 hover:text-primary-800'}`}
+                                        disabled={!isActivePeriod}
+                                    >
+                                        <Banknote className="w-5 h-5 mr-2" />
+                                        Add Deposit
+                                    </button>
+                                </div>
+                            </div>
+
                             <div className="border-t border-border pt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                                 <div className="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-md flex justify-between sm:block">
                                     <p className="text-sm text-muted-foreground">Total Deposits</p><p className="font-bold text-lg text-card-foreground">৳{fundStatus.totalDeposits.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>

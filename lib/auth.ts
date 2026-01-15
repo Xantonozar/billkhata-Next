@@ -14,9 +14,11 @@ const REFRESH_TOKEN_EXPIRES = process.env.JWT_REFRESH_EXPIRES || '7d';
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
 // Cookie configuration
+// Cookie configuration
 const COOKIE_OPTIONS = {
     httpOnly: true,
-    secure: IS_PRODUCTION,
+    // Only use secure cookies if explicitly on HTTPS or if configured
+    secure: process.env.NODE_ENV === 'production' && process.env.NEXT_PUBLIC_APP_URL?.startsWith('https') === true,
     sameSite: 'lax' as const,
     path: '/',
 };
@@ -243,8 +245,8 @@ export const requireVerified = (user: any): NextResponse | null => {
         return NextResponse.json({ message: 'Not authorized' }, { status: 401 });
     }
     if (!isVerified(user)) {
-        return NextResponse.json({ 
-            message: 'Email verification required. Please verify your email to access this resource.' 
+        return NextResponse.json({
+            message: 'Email verification required. Please verify your email to access this resource.'
         }, { status: 403 });
     }
     return null;

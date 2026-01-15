@@ -3,9 +3,9 @@ import * as Brevo from '@getbrevo/brevo';
 const apiInstance = new Brevo.TransactionalEmailsApi();
 
 // Set API key using the proper method
-const apiKey = process.env.BREVO_API_KEY;
+const apiKey = process.env.BREVO_API_KEY?.trim();
 if (apiKey) {
-  apiInstance.setApiKey(Brevo.TransactionalEmailsApiApiKeys.apiKey, apiKey);
+    apiInstance.setApiKey(Brevo.TransactionalEmailsApiApiKeys.apiKey, apiKey);
 }
 const senderEmail = process.env.SENDER_EMAIL || 'noreply@billkhata.com';
 const senderName = process.env.SENDER_NAME || 'BillKhata';
@@ -62,10 +62,15 @@ interface EmailOptions {
 
 async function sendEmail({ to, subject, htmlContent }: EmailOptions): Promise<boolean> {
     try {
+        // Debug logging for environment detection
+        const hasKey = !!process.env.BREVO_API_KEY;
+        console.log(`[Email Service] Checking configuration: Key present? ${hasKey}, Sender: ${senderEmail}`);
+
         if (!process.env.BREVO_API_KEY) {
             const isDevelopment = process.env.NODE_ENV === 'development' || process.env.IS_TEST === 'true';
-            
+
             if (isDevelopment) {
+                console.warn('⚠️ BREVO_API_KEY is missing. Email simulation mode active.');
                 console.debug('📧 Email would be sent to:', maskEmail(to));
                 console.debug('📧 Subject:', subject);
                 return true; // Return true for development/test convenience
@@ -81,12 +86,17 @@ async function sendEmail({ to, subject, htmlContent }: EmailOptions): Promise<bo
         sendSmtpEmail.subject = subject;
         sendSmtpEmail.htmlContent = htmlContent;
 
+        console.log(`🚀 Sending email to ${maskEmail(to)} via Brevo...`);
         await apiInstance.sendTransacEmail(sendSmtpEmail);
         console.log('✅ Email sent successfully to:', maskEmail(to));
         return true;
     } catch (error) {
-        console.error('❌ Failed to send email:', error);
-        return false;
+        console.error('❌ Failed to send email via Brevo:', error);
+        // Log the error message specifically if available
+        if (error instanceof Error) {
+            console.error('Error details:', error.message);
+        }
+        throw error;
     }
 }
 

@@ -61,6 +61,12 @@ const billSchema = new mongoose.Schema({
         ref: 'User',
         required: true
     },
+    calculationPeriodId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'CalculationPeriod',
+        default: null,
+        index: true
+    },
     shares: [billShareSchema]
 }, {
     timestamps: true
@@ -69,6 +75,7 @@ const billSchema = new mongoose.Schema({
 // Add compound indexes for faster queries
 billSchema.index({ khataId: 1, dueDate: -1 });
 billSchema.index({ khataId: 1, category: 1, dueDate: -1 });
+billSchema.index({ khataId: 1, calculationPeriodId: 1, dueDate: -1 });
 billSchema.index({ khataId: 1, status: 1 }); // For filtering by status (Pending/Unpaid)
 billSchema.index({ khataId: 1, date: -1 }); // General date sorting
 

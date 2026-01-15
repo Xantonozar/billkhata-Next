@@ -37,6 +37,12 @@ const expenseSchema = new mongoose.Schema({
         enum: ['Shopping', 'BillPayment', 'Adjustment'],
         default: 'Shopping'
     },
+    calculationPeriodId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'CalculationPeriod',
+        default: null,
+        index: true
+    },
     status: {
         type: String,
         enum: ['Pending', 'Approved', 'Rejected'],
@@ -62,6 +68,7 @@ const expenseSchema = new mongoose.Schema({
 // Compound index for efficient queries
 expenseSchema.index({ khataId: 1, status: 1 });
 expenseSchema.index({ khataId: 1, userId: 1 });
+expenseSchema.index({ khataId: 1, calculationPeriodId: 1, createdAt: -1 });
 expenseSchema.index({ khataId: 1, createdAt: -1, status: 1 });
 
 // Delete the cached model to force using the updated schema

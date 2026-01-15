@@ -25,6 +25,12 @@ const depositSchema = new mongoose.Schema({
         enum: ['bKash', 'Nagad', 'Rocket', 'Cash', 'Bank Transfer', 'Manager Adjustment'],
         required: true
     },
+    calculationPeriodId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'CalculationPeriod',
+        default: null,
+        index: true
+    },
     transactionId: {
         type: String,
         default: ''
@@ -58,6 +64,7 @@ const depositSchema = new mongoose.Schema({
 // Compound index for efficient queries
 depositSchema.index({ khataId: 1, status: 1 });
 depositSchema.index({ khataId: 1, userId: 1 });
+depositSchema.index({ khataId: 1, calculationPeriodId: 1, createdAt: -1 });
 depositSchema.index({ khataId: 1, createdAt: -1, status: 1 });
 
 const Deposit = mongoose.models.Deposit || mongoose.model('Deposit', depositSchema);

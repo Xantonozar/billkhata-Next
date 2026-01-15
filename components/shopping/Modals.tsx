@@ -52,31 +52,56 @@ export const EditRosterModal: React.FC<EditRosterModalProps> = ({ onClose, roste
     };
 
     return (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex justify-center items-center p-4" onClick={onClose}>
-            <div className="w-full max-h-[90vh] max-w-2xl bg-white dark:bg-slate-800 rounded-2xl shadow-2xl flex flex-col transform transition-transform duration-300 ease-out scale-100" onClick={e => e.stopPropagation()}>
-                <div className="flex-shrink-0 px-4 sm:px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
-                    <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">Edit Shopping Roster</h3>
-                    <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"><XIcon className="w-5 h-5 text-slate-500" /></button>
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex justify-center items-center p-4 animate-fade-in" onClick={onClose}>
+            <div className="w-full max-h-[90vh] max-w-2xl bg-white dark:bg-slate-800 rounded-2xl shadow-2xl flex flex-col transform transition-all duration-300 scale-100 hover:shadow-primary-500/10 border border-slate-100 dark:border-slate-700" onClick={e => e.stopPropagation()}>
+                <div className="flex-shrink-0 px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50 rounded-t-2xl">
+                    <div>
+                        <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">Edit Shopping Roster</h3>
+                        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 sm:mt-1">Assign members to shopping days</p>
+                    </div>
+                    <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
+                        <XIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+                    </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+                <div className="flex-1 overflow-y-auto p-4 sm:p-6 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-600">
                     <div className="space-y-3 sm:space-y-4">
                         {Object.entries(editedRoster).map(([day, duty]) => {
                             const shoppingDuty = duty as ShoppingDuty;
+                            const isAssigned = !!shoppingDuty.name;
+
                             return (
-                                <div key={day} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg border border-slate-100 dark:border-slate-700 hover:border-primary-200 dark:hover:border-primary-800 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-all">
-                                    <label className="font-semibold text-slate-700 dark:text-slate-300 w-full sm:w-1/3 mb-2 sm:mb-0">{day}</label>
+                                <div key={day} className={`group flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 rounded-xl border transition-all duration-200 
+                                    ${isAssigned
+                                        ? 'bg-white dark:bg-slate-800 border-primary-200 dark:border-primary-800/30 shadow-sm'
+                                        : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700'}`}>
+
+                                    <div className="flex items-center gap-3 w-full sm:w-1/3 mb-2 sm:mb-0">
+                                        <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-[10px] sm:text-xs font-bold uppercase tracking-wider shadow-sm transition-colors
+                                            ${isAssigned
+                                                ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300'
+                                                : 'bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-400'}`}>
+                                            {day.substring(0, 3)}
+                                        </div>
+                                        <span className={`font-bold text-sm sm:text-base ${isAssigned ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>
+                                            {day}
+                                        </span>
+                                    </div>
+
                                     <div className="flex-1 w-full sm:ml-4 relative">
                                         <select
                                             value={shoppingDuty.name}
                                             onChange={(e) => handleAssignmentChange(day, e.target.value)}
-                                            className="w-full appearance-none px-4 py-2 bg-slate-100 dark:bg-slate-700 border-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-slate-900 dark:text-white cursor-pointer"
+                                            className={`w-full appearance-none px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border-2 rounded-xl focus:outline-none focus:ring-4 focus:ring-primary-500/10 transition-all font-medium cursor-pointer
+                                                ${isAssigned
+                                                    ? 'bg-white dark:bg-slate-800 border-primary-300 dark:border-primary-700 text-primary-900 dark:text-primary-100 focus:border-primary-500'
+                                                    : 'bg-slate-100 dark:bg-slate-700/50 border-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
                                         >
                                             <option value="">No Duty Assigned</option>
-                                            {members.map(member => <option key={member.id} value={member.name}>{member.name}</option>)}
+                                            {members.map(member => <option key={member.id} value={member.name}>👤 {member.name}</option>)}
                                         </select>
-                                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
-                                            <svg className="h-4 w-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
+                                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
+                                            <svg className="h-4 w-4 sm:h-5 sm:w-5 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
                                         </div>
                                     </div>
                                 </div>
@@ -85,9 +110,13 @@ export const EditRosterModal: React.FC<EditRosterModalProps> = ({ onClose, roste
                     </div>
                 </div>
 
-                <div className="flex-shrink-0 px-4 sm:px-6 py-4 border-t border-slate-100 dark:border-slate-700 flex justify-end gap-3 bg-slate-50 dark:bg-slate-800/50 rounded-b-2xl">
-                    <button onClick={onClose} className="px-4 py-2.5 sm:px-5 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 font-semibold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 transition-colors text-sm sm:text-base">Cancel</button>
-                    <button onClick={handleSaveChanges} className="px-4 py-2.5 sm:px-5 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 shadow-lg shadow-primary-500/20 transition-all text-sm sm:text-base">Save Changes</button>
+                <div className="flex-shrink-0 px-4 sm:px-6 py-4 sm:py-5 border-t border-slate-100 dark:border-slate-700 flex justify-end gap-3 bg-slate-50/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-b-2xl">
+                    <button onClick={onClose} className="px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 font-bold rounded-xl hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 transition-all active:scale-[0.98]">
+                        Cancel
+                    </button>
+                    <button onClick={handleSaveChanges} className="px-5 sm:px-8 py-2.5 sm:py-3 text-sm sm:text-base bg-gradient-to-r from-primary-600 to-indigo-600 text-white font-bold rounded-xl hover:shadow-lg hover:shadow-primary-500/30 hover:scale-[1.02] active:scale-[0.98] transition-all">
+                        Save Changes
+                    </button>
                 </div>
             </div>
         </div>
