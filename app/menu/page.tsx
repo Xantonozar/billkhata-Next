@@ -4,7 +4,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { Role } from '@/types';
-import { MenuBookIcon, PencilIcon } from '@/components/Icons';
+import { MenuBookIcon, PencilIcon, SunriseIcon, SoupIcon, MoonIcon } from '@/components/Icons';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { api } from '@/services/api';
 import ToastContainer from '@/components/ToastContainer';
@@ -258,51 +258,86 @@ export default function MenuPage() {
                 ) : (
                     <div className="space-y-6">
                         {/* Unified Responsive Grid View */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                            {weeklyMenu.map(item => (
-                                <div key={item.day} className="bg-card rounded-xl shadow-md p-4 flex flex-col h-full transition-all hover:shadow-lg hover:scale-[1.02]">
-                                    <div className="flex justify-between items-center mb-3 pb-2 border-b border-border">
-                                        <h3 className="text-lg font-bold font-sans text-card-foreground">{item.day}</h3>
-                                        {user?.role === Role.Manager && (
-                                            <button
-                                                onClick={() => setEditingDay(item.day)}
-                                                className="text-xs sm:text-sm font-semibold text-primary-600 dark:text-primary-400 flex items-center gap-1 bg-primary-50 dark:bg-primary-500/10 px-2 py-1 rounded-md hover:bg-primary-100 dark:hover:bg-primary-500/20 transition-colors"
-                                            >
-                                                <PencilIcon className="w-3 h-3 sm:w-4 sm:h-4" /> Edit
-                                            </button>
-                                        )}
+                        {/* Unified Responsive Grid View */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            {weeklyMenu.map(item => {
+                                const isToday = item.day === new Date().toLocaleDateString('en-US', { weekday: 'long' });
+
+                                return (
+                                    <div
+                                        key={item.day}
+                                        onClick={() => user?.role === Role.Manager && setEditingDay(item.day)}
+                                        className={`group relative bg-card rounded-2xl shadow-sm border transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col h-full overflow-hidden
+                                        ${isToday ? 'border-primary-500/30 ring-1 ring-primary-500/20' : 'border-slate-100 dark:border-slate-800'}
+                                        ${user?.role === Role.Manager ? 'cursor-pointer' : ''}`}
+                                    >
+
+                                        {/* Day Header */}
+                                        <div className={`px-5 py-4 flex justify-between items-center border-b border-border bg-slate-50/50 dark:bg-slate-800/50`}>
+                                            <div className="flex flex-col">
+                                                <h3 className={`text-lg font-extrabold tracking-tight ${isToday ? 'text-primary-600 dark:text-primary-400' : 'text-slate-800 dark:text-slate-100'}`}>
+                                                    {item.day}
+                                                </h3>
+                                                {isToday && <span className="text-[10px] uppercase font-bold text-primary-500 tracking-wider">Today</span>}
+                                            </div>
+                                            {user?.role === Role.Manager && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setEditingDay(item.day);
+                                                    }}
+                                                    className="p-1.5 rounded-lg text-slate-400 hover:text-primary-600 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
+                                                    title="Edit Menu"
+                                                >
+                                                    <PencilIcon className="w-4 h-4" />
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {/* Meal Content */}
+                                        <div className="p-5 space-y-5 flex-grow bg-white dark:bg-slate-900/20">
+                                            {/* Breakfast */}
+                                            <div className="flex gap-4 group/meal">
+                                                <div className="w-10 h-10 rounded-xl bg-orange-50 dark:bg-orange-500/10 text-orange-500 dark:text-orange-400 flex items-center justify-center flex-shrink-0 group-hover/meal:scale-110 transition-transform duration-300">
+                                                    <SunriseIcon className="w-5 h-5" />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Breakfast</p>
+                                                    <p className={`text-sm leading-snug break-words ${item.breakfast ? 'font-medium text-slate-700 dark:text-slate-200' : 'text-slate-400 dark:text-slate-600 italic font-light'}`}>
+                                                        {item.breakfast || 'Not set'}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            {/* Lunch */}
+                                            <div className="flex gap-4 group/meal">
+                                                <div className="w-10 h-10 rounded-xl bg-yellow-50 dark:bg-yellow-500/10 text-yellow-500 dark:text-yellow-400 flex items-center justify-center flex-shrink-0 group-hover/meal:scale-110 transition-transform duration-300">
+                                                    <SoupIcon className="w-5 h-5" />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Lunch</p>
+                                                    <p className={`text-sm leading-snug break-words ${item.lunch ? 'font-medium text-slate-700 dark:text-slate-200' : 'text-slate-400 dark:text-slate-600 italic font-light'}`}>
+                                                        {item.lunch || 'Not set'}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            {/* Dinner */}
+                                            <div className="flex gap-4 group/meal">
+                                                <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-500 dark:text-indigo-400 flex items-center justify-center flex-shrink-0 group-hover/meal:scale-110 transition-transform duration-300">
+                                                    <MoonIcon className="w-5 h-5" />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Dinner</p>
+                                                    <p className={`text-sm leading-snug break-words ${item.dinner ? 'font-medium text-slate-700 dark:text-slate-200' : 'text-slate-400 dark:text-slate-600 italic font-light'}`}>
+                                                        {item.dinner || 'Not set'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="space-y-4 flex-grow">
-                                        <div className="flex items-start gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-500/20 flex items-center justify-center flex-shrink-0">
-                                                <span className="text-sm">🍳</span>
-                                            </div>
-                                            <div>
-                                                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Breakfast</p>
-                                                <p className="text-sm font-medium text-slate-700 dark:text-slate-200 mt-0.5">{item.breakfast || <span className="text-slate-400 italic font-normal">Not set</span>}</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-start gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-yellow-100 dark:bg-yellow-500/20 flex items-center justify-center flex-shrink-0">
-                                                <span className="text-sm">🍛</span>
-                                            </div>
-                                            <div>
-                                                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Lunch</p>
-                                                <p className="text-sm font-medium text-slate-700 dark:text-slate-200 mt-0.5">{item.lunch || <span className="text-slate-400 italic font-normal">Not set</span>}</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-start gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-                                                <span className="text-sm">🌙</span>
-                                            </div>
-                                            <div>
-                                                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Dinner</p>
-                                                <p className="text-sm font-medium text-slate-700 dark:text-slate-200 mt-0.5">{item.dinner || <span className="text-slate-400 italic font-normal">Not set</span>}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
 
                         {user?.role === Role.Manager && (

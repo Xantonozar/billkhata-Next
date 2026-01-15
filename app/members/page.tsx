@@ -70,11 +70,51 @@ const ConfirmModal: React.FC<{
 };
 
 const MemberHistoryModal: React.FC<{ member: Member | null, onClose: () => void }> = ({ member, onClose }) => {
+    const { user } = useAuth();
+    const [mealStats, setMealStats] = useState({ last24h: 0, last3d: 0, last7d: 0, total: 0 });
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (member && user?.khataId) {
+            fetchMealStats();
+        }
+    }, [member, user?.khataId]);
+
+    const fetchMealStats = async () => {
+        if (!member || !user?.khataId) return;
+        setLoading(true);
+
+        try {
+            const meals = await api.getMeals(user.khataId);
+            const memberMeals = meals.filter((m: any) =>
+                (m.userId === member.id || m._id === member.id || m.userId?._id === member.id)
+            );
+
+            const now = new Date();
+            const last24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+            const last3d = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+            const last7d = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+            setMealStats({
+                last24h: memberMeals.filter((m: any) => new Date(m.date) >= last24h).reduce((sum: number, m: any) => sum + (m.totalMeals || 0), 0),
+                last3d: memberMeals.filter((m: any) => new Date(m.date) >= last3d).reduce((sum: number, m: any) => sum + (m.totalMeals || 0), 0),
+                last7d: memberMeals.filter((m: any) => new Date(m.date) >= last7d).reduce((sum: number, m: any) => sum + (m.totalMeals || 0), 0),
+                total: memberMeals.reduce((sum: number, m: any) => sum + (m.totalMeals || 0), 0)
+            });
+        } catch (error) {
+            console.error('Error fetching meal stats:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     if (!member) return null;
+
+    const foodPrefs = (member as any).foodPreferences || { likes: [], dislikes: [], avoidance: [], notes: '' };
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 animate-fade-in p-4" onClick={onClose}>
-            <div className="bg-card rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="bg-card rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
                 <div className="sticky top-0 bg-card z-10 p-4 border-b border-border">
                     <div className="flex justify-between items-center">
                         <h3 className="text-xl font-bold text-card-foreground">
@@ -84,6 +124,7 @@ const MemberHistoryModal: React.FC<{ member: Member | null, onClose: () => void 
                     </div>
                 </div>
                 <div className="p-6 space-y-6">
+                    {/* Member Information */}
                     <div className="p-4 border rounded-lg border-border">
                         <h4 className="font-bold text-lg mb-2">Member Information</h4>
                         <div className="space-y-2 text-sm">
@@ -95,6 +136,7 @@ const MemberHistoryModal: React.FC<{ member: Member | null, onClose: () => void 
                         </div>
                     </div>
 
+                    {/* Contact Details */}
                     <div className="p-4 border rounded-lg border-border">
                         <h4 className="font-bold text-lg mb-2">Contact Details</h4>
                         <div className="space-y-2 text-sm">
@@ -111,6 +153,96 @@ const MemberHistoryModal: React.FC<{ member: Member | null, onClose: () => void 
                                 )}
                             </div>
                         </div>
+                    </div>
+
+                    {/* Meal Statistics */}
+                    <div className="p-4 border rounded-lg border-border">
+                        <h4 className="font-bold text-lg mb-3">Meal Statistics</h4>
+                        {loading ? (
+                            <div className="text-center text-sm text-muted-foreground">Loading...</div>
+                        ) : (
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="bg-primary-50 dark:bg-primary-500/10 p-3 rounded-lg text-center">
+                                    <p className="text-xs text-muted-foreground mb-1">Last 24h</p>
+                                    <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">{mealStats.last24h}</p>
+                                </div>
+                                <div className="bg-blue-50 dark:bg-blue-500/10 p-3 rounded-lg text-center">
+                                    <p className="text-xs text-muted-foreground mb-1">Last 3 Days</p>
+                                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{mealStats.last3d}</p>
+                                </div>
+                                <div className="bg-green-50 dark:bg-green-500/10 p-3 rounded-lg text-center">
+                                    <p className="text-xs text-muted-foreground mb-1">Last 7 Days</p>
+                                    <p className="text-2xl font-bold text-green-600 dark:text-green-400">{mealStats.last7d}</p>
+                                </div>
+                                <div className="bg-purple-50 dark:bg-purple-500/10 p-3 rounded-lg text-center">
+                                    <p className="text-xs text-muted-foreground mb-1">Total</p>
+                                    <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{mealStats.total}</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Food Preferences */}
+                    <div className="p-4 border rounded-lg border-border">
+                        <h4 className="font-bold text-lg mb-3">Food Preferences</h4>
+
+                        {/* Likes */}
+                        <div className="mb-4">
+                            <h5 className="text-sm font-medium text-green-600 dark:text-green-400 mb-2">✓ Likes</h5>
+                            {foodPrefs.likes && foodPrefs.likes.length > 0 ? (
+                                <div className="flex flex-wrap gap-2">
+                                    {foodPrefs.likes.map((item: string, idx: number) => (
+                                        <span key={idx} className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 rounded-md text-xs">
+                                            {item}
+                                        </span>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-xs text-muted-foreground italic">No preferences set</p>
+                            )}
+                        </div>
+
+                        {/* Dislikes */}
+                        <div className="mb-4">
+                            <h5 className="text-sm font-medium text-yellow-600 dark:text-yellow-400 mb-2">− Dislikes</h5>
+                            {foodPrefs.dislikes && foodPrefs.dislikes.length > 0 ? (
+                                <div className="flex flex-wrap gap-2">
+                                    {foodPrefs.dislikes.map((item: string, idx: number) => (
+                                        <span key={idx} className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 rounded-md text-xs">
+                                            {item}
+                                        </span>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-xs text-muted-foreground italic">No preferences set</p>
+                            )}
+                        </div>
+
+                        {/* Avoidance */}
+                        <div className="mb-4">
+                            <h5 className="text-sm font-medium text-red-600 dark:text-red-400 mb-2">✕ Won't Eat (Allergies/Restrictions)</h5>
+                            {foodPrefs.avoidance && foodPrefs.avoidance.length > 0 ? (
+                                <div className="flex flex-wrap gap-2">
+                                    {foodPrefs.avoidance.map((item: string, idx: number) => (
+                                        <span key={idx} className="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 rounded-md text-xs font-medium">
+                                            {item}
+                                        </span>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-xs text-muted-foreground italic">No restrictions set</p>
+                            )}
+                        </div>
+
+                        {/* Notes */}
+                        {foodPrefs.notes && (
+                            <div>
+                                <h5 className="text-sm font-medium text-card-foreground mb-2">📝 Notes</h5>
+                                <p className="text-sm text-card-foreground whitespace-pre-wrap bg-slate-50 dark:bg-slate-700/50 p-3 rounded-md">
+                                    {foodPrefs.notes}
+                                </p>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

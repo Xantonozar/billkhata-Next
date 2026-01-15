@@ -357,7 +357,7 @@ const ManagerMealView: React.FC<{
                 </p>
                 {!isFinalized && (
                     <>
-                        <button onClick={onFinalize} className="mt-3 w-full py-2.5 bg-primary text-white font-semibold rounded-lg hover:bg-primary-600">📋 Finalize Today's Meals</button>
+                        <button onClick={onFinalize} className="mt-3 w-full py-2.5 bg-primary text-green-900 dark:text-green-200 font-semibold rounded-lg hover:bg-primary-600">📋 Finalize Today's Meals</button>
                         <p className="text-xs text-muted-foreground mt-1 text-center">(After this, members can't change)</p>
                     </>
                 )}
