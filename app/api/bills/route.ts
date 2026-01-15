@@ -75,6 +75,13 @@ export async function POST(req: NextRequest) {
         // If auto-deduct from meal fund, create expenses for all members
         if (autoDeductFromMealFund && category === 'Others') {
             try {
+                // Get active calculation period
+                const CalculationPeriod = await import('@/models/CalculationPeriod').then(mod => mod.default);
+                const activePeriod = await CalculationPeriod.findOne({
+                    khataId: user.khataId,
+                    status: 'Active'
+                });
+
                 const Expense = await import('@/models/Expense').then(mod => mod.default);
                 const expensePromises = shares.map(share =>
                     Expense.create({
@@ -87,7 +94,8 @@ export async function POST(req: NextRequest) {
                         category: 'BillPayment',
                         status: 'Approved',
                         approvedBy: user._id,
-                        approvedAt: new Date()
+                        approvedAt: new Date(),
+                        calculationPeriodId: activePeriod ? activePeriod._id : undefined
                     })
                 );
                 const createdExpenses = await Promise.all(expensePromises);

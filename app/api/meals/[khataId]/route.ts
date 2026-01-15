@@ -19,6 +19,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ khat
         const endDate = searchParams.get('endDate');
 
         const status = searchParams.get('status');
+        const calculationPeriodId = searchParams.get('calculationPeriodId');
 
         if (user.khataId !== khataId) {
             return NextResponse.json({ message: 'Access denied' }, { status: 403 });
@@ -28,6 +29,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ khat
 
         if (status) {
             query.status = status;
+        }
+
+        if (calculationPeriodId) {
+            query.calculationPeriodId = calculationPeriodId;
         }
 
         if (startDate || endDate) {
@@ -72,6 +77,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ kha
             date: mealDate
         });
 
+        // Find active calculation period for association
+        const CalculationPeriod = await import('@/models/CalculationPeriod').then(mod => mod.default);
+        const activePeriod = await CalculationPeriod.findOne({
+            khataId,
+            status: 'Active'
+        });
+
+        // Only allow meal updates if a period is active? 
+        // Or if the specific date falls within an active period?
+        // For simplicity, we associate new updates with the current active period if it exists.
+        // Ideally, we'd check if the date falls within the period, but let's stick to association for now.
+
         let targetUserId = user._id;
         let targetUserName = user.name;
 
@@ -110,7 +127,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ kha
                     dinner: d,
                     totalMeals: totalMeals,
                     // All meal updates are auto-approved/live, but logged in history
-                    status: 'Approved'
+                    status: 'Approved',
+                    calculationPeriodId: activePeriod ? activePeriod._id : undefined
                 }
             },
             {

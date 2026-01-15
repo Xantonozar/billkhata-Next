@@ -47,6 +47,13 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ bill
         // If paying from meal fund, create an auto-approved expense
         if (paidFromMealFund && (status === 'Pending Approval' || status === 'Paid')) {
             try {
+                // Get active calculation period
+                const CalculationPeriod = await import('@/models/CalculationPeriod').then(mod => mod.default);
+                const activePeriod = await CalculationPeriod.findOne({
+                    khataId: bill.khataId,
+                    status: 'Active'
+                });
+
                 const Expense = await import('@/models/Expense').then(mod => mod.default);
                 await Expense.create({
                     khataId: bill.khataId,
@@ -58,7 +65,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ bill
                     category: 'BillPayment',
                     status: 'Approved',
                     approvedBy: userId,
-                    approvedAt: new Date()
+                    approvedAt: new Date(),
+                    calculationPeriodId: activePeriod ? activePeriod._id : undefined
                 });
             } catch (expenseError) {
                 console.error('Error creating expense for meal fund payment:', expenseError);

@@ -23,14 +23,19 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ khat
         const skip = (page - 1) * limit;
 
         const status = searchParams.get('status');
+        const calculationPeriodId = searchParams.get('calculationPeriodId');
 
         const query: any = { khataId };
         if (status) {
             query.status = status;
         }
 
+        if (calculationPeriodId) {
+            query.calculationPeriodId = calculationPeriodId;
+        }
+
         const expenses = await Expense.find(query)
-            .select('amount items notes receiptUrl status createdAt userId approvedBy')
+            .select('amount items notes receiptUrl status createdAt userId approvedBy calculationPeriodId')
             .sort({ createdAt: -1 })
             .populate('userId', 'name email')
             .populate('approvedBy', 'name')
@@ -59,6 +64,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ kha
             return NextResponse.json({ message: 'Access denied' }, { status: 403 });
         }
 
+        // Find active calculation period
+        const CalculationPeriod = await import('@/models/CalculationPeriod').then(mod => mod.default);
+        const activePeriod = await CalculationPeriod.findOne({
+            khataId,
+            status: 'Active'
+        });
+
         const expense = await Expense.create({
             khataId,
             userId: user._id,
@@ -67,7 +79,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ kha
             items,
             notes: notes || '',
             receiptUrl: receiptUrl || '',
-            status: 'Pending'
+            status: 'Pending',
+            calculationPeriodId: activePeriod ? activePeriod._id : undefined
         });
 
         // Notify manager about new expense

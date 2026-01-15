@@ -29,14 +29,19 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ khat
         const skip = (page - 1) * limit;
 
         const status = searchParams.get('status');
+        const calculationPeriodId = searchParams.get('calculationPeriodId');
 
         const query: any = { khataId };
         if (status && ['Pending', 'Approved', 'Rejected'].includes(status)) {
             query.status = status;
         }
 
+        if (calculationPeriodId) {
+            query.calculationPeriodId = calculationPeriodId;
+        }
+
         const deposits = await Deposit.find(query)
-            .select('amount paymentMethod transactionId screenshotUrl status createdAt userId approvedBy')
+            .select('amount paymentMethod transactionId screenshotUrl status createdAt userId approvedBy calculationPeriodId')
             .sort({ createdAt: -1 })
             .populate('userId', 'name email')
             .populate('approvedBy', 'name')
@@ -79,6 +84,17 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ kha
 
         const { amount, paymentMethod, transactionId, screenshotUrl } = validation.data;
 
+        // Find active calculation period
+        const CalculationPeriod = await import('@/models/CalculationPeriod').then(mod => mod.default);
+        const activePeriod = await CalculationPeriod.findOne({
+            khataId,
+            status: 'Active'
+        });
+
+        // Ensure there is an active period before allowing deposits (optional, but good practice)
+        // If we want to allow deposits without an active period for legacy reasons, we can skip this check 
+        // or handle it gracefully. For now, let's just associate if it exists.
+
         const deposit = await Deposit.create({
             khataId,
             userId: user._id,
@@ -87,7 +103,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ kha
             paymentMethod,
             transactionId: transactionId || '',
             screenshotUrl: screenshotUrl || '',
-            status: 'Pending'
+            status: 'Pending',
+            calculationPeriodId: activePeriod ? activePeriod._id : undefined
         });
 
         // Notify manager about new deposit

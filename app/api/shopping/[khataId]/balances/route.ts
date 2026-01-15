@@ -21,17 +21,62 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ khat
             return NextResponse.json({ message: 'Access denied' }, { status: 403 });
         }
 
+        // Get calculation period from query params or use active period
+        const { searchParams } = new URL(req.url);
+        const requestedPeriodId = searchParams.get('calculationPeriodId');
+
+        const CalculationPeriod = await import('@/models/CalculationPeriod').then(mod => mod.default);
+
+        let targetPeriod;
+        if (requestedPeriodId) {
+            // Use the requested period
+            targetPeriod = await CalculationPeriod.findById(requestedPeriodId);
+            if (!targetPeriod || targetPeriod.khataId !== khataId) {
+                return NextResponse.json({ message: 'Invalid calculation period' }, { status: 400 });
+            }
+        } else {
+            // Fall back to active period
+            targetPeriod = await CalculationPeriod.findOne({
+                khataId,
+                status: 'Active'
+            });
+        }
+
+        // If no period found, return empty balances
+        if (!targetPeriod) {
+            const members = await User.find({ khataId }).select('_id name email profileImage');
+            const emptyBalances = members.map(member => ({
+                userId: member._id,
+                name: member.name,
+                email: member.email,
+                profileImage: member.profileImage,
+                totalDeposits: 0,
+                totalMeals: 0,
+                mealCost: 0,
+                totalBillPayments: 0,
+                balance: 0
+            }));
+
+            return NextResponse.json({
+                rate: 0,
+                totalShopping: 0,
+                totalMeals: 0,
+                balances: emptyBalances
+            });
+        }
+
         // 1. Get all members
         const members = await User.find({ khataId }).select('_id name email profileImage');
 
-        // 2. Global Aggregations for Rate Calculation
+        // 2. Global Aggregations for Rate Calculation (filtered by target period)
         const [expenseStats, mealStats] = await Promise.all([
-            // Total Shopping (Approved only, excluding bill payments)
+            // Total Shopping (Approved only, excluding bill payments, current period only)
             Expense.aggregate([
                 {
                     $match: {
                         khataId,
                         status: 'Approved',
+                        calculationPeriodId: targetPeriod._id,
                         $or: [
                             { category: 'Shopping' },
                             { category: { $exists: false } }
@@ -40,9 +85,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ khat
                 },
                 { $group: { _id: null, total: { $sum: '$amount' } } }
             ]),
-            // Total meals for all members
+            // Total meals for all members (current period only)
             Meal.aggregate([
-                { $match: { khataId } },
+                { $match: { khataId, calculationPeriodId: targetPeriod._id } },
                 { $group: { _id: null, total: { $sum: '$totalMeals' } } }
             ])
         ]);
@@ -51,21 +96,21 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ khat
         const totalMeals = mealStats.length > 0 ? mealStats[0].total : 0;
         const rate = totalMeals > 0 ? (totalShopping / totalMeals) : 0;
 
-        // 3. Per-Member Aggregations
+        // 3. Per-Member Aggregations (filtered by target period)
         const [memberDeposits, memberMeals, memberBillPayments] = await Promise.all([
-            // Deposits by user
+            // Deposits by user (current period only)
             Deposit.aggregate([
-                { $match: { khataId, status: 'Approved' } },
+                { $match: { khataId, status: 'Approved', calculationPeriodId: targetPeriod._id } },
                 { $group: { _id: '$userId', total: { $sum: '$amount' } } }
             ]),
-            // Meals by user
+            // Meals by user (current period only)
             Meal.aggregate([
-                { $match: { khataId } },
+                { $match: { khataId, calculationPeriodId: targetPeriod._id } },
                 { $group: { _id: '$userId', total: { $sum: '$totalMeals' } } }
             ]),
-            // Bill payments by user
+            // Bill payments by user (current period only)
             Expense.aggregate([
-                { $match: { khataId, status: 'Approved', category: 'BillPayment' } },
+                { $match: { khataId, status: 'Approved', category: 'BillPayment', calculationPeriodId: targetPeriod._id } },
                 { $group: { _id: '$userId', total: { $sum: '$amount' } } }
             ])
         ]);

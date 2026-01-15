@@ -2,6 +2,7 @@
 
 /* Force dark mode to be class-based, overriding default media query */
 @custom-variant dark (&:where(.dark, .dark *));
+@custom-variant earthy-green (&:where(.earthy-green, .earthy-green *));
 
 :root {
   /* Default/Purple Theme Variables */
@@ -279,18 +280,26 @@
 }
 
 body {
-  background: var(--background-main);
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  background-attachment: fixed;
   color: var(--text-main);
   font-family: var(--font-body);
+  min-height: 100vh;
 }
 
 /* Explicit rule for earth green body */
 body:has(.earthy-green) {
-  background: var(--primary-100);
+  background: linear-gradient(135deg, #f4f6f3 0%, #daddd8 100%);
+  background-attachment: fixed;
   color: var(--primary-800);
 }
 
 .dark body {
-  background: var(--color-slate-950);
+  background: linear-gradient(135deg, #020617 0%, #1e293b 100%);
+  background-attachment: fixed;
   color: var(--color-slate-300);
+}
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
 }
