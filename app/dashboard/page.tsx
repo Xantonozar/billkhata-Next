@@ -18,12 +18,25 @@ const initialTodaysMenu: TodaysMenu = {
 };
 
 // Earthy & Modern Stat Card
+const formatBillTitle = (title: string) => {
+    if (!title) return 'None';
+    const lower = title.toLowerCase();
+    if (lower === 'electricity') return 'Electric Bill';
+    if (lower === 'water') return 'Water Bill';
+    if (lower === 'gas') return 'Gas Bill';
+    if (lower === 'rent') return 'House Rent';
+    if (lower === 'maid') return 'Maid Salary';
+    if (lower === 'wifi' || lower === 'wi-fi') return 'Wi-Fi Bill';
+    if (!lower.includes('bill')) return `${title} Bill`;
+    return title;
+};
+
 const StatCard: React.FC<{
     title: string;
     value: string;
     subtitle: string;
     icon?: React.ReactNode;
-    colorTheme: 'rose' | 'amber' | 'emerald' | 'blue';
+    colorTheme: 'rose' | 'amber' | 'emerald' | 'blue' | 'purple';
     isLoading?: boolean
 }> = ({ title, value, subtitle, icon, colorTheme, isLoading }) => {
 
@@ -32,6 +45,7 @@ const StatCard: React.FC<{
         amber: "bg-[#FFF8E7] dark:bg-[#2B2315] border-[#FAEBD7] dark:border-[#4B3C22] text-amber-950 dark:text-amber-100", // Sand/Beige
         emerald: "bg-[#EBF7EE] dark:bg-[#132A20] border-[#D6EFE0] dark:border-[#1F4533] text-emerald-950 dark:text-emerald-100", // Earthy Sage
         blue: "bg-[#F0F7FA] dark:bg-[#1A2530] border-[#E1F0F5] dark:border-[#2A3B4D] text-slate-950 dark:text-blue-100", // River/Mist
+        purple: "bg-[#F5F3FF] dark:bg-[#1E1B2E] border-[#E9E5FF] dark:border-[#342F4D] text-purple-950 dark:text-purple-100", // Soft Purple
     };
 
     const iconBgClasses = {
@@ -39,6 +53,7 @@ const StatCard: React.FC<{
         amber: "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400",
         emerald: "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400",
         blue: "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400",
+        purple: "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400",
     };
 
     return (
@@ -193,7 +208,20 @@ const ManagerDashboard: React.FC<{ initialData?: any, loading?: boolean, user?: 
         fundBalance: initialData?.fundBalance || 0,
         activeMembers: initialData?.activeMembers || 0,
         totalBillsCount: initialData?.totalBillsCount || 0,
+        nextBillDue: initialData?.nextBillDue || null,
     }), [initialData]);
+
+    const nextBillDueText = stats.nextBillDue
+        ? `${new Date(stats.nextBillDue.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+        : "No upcoming bills";
+
+    const daysLeft = stats.nextBillDue
+        ? Math.ceil((new Date(stats.nextBillDue.dueDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+        : 0;
+
+    const daysLeftText = stats.nextBillDue
+        ? `${daysLeft} day${daysLeft !== 1 ? 's' : ''} left`
+        : 'Relax, all clear!';
 
     const priorityActions = useMemo(() => {
         if (!initialData) return [];
@@ -274,7 +302,7 @@ const ManagerDashboard: React.FC<{ initialData?: any, loading?: boolean, user?: 
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
                 <StatCard
                     title="Total Bills"
                     value={`৳${stats.totalBillsAmount.toLocaleString()}`}
@@ -305,6 +333,14 @@ const ManagerDashboard: React.FC<{ initialData?: any, loading?: boolean, user?: 
                     subtitle="Active users"
                     icon={<UsersIcon />}
                     colorTheme="blue"
+                    isLoading={loading}
+                />
+                <StatCard
+                    title="Next Bill"
+                    value={stats.nextBillDue ? formatBillTitle(stats.nextBillDue.title) : 'None'}
+                    subtitle={stats.nextBillDue ? daysLeftText : 'No upcoming bills'}
+                    icon={<BellIcon />}
+                    colorTheme="purple"
                     isLoading={loading}
                 />
             </div>
@@ -432,7 +468,7 @@ const MemberDashboard: React.FC<{ initialData?: any, loading?: boolean, user?: a
     const nextBillDue: Bill | null = useMemo(() => initialData?.nextBillDue || null, [initialData]);
 
     const nextBillDueText = nextBillDue
-        ? `${nextBillDue.title} - ${new Date(nextBillDue.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+        ? `${new Date(nextBillDue.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
         : "No upcoming bills";
 
     const daysLeft = nextBillDue
@@ -489,8 +525,8 @@ const MemberDashboard: React.FC<{ initialData?: any, loading?: boolean, user?: a
                 />
                 <StatCard
                     title="Next Bill"
-                    value={nextBillDue ? daysLeftText : 'None'}
-                    subtitle={nextBillDue ? nextBillDueText : 'No upcoming bills'}
+                    value={nextBillDue ? formatBillTitle(nextBillDue.title) : 'None'}
+                    subtitle={nextBillDue ? daysLeftText : 'No upcoming bills'}
                     icon={<BellIcon />}
                     colorTheme="blue"
                     isLoading={loading}

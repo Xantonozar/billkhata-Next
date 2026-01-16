@@ -148,6 +148,22 @@ export async function GET(req: NextRequest) {
             const totalOut = approvedExpenses.reduce((acc, e) => acc + e.amount, 0);
             const fundBalance = totalIn - totalOut;
 
+            // Find next upcoming bill
+            const upcomingBills = bills.filter((b: any) => new Date(b.dueDate) >= new Date());
+            upcomingBills.sort((a: any, b: any) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+
+            let nextBillDue = null;
+            if (upcomingBills.length > 0) {
+                nextBillDue = {
+                    title: upcomingBills[0].title,
+                    dueDate: upcomingBills[0].dueDate
+                };
+            } else {
+                // If no upcoming bills, show the most recent one? OR just null.
+                // Let's check unpaid past bills?
+                // For now, let's just stick to future bills as "Next Bill"
+            }
+
             return NextResponse.json({
                 totalBillsAmount,
                 totalBillsCount: bills.length,
@@ -156,6 +172,7 @@ export async function GET(req: NextRequest) {
                 activeMembers: activeMembersCount,
                 todaysMenu,
                 pendingJoinRequestsCount: pendingUsers,
+                nextBillDue,
                 priorityActions: {
                     expenses: pendingExpenses,
                     deposits: pendingDeposits,
