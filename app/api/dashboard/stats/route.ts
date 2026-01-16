@@ -94,6 +94,19 @@ export async function GET(req: NextRequest) {
             ? { khataId: user.khataId, calculationPeriodId: activePeriod._id }
             : { khataId: user.khataId };
 
+
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999);
+
+        // Filter for Bills (Strictly Current Month, independent of Calculation Period)
+        const currentMonthBillQuery = {
+            khataId: user.khataId,
+            dueDate: {
+                $gte: startOfMonth,
+                $lte: endOfMonth
+            }
+        };
+
         if (user.role === Role.Manager) {
             // --- MANAGER STATS ---
             const [
@@ -105,7 +118,7 @@ export async function GET(req: NextRequest) {
                 approvedDeposits,
                 approvedExpenses
             ] = await Promise.all([
-                Bill.find(periodQuery).lean(),
+                Bill.find(currentMonthBillQuery).lean(),
                 User.countDocuments({ khataId: user.khataId, roomStatus: RoomStatus.Approved, role: { $ne: Role.Manager } }),
                 Deposit.find({ ...periodQuery, status: 'Pending' }).lean(),
                 Expense.find({ ...periodQuery, status: 'Pending' }).lean(),
@@ -156,7 +169,7 @@ export async function GET(req: NextRequest) {
             // 1. My Bills Due
             // We apply period query to bills as well, assuming "Current Calculation" view
             const myBills = await Bill.find({
-                ...periodQuery,
+                ...currentMonthBillQuery,
                 'shares.userId': userId
             }).lean();
 

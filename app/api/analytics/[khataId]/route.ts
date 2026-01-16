@@ -112,34 +112,42 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ khat
                 // Monthly Shopping Expenses
                 Expense.aggregate([
                     { $match: { khataId, status: 'Approved', createdAt: { $gte: sixMonthsAgo } } },
-                    { $group: { 
-                        _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } },
-                        total: { $sum: '$amount' }
-                    }}
+                    {
+                        $group: {
+                            _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } },
+                            total: { $sum: '$amount' }
+                        }
+                    }
                 ]),
                 // Monthly Bills Total
                 Bill.aggregate([
                     { $match: { khataId, dueDate: { $gte: sixMonthsAgo } } },
-                    { $group: { 
-                        _id: { year: { $year: '$dueDate' }, month: { $month: '$dueDate' } },
-                        total: { $sum: '$totalAmount' }
-                    }}
+                    {
+                        $group: {
+                            _id: { year: { $year: '$dueDate' }, month: { $month: '$dueDate' } },
+                            total: { $sum: '$totalAmount' }
+                        }
+                    }
                 ]),
                 // Monthly Bills by Category
                 Bill.aggregate([
                     { $match: { khataId, dueDate: { $gte: sixMonthsAgo } } },
-                    { $group: { 
-                        _id: { year: { $year: '$dueDate' }, month: { $month: '$dueDate' }, category: '$category' },
-                        total: { $sum: '$totalAmount' }
-                    }}
+                    {
+                        $group: {
+                            _id: { year: { $year: '$dueDate' }, month: { $month: '$dueDate' }, category: '$category' },
+                            total: { $sum: '$totalAmount' }
+                        }
+                    }
                 ]),
                 // Monthly Deposits
                 Deposit.aggregate([
                     { $match: { khataId, status: 'Approved', createdAt: { $gte: sixMonthsAgo } } },
-                    { $group: { 
-                        _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } },
-                        total: { $sum: '$amount' }
-                    }}
+                    {
+                        $group: {
+                            _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } },
+                            total: { $sum: '$amount' }
+                        }
+                    }
                 ])
             ]);
 

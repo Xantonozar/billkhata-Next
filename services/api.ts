@@ -281,9 +281,13 @@ const api = {
 
 
     // Bills
-    getBillsForRoom: async (roomId: string): Promise<Bill[]> => {
+    getBillsForRoom: async (roomId: string, month?: number, year?: number): Promise<Bill[]> => {
         try {
-            const response = await axiosInstance.get(`/bills/room/${roomId}`);
+            const params: any = {};
+            if (month) params.month = month;
+            if (year) params.year = year;
+
+            const response = await axiosInstance.get(`/bills/room/${roomId}`, { params });
             return response.data;
         } catch (error) {
             console.error('Get bills error:', error);

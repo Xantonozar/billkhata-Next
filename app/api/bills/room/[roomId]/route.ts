@@ -21,9 +21,19 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ room
         const { searchParams } = new URL(req.url);
         const page = parseInt(searchParams.get('page') || '1');
         const limit = parseInt(searchParams.get('limit') || '20');
+        const month = searchParams.get('month') ? parseInt(searchParams.get('month')!) : null;
+        const year = searchParams.get('year') ? parseInt(searchParams.get('year')!) : null;
         const skip = (page - 1) * limit;
 
-        const bills = await Bill.find({ khataId: roomId })
+        const query: any = { khataId: roomId };
+
+        if (month && year) {
+            const startDate = new Date(year, month - 1, 1);
+            const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+            query.dueDate = { $gte: startDate, $lte: endDate };
+        }
+
+        const bills = await Bill.find(query)
             .select('title category totalAmount dueDate description imageUrl createdBy shares')
             .populate('createdBy', 'name')
             .sort({ dueDate: -1 })

@@ -76,25 +76,35 @@ export default function BillsOverviewPage() {
     const [bills, setBills] = useState<Bill[]>([]);
     const [loading, setLoading] = useState(true);
 
+    const [selectedDate, setSelectedDate] = useState(new Date());
+
     useEffect(() => {
         if (user?.khataId) {
             setLoading(true);
-            api.getBillsForRoom(user.khataId).then(data => {
+            const month = selectedDate.getMonth() + 1;
+            const year = selectedDate.getFullYear();
+
+            api.getBillsForRoom(user.khataId, month, year).then(data => {
                 setBills(data);
                 setLoading(false);
             }).catch(() => setLoading(false));
         }
-    }, [user]);
+    }, [user, selectedDate]);
+
+    // Generate last 12 months for dropdown
+    const availableMonths = useMemo(() => {
+        const months = [];
+        for (let i = 0; i < 12; i++) {
+            const d = new Date();
+            d.setMonth(d.getMonth() - i);
+            months.push(d);
+        }
+        return months;
+    }, []);
 
     const monthSummary = useMemo(() => {
-        const now = new Date();
-        const currentMonth = now.getMonth();
-        const currentYear = now.getFullYear();
-
-        const currentMonthBills = bills.filter(bill => {
-            const billDate = new Date(bill.dueDate);
-            return billDate.getMonth() === currentMonth && billDate.getFullYear() === currentYear;
-        });
+        // Bills are already filtered by backend for the selected month
+        const currentMonthBills = bills;
 
         if (user?.role === Role.Manager) {
             const totalAmount = currentMonthBills.reduce((acc, bill) => acc + bill.totalAmount, 0);
@@ -139,9 +149,19 @@ export default function BillsOverviewPage() {
                         <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-violet-600 to-indigo-600 dark:from-slate-200 dark:to-slate-400 earthy-green:from-[#4b5842] earthy-green:to-[#6d8b2a] bg-clip-text text-transparent">
                             Bills Overview
                         </h1>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 earthy-green:text-[#6d8b2a] mt-1">
-                            {new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}
-                        </p>
+                        <div className="mt-2">
+                            <select
+                                value={selectedDate.toISOString()}
+                                onChange={(e) => setSelectedDate(new Date(e.target.value))}
+                                className="text-sm font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+                            >
+                                {availableMonths.map((date) => (
+                                    <option key={date.toISOString()} value={date.toISOString()}>
+                                        {date.toLocaleString('default', { month: 'long', year: 'numeric' })}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
                     {user.role === Role.Manager && (
                         <button
