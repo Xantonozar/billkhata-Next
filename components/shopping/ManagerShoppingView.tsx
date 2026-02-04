@@ -4,7 +4,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { api } from '@/services/api';
 import { FundAdjustmentModal, AddManagerShoppingModal, AddDepositModal } from './Modals';
-import { Plus, Banknote } from 'lucide-react';
+import { Plus, Banknote, Pencil } from 'lucide-react';
+import { PencilIcon } from '@/components/Icons';
 
 interface ManagerShoppingViewProps {
     selectedPeriodId: string | null;
@@ -164,16 +165,16 @@ const ManagerShoppingView: React.FC<ManagerShoppingViewProps> = ({ selectedPerio
 
                             <div className="border-t border-border pt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                                 <div className="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-md flex justify-between sm:block">
-                                    <p className="text-sm text-muted-foreground">Total Deposits</p><p className="font-bold text-lg text-card-foreground">৳{fundStatus.totalDeposits.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                                    <p className="text-sm text-muted-foreground">Total Deposits</p><p className="font-bold text-lg text-card-foreground">৳{fundStatus.totalDeposits.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                                 </div>
                                 <div className="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-md flex justify-between sm:block">
-                                    <p className="text-sm text-muted-foreground">Total Shopping</p><p className="font-bold text-lg text-card-foreground">৳{fundStatus.totalShopping.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                                    <p className="text-sm text-muted-foreground">Total Shopping</p><p className="font-bold text-lg text-card-foreground">৳{fundStatus.totalShopping.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                                 </div>
                                 <div className="p-3 bg-orange-50 dark:bg-orange-500/10 rounded-md flex justify-between sm:block">
-                                    <p className="text-sm text-orange-600 dark:text-orange-300">Other Bills</p><p className="font-bold text-lg text-orange-600 dark:text-orange-300">৳{fundStatus.totalBillPayments.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                                    <p className="text-sm text-orange-600 dark:text-orange-300">Other Bills</p><p className="font-bold text-lg text-orange-600 dark:text-orange-300">৳{fundStatus.totalBillPayments.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                                 </div>
                                 <div className="p-3 bg-green-50 dark:bg-green-500/10 rounded-md flex justify-between sm:block">
-                                    <p className="text-sm text-green-600 dark:text-green-300">Fund Balance</p><p className="font-bold text-lg text-green-600 dark:text-green-300">{fundStatus.balance >= 0 ? '+' : ''}৳{fundStatus.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                                    <p className="text-sm text-green-600 dark:text-green-300">Fund Balance</p><p className="font-bold text-lg text-green-600 dark:text-green-300">{fundStatus.balance >= 0 ? '+' : ''}৳{fundStatus.balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                                 </div>
                                 <div className="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-md flex justify-between sm:block">
                                     <p className="text-sm text-muted-foreground">Current Rate</p><p className="font-bold text-lg text-card-foreground">৳{fundStatus.rate.toFixed(2)}</p>
@@ -236,8 +237,8 @@ const ManagerShoppingView: React.FC<ManagerShoppingViewProps> = ({ selectedPerio
                                         <th className="py-2 px-2 text-right">Deposits</th>
                                         <th className="py-2 px-2 text-right">Meals</th>
                                         <th className="py-2 px-2 text-right">Meal Cost</th>
-                                        <th className="py-2 px-2 text-right">Bills</th>
-                                        <th className="py-2 px-2 text-right">Balance</th>
+                                        <th className="py-2 px-3 sm:px-2 text-right min-w-[90px]">Bills</th>
+                                        <th className="py-2 px-3 sm:px-2 text-right min-w-[110px]">Balance</th>
                                         <th className="py-2 px-2 text-center">Action</th>
                                     </tr>
                                 </thead>
@@ -248,16 +249,18 @@ const ManagerShoppingView: React.FC<ManagerShoppingViewProps> = ({ selectedPerio
                                             <td className="py-3 px-2 text-right text-slate-600 dark:text-slate-400">৳{m.totalDeposits.toFixed(2)}</td>
                                             <td className="py-3 px-2 text-right text-blue-600 dark:text-blue-400 font-medium">{m.totalMeals.toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
                                             <td className="py-3 px-2 text-right text-slate-600 dark:text-slate-400">৳{m.mealCost.toFixed(2)}</td>
-                                            <td className="py-3 px-2 text-right text-orange-600 dark:text-orange-400">৳{m.totalBillPayments.toFixed(2)}</td>
-                                            <td className={`py-3 px-2 text-right font-bold ${m.balance >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-500'}`}>
+                                            <td className="py-3 px-3 sm:px-2 text-right text-orange-600 dark:text-orange-400 min-w-[90px] whitespace-nowrap">৳{m.totalBillPayments.toFixed(2)}</td>
+                                            <td className={`py-3 px-3 sm:px-2 text-right font-bold min-w-[110px] whitespace-nowrap ${m.balance >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-500'}`}>
                                                 {m.balance >= 0 ? '+' : ''}৳{m.balance.toFixed(2)}
                                             </td>
                                             <td className="py-3 px-2 text-center">
                                                 <button
                                                     onClick={() => setAdjustUser({ id: m.userId, name: m.name })}
-                                                    className="px-3 py-1 bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300 rounded-md text-xs font-semibold hover:bg-primary-200 transition-colors"
+                                                    className="p-2 sm:px-3 sm:py-1 bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300 rounded-md text-xs font-semibold hover:bg-primary-200 transition-colors"
+                                                    title="Edit Fund"
                                                 >
-                                                    Edit Fund
+                                                    <span className="hidden sm:inline">Edit Fund</span>
+                                                    <PencilIcon className="w-4 h-4 sm:hidden" />
                                                 </button>
                                             </td>
                                         </tr>

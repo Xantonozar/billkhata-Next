@@ -518,50 +518,58 @@ export default function RoomMembersPage() {
             <AppLayout>
                 <div className="space-y-6 animate-fade-in">
 
-                    {/* Room Details Header */}
-                    <div className="bg-card rounded-xl shadow-md p-6">
-                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                            <div>
-                                <h1 className="text-2xl sm:text-3xl font-bold text-card-foreground flex items-center gap-2">
-                                    <UsersIcon className="w-8 h-8 text-primary-500" />
-                                    {roomDetails?.name || 'My Room'}
-                                </h1>
-                                <p className="text-gray-500 dark:text-gray-400 mt-1">
-                                    Total Members: <span className="font-semibold text-gray-900 dark:text-white">{members.length}</span>
-                                </p>
+                    {/* Room Details Header - Refined UI/UX */}
+                    <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 sm:p-8 relative overflow-hidden group mb-8">
+                        {/* Decorative Background Element */}
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-primary-500/5 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-primary-500/10 transition-colors" />
+
+                        <div className="relative z-10 space-y-6">
+                            {/* Row 1: Room Name & Member Count */}
+                            <div className="flex flex-wrap items-end justify-between gap-4">
+                                <div className="space-y-1">
+                                    <h1 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight leading-none bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-400">
+                                        {roomDetails?.name || 'My Room'}
+                                    </h1>
+                                    <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500 font-medium text-sm sm:text-base">
+                                        <UsersIcon className="w-4 h-4" />
+                                        <span>Total Members:</span>
+                                        <span className="text-slate-900 dark:text-slate-200 font-bold">{members.length}</span>
+                                    </div>
+                                </div>
                             </div>
 
+                            {/* Row 2: Room Code & Add Button (Side by Side) */}
                             {(user?.role === Role.Manager || user?.role === Role.MasterManager) && (
-                                <div className="flex flex-col md:flex-row gap-3">
-                                    <div className="w-full md:w-auto bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg border border-gray-200 dark:border-gray-600 flex flex-col sm:flex-row items-center gap-3">
-                                        <div className="flex flex-col">
-                                            <span className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider font-semibold">Room Code</span>
-                                            <div className="flex items-center gap-2">
-                                                <span className="font-mono text-2xl font-bold text-primary-600 dark:text-primary-400 tracking-widest">
-                                                    {roomDetails?.khataId || user?.khataId}
-                                                </span>
-                                                <button
-                                                    onClick={handleCopyRoomCode}
-                                                    className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md transition-colors text-gray-500 dark:text-gray-400"
-                                                    title="Copy Code"
-                                                >
-                                                    {copied ? <CheckCircleIcon className="w-5 h-5 text-green-500" /> : <ClipboardIcon className="w-5 h-5" />}
-                                                </button>
-                                            </div>
+                                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-2">
+                                    {/* Room Code Area */}
+                                    <div className="flex-1 bg-slate-50/50 dark:bg-slate-800/30 rounded-2xl border border-slate-100 dark:border-slate-800 p-3 flex items-center justify-between group/code transition-all hover:border-primary-200 dark:hover:border-primary-900/40">
+                                        <div className="flex flex-col pl-1">
+                                            <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-widest font-black mb-0.5">Room Code</span>
+                                            <span className="font-mono text-xl sm:text-2xl font-black text-primary-600 dark:text-primary-400 tracking-[0.2em] leading-none">
+                                                {roomDetails?.khataId || user?.khataId}
+                                            </span>
                                         </div>
-
-                                        <div className="w-px h-10 bg-gray-300 dark:bg-gray-600 hidden sm:block"></div>
-                                        <div className="w-full sm:w-auto h-px bg-gray-300 dark:bg-gray-600 sm:hidden"></div>
+                                        <button
+                                            onClick={handleCopyRoomCode}
+                                            className="ml-4 p-2.5 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:border-primary-200 transition-all text-slate-400 hover:text-primary-600"
+                                            title="Copy Room Code"
+                                        >
+                                            {copied ? <CheckCircleIcon className="w-5 h-5 text-green-500" /> : <ClipboardIcon className="w-5 h-5" />}
+                                        </button>
                                     </div>
+
+                                    {/* Add Member Button */}
                                     {user?.role === Role.MasterManager && (
                                         <button
                                             onClick={() => setShowAddMemberModal(true)}
-                                            className="px-4 py-3 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 whitespace-nowrap"
+                                            className="px-6 py-4 bg-primary text-primary-foreground rounded-2xl font-black text-lg hover:bg-primary/90 transition-all flex items-center justify-center gap-3 shadow-lg shadow-primary-500/20 border-b-4 border-primary-700 active:border-b-0 active:translate-y-1 group/btn"
                                         >
-                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                            </svg>
-                                            Add Member
+                                            <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center group-hover/btn:scale-110 transition-transform">
+                                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
+                                                </svg>
+                                            </div>
+                                            <span>Add Member</span>
                                         </button>
                                     )}
                                 </div>
@@ -580,7 +588,7 @@ export default function RoomMembersPage() {
                             </p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
                             {members.map(member => (
                                 <MemberCard
                                     key={member.id}
@@ -594,9 +602,12 @@ export default function RoomMembersPage() {
                     )}
 
                     {(user?.role === Role.Manager || user?.role === Role.MasterManager) && pendingRequests.length > 0 && (
-                        <div>
-                            <h2 className="text-xl font-bold mb-3 text-gray-800 dark:text-white">🔔 Pending Join Requests ({pendingRequests.length})</h2>
-                            <div className="space-y-4">
+                        <div className="mt-12">
+                            <h2 className="text-2xl font-black mb-6 text-slate-800 dark:text-white flex items-center gap-3">
+                                <span className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-xl">🔔</span>
+                                Pending Join Requests ({pendingRequests.length})
+                            </h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {pendingRequests.map(req => (
                                     <div key={req.id} className="bg-card rounded-xl shadow-md p-5">
                                         <h4 className="font-bold text-lg text-card-foreground">{req.name}</h4>

@@ -62,16 +62,20 @@ export default function ShoppingPage() {
                         <h1 className="text-2xl sm:text-3xl font-bold text-card-foreground">Fund Management</h1>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
-                        <CalculationPeriodSelector
-                            selectedPeriodId={selectedPeriodId}
-                            onPeriodChange={setSelectedPeriodId}
-                        />
-                        <CalculationPeriodControls
-                            activePeriod={activePeriod}
-                            onPeriodStarted={handlePeriodChanged}
-                            onPeriodEnded={handlePeriodChanged}
-                        />
+                    <div className="flex flex-row items-center justify-between w-full sm:w-auto sm:justify-end gap-2 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
+                        <div className="flex-none sm:flex-initial">
+                            <CalculationPeriodSelector
+                                selectedPeriodId={selectedPeriodId}
+                                onPeriodChange={setSelectedPeriodId}
+                            />
+                        </div>
+                        <div className="flex-none">
+                            <CalculationPeriodControls
+                                activePeriod={activePeriod}
+                                onPeriodStarted={handlePeriodChanged}
+                                onPeriodEnded={handlePeriodChanged}
+                            />
+                        </div>
                     </div>
                 </div>
 

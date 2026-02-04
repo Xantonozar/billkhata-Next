@@ -23,7 +23,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ user
 
         const { userId } = await params;
         const body = await req.json();
-        const { name, email, phone, whatsapp, facebook, role, avatarUrl } = body;
+        const { name, email, phone, whatsapp, facebook, role, avatarUrl, password } = body;
 
         // Prevent Master Manager from editing their own role
         if (userId === currentUser._id.toString() && role && role !== currentUser.role) {
@@ -51,6 +51,16 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ user
         if (facebook !== undefined) updateData.facebook = facebook;
         if (role !== undefined) updateData.role = role;
         if (avatarUrl !== undefined) updateData.avatarUrl = avatarUrl;
+
+        // Handle password update
+        if (password && password.trim().length > 0) {
+            if (password.length < 6) {
+                return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 });
+            }
+            const bcrypt = await import('bcryptjs');
+            const salt = await bcrypt.genSalt(10);
+            updateData.password = await bcrypt.hash(password, salt);
+        }
 
         const updatedUser = await User.findByIdAndUpdate(
             userId,

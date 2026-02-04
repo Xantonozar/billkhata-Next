@@ -75,14 +75,14 @@ const CalculationPeriodControls: React.FC<CalculationPeriodControlsProps> = ({
                 {!activePeriod ? (
                     <button
                         onClick={() => setShowStartModal(true)}
-                        className="px-4 py-2 bg-primary text-white font-semibold rounded-lg hover:bg-primary-600 transition-colors"
+                        className="px-3 sm:px-4 py-2 bg-primary text-white font-semibold rounded-lg hover:bg-primary-600 transition-colors whitespace-nowrap text-sm sm:text-base"
                     >
                         Start Calculation
                     </button>
                 ) : (
                     <button
                         onClick={() => setShowEndModal(true)}
-                        className="px-4 py-2 bg-orange-600 text-white font-semibold rounded-lg hover:bg-orange-700 transition-colors"
+                        className="px-3 sm:px-4 py-2 bg-orange-600 text-white font-semibold rounded-lg hover:bg-orange-700 transition-colors whitespace-nowrap text-sm sm:text-base"
                     >
                         End Calculation
                     </button>

@@ -27,7 +27,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ kha
             return NextResponse.json({ message: 'Access denied' }, { status: 403 });
         }
 
-        const { name, email, password } = await req.json();
+        const { name, email, password, avatarUrl } = await req.json();
 
         if (!name || name.trim().length < 2) {
             return NextResponse.json({ message: 'Name is required and must be at least 2 characters' }, { status: 400 });
@@ -58,7 +58,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ kha
             roomStatus: 'Approved', // Auto-approve
             khataId: khataId,
             isDummyAccount: !email || !password, // Mark as dummy if credentials were auto-generated
-            isVerified: true // Auto-verify
+            isVerified: true, // Auto-verify
+            avatarUrl: avatarUrl || undefined
         });
 
         // Add member to Room

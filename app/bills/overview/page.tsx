@@ -9,6 +9,8 @@ import { Role } from '@/types';
 import { HomeIcon, ElectricityIcon, WaterIcon, GasIcon, WifiIcon, MaidIcon, OtherIcon } from '@/components/Icons';
 import AppLayout from '@/components/AppLayout';
 import { BillsOverviewSkeleton } from '@/components/skeletons/BillCardSkeleton';
+import { CreateBillModal } from '@/components/bills/CreateBillModal';
+import { createPortal } from 'react-dom';
 
 // Vivid color mappings for payment status
 const statusColors: Record<PaymentStatus, string> = {
@@ -75,10 +77,11 @@ export default function BillsOverviewPage() {
     const router = useRouter();
     const [bills, setBills] = useState<Bill[]>([]);
     const [loading, setLoading] = useState(true);
+    const [showCreateModal, setShowCreateModal] = useState(false);
 
     const [selectedDate, setSelectedDate] = useState(new Date());
 
-    useEffect(() => {
+    const fetchBills = () => {
         if (user?.khataId) {
             setLoading(true);
             const month = selectedDate.getMonth() + 1;
@@ -89,6 +92,10 @@ export default function BillsOverviewPage() {
                 setLoading(false);
             }).catch(() => setLoading(false));
         }
+    };
+
+    useEffect(() => {
+        fetchBills();
     }, [user, selectedDate]);
 
     // Generate last 12 months for dropdown
@@ -165,7 +172,7 @@ export default function BillsOverviewPage() {
                     </div>
                     {(user.role === Role.Manager || user.role === Role.MasterManager) && (
                         <button
-                            onClick={() => router.push('/bills/create')}
+                            onClick={() => setShowCreateModal(true)}
                             className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 dark:from-indigo-600 dark:to-purple-600 dark:hover:from-indigo-500 dark:hover:to-purple-500 earthy-green:from-[#a3c24d] earthy-green:to-[#8fb339] earthy-green:hover:from-[#8fb339] earthy-green:hover:to-[#6d8b2a] text-white font-semibold rounded-2xl shadow-lg shadow-violet-200 dark:shadow-none earthy-green:shadow-[#b7ce63]/50 transition-all active:scale-95"
                         >
                             <span className="text-xl">+</span> New Bill
@@ -173,8 +180,6 @@ export default function BillsOverviewPage() {
                     )}
                 </div>
 
-                {/* Main Summary Card - Adaptive Design */}
-                {/* Main Summary Card - Adaptive Design */}
                 {/* Main Summary Card - Adaptive Design */}
                 <div className="relative overflow-hidden p-6 rounded-3xl bg-gradient-to-br from-violet-500 via-purple-500 to-fuchsia-500 dark:from-slate-800 dark:via-slate-900 dark:to-slate-800 earthy-green:from-primary-50 earthy-green:via-primary-100 earthy-green:to-primary-200 shadow-xl shadow-purple-200 dark:shadow-black/50 earthy-green:shadow-primary-200/50 text-white earthy-green:text-primary-900 transition-all duration-300">
                     <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-white/20 dark:bg-indigo-500/10 earthy-green:bg-white/40 rounded-full blur-2xl"></div>
@@ -228,7 +233,12 @@ export default function BillsOverviewPage() {
                             {Object.entries(billsByCategory).map(([category, categoryBills]) => {
                                 const config = categoryConfig[category] || categoryConfig['Others'];
                                 const totalAmount = categoryBills.reduce((sum, bill) => sum + bill.totalAmount, 0);
-                                const yourShare = categoryBills.flatMap(b => b.shares).filter(s => s.userId === user.id).reduce((sum, s) => sum + s.amount, 0);
+                                const isManager = user.role === Role.Manager || user.role === Role.MasterManager;
+                                const categoryShares = categoryBills.flatMap(b => b.shares);
+                                const paidAmount = categoryShares.filter(s => s.status === 'Paid').reduce((sum, s) => sum + s.amount, 0);
+                                const paidCount = categoryShares.filter(s => s.status === 'Paid').length;
+                                const totalCount = categoryShares.length;
+                                const yourShare = categoryShares.filter(s => s.userId === user.id).reduce((sum, s) => sum + s.amount, 0);
                                 const latestBill = [...categoryBills].sort((a, b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime())[0];
                                 const myShareDetails = latestBill?.shares.find(s => s.userId === user.id);
 
@@ -242,11 +252,18 @@ export default function BillsOverviewPage() {
                                             <div className={`p-3 rounded-2xl ${config.gradient} ${config.text} group-hover:bg-white dark:group-hover:bg-slate-800 earthy-green:group-hover:bg-white`}>
                                                 {React.cloneElement(config.icon, { className: "w-6 h-6" })}
                                             </div>
-                                            {myShareDetails && (
-                                                <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${statusColors[myShareDetails.status]}`}>
-                                                    {myShareDetails.status}
-                                                </span>
-                                            )}
+                                            <div className="flex flex-col items-end gap-1">
+                                                {myShareDetails && (
+                                                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${statusColors[myShareDetails.status]}`}>
+                                                        {myShareDetails.status === 'Paid' ? 'You Paid' : myShareDetails.status}
+                                                    </span>
+                                                )}
+                                                {isManager && (
+                                                    <span className="text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded-full">
+                                                        {paidCount}/{totalCount} Paid
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
 
                                         <h3 className={`text-lg font-bold ${config.text} mb-3 group-hover:text-slate-800 dark:group-hover:text-slate-200 earthy-green:group-hover:text-[#3a4433] transition-colors`}>
@@ -261,9 +278,11 @@ export default function BillsOverviewPage() {
                                                 </span>
                                             </div>
                                             <div className="flex justify-between items-center p-2.5 rounded-xl bg-white dark:bg-slate-700/20 earthy-green:bg-white border-2 border-slate-50 dark:border-slate-700/50 earthy-green:border-[#daddd8]/50 group-hover:border-white/20 dark:group-hover:border-slate-600/50 transition-colors">
-                                                <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 earthy-green:text-[#6d8b2a]">My Share</span>
+                                                <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 earthy-green:text-[#6d8b2a]">
+                                                    {isManager ? 'Total Paid' : 'My Share'}
+                                                </span>
                                                 <span className={`font-bold ${config.text} font-numeric`}>
-                                                    ৳{yourShare.toLocaleString()}
+                                                    ৳{(isManager ? paidAmount : yourShare).toLocaleString()}
                                                 </span>
                                             </div>
                                         </div>
@@ -277,6 +296,14 @@ export default function BillsOverviewPage() {
                     )}
                 </div>
             </div>
+
+            {showCreateModal && typeof document !== 'undefined' && createPortal(
+                <CreateBillModal
+                    onClose={() => setShowCreateModal(false)}
+                    onSuccess={fetchBills}
+                />,
+                document.body
+            )}
         </AppLayout>
     );
 }

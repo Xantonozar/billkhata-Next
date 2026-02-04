@@ -64,23 +64,23 @@ const CalculationPeriodSelector: React.FC<CalculationPeriodSelectorProps> = ({
         <div className="relative">
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-lg hover:bg-muted transition-colors"
+                className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-card border border-border rounded-lg hover:bg-muted transition-colors whitespace-nowrap overflow-hidden"
             >
-                <span className="text-sm font-medium text-card-foreground">
+                <span className="text-sm font-medium text-card-foreground truncate max-w-[100px] sm:max-w-none">
                     {selectedPeriod ? (
                         <>
                             {selectedPeriod.name}
                             {selectedPeriod.status === 'Active' && (
-                                <span className="ml-2 px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs rounded-full">
+                                <span className="ml-1.5 px-1.5 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-[10px] rounded-full">
                                     Active
                                 </span>
                             )}
                         </>
                     ) : (
-                        'Select Period'
+                        'Select'
                     )}
                 </span>
-                <ChevronDownIcon className={`w-4 h-4 text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                <ChevronDownIcon className={`w-3.5 h-3.5 text-muted-foreground flex-none transition-transform ${isOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {isOpen && (

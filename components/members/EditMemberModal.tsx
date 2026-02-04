@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState } from 'react';
-import { XIcon } from '@/components/Icons';
+import { XIcon, CameraIcon } from '@/components/Icons';
 import { Role } from '@/types';
+import { api } from '@/services/api';
 
 interface EditMemberModalProps {
     isOpen: boolean;
@@ -20,9 +21,13 @@ const EditMemberModal: React.FC<EditMemberModalProps> = ({ isOpen, member, onClo
         whatsapp: member?.whatsapp || '',
         facebook: member?.facebook || '',
         role: member?.role || Role.Member,
+        avatarUrl: member?.avatarUrl || '',
+        password: '',
     });
     const [loading, setLoading] = useState(false);
+    const [uploading, setUploading] = useState(false);
     const [error, setError] = useState('');
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     React.useEffect(() => {
         if (member) {
@@ -33,11 +38,43 @@ const EditMemberModal: React.FC<EditMemberModalProps> = ({ isOpen, member, onClo
                 whatsapp: member.whatsapp || '',
                 facebook: member.facebook || '',
                 role: member.role || Role.Member,
+                avatarUrl: member.avatarUrl || '',
+                password: '',
             });
         }
     }, [member]);
 
     if (!isOpen || !member) return null;
+
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (file.size > 5 * 1024 * 1024) {
+            setError('Image size should be less than 5MB');
+            return;
+        }
+
+        if (!file.type.startsWith('image/')) {
+            setError('Please upload an image file');
+            return;
+        }
+
+        setUploading(true);
+        setError('');
+        try {
+            const url = await api.uploadImage(file);
+            if (url) {
+                setFormData(prev => ({ ...prev, avatarUrl: url }));
+            } else {
+                throw new Error('Upload failed');
+            }
+        } catch (error) {
+            setError('Failed to upload image');
+        } finally {
+            setUploading(false);
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -86,6 +123,42 @@ const EditMemberModal: React.FC<EditMemberModalProps> = ({ isOpen, member, onClo
                             {error}
                         </div>
                     )}
+
+                    {/* Profile Photo */}
+                    <div className="flex flex-col items-center gap-2 mb-6">
+                        <div className="relative group">
+                            <div className="w-24 h-24 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden border-2 border-slate-200 dark:border-slate-700">
+                                {formData.avatarUrl ? (
+                                    <img src={formData.avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+                                ) : (
+                                    <div className="text-2xl font-bold text-slate-400 dark:text-slate-600">
+                                        {formData.name?.charAt(0) || '?'}
+                                    </div>
+                                )}
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => fileInputRef.current?.click()}
+                                className="absolute bottom-0 right-0 p-2 bg-primary-600 text-white rounded-full hover:bg-primary-700 transition-colors shadow-lg"
+                                disabled={uploading}
+                            >
+                                <CameraIcon className="w-4 h-4" />
+                            </button>
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                onChange={handleImageUpload}
+                                className="hidden"
+                                accept="image/*"
+                            />
+                            {uploading && (
+                                <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center">
+                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                </div>
+                            )}
+                        </div>
+                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Member Photo</span>
+                    </div>
 
                     {/* Name */}
                     <div>
@@ -146,6 +219,20 @@ const EditMemberModal: React.FC<EditMemberModalProps> = ({ isOpen, member, onClo
                             onChange={e => setFormData({ ...formData, facebook: e.target.value })}
                             className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border-2 border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:border-primary-500 transition-colors text-foreground"
                             placeholder="https://facebook.com/username"
+                        />
+                    </div>
+
+                    {/* Password */}
+                    <div className="mb-4">
+                        <label className="block text-sm font-semibold text-muted-foreground mb-2">
+                            New Password <span className="text-xs font-normal text-slate-400 ml-1">(Optional - leave blank to keep current)</span>
+                        </label>
+                        <input
+                            type="password"
+                            value={formData.password}
+                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                            className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none"
+                            placeholder="Min 6 characters"
                         />
                     </div>
 

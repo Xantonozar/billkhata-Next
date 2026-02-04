@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from 'react';
-import { XIcon, SpinnerIcon, UserPlusIcon } from '@/components/Icons';
+import { XIcon, SpinnerIcon, UserPlusIcon, CameraIcon } from '@/components/Icons';
+import { api } from '@/services/api';
 
 interface AddMemberModalProps {
     isOpen: boolean;
@@ -15,8 +16,11 @@ export default function AddMemberModal({ isOpen, onClose, khataId, onMemberAdded
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
+    const [uploading, setUploading] = useState(false);
+    const [avatarUrl, setAvatarUrl] = useState('');
     const [error, setError] = useState('');
     const [generatedCredentials, setGeneratedCredentials] = useState<{ email: string; password: string } | null>(null);
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -38,7 +42,8 @@ export default function AddMemberModal({ isOpen, onClose, khataId, onMemberAdded
                 body: JSON.stringify({
                     name: name.trim(),
                     email: email.trim() || undefined,
-                    password: password.trim() || undefined
+                    password: password.trim() || undefined,
+                    avatarUrl: avatarUrl || undefined
                 })
             });
 
@@ -52,12 +57,6 @@ export default function AddMemberModal({ isOpen, onClose, khataId, onMemberAdded
             onMemberAdded();
 
             // If credentials were generated, show them to the user
-            if (data.generatedCredentials) {
-                setGeneratedCredentials(data.generatedCredentials);
-            } else {
-                // No generated credentials, close immediately
-                handleClose();
-            }
         } catch (err: any) {
             setError(err.message || 'Failed to create member');
         } finally {
@@ -65,10 +64,41 @@ export default function AddMemberModal({ isOpen, onClose, khataId, onMemberAdded
         }
     };
 
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (file.size > 5 * 1024 * 1024) {
+            setError('Image size should be less than 5MB');
+            return;
+        }
+
+        if (!file.type.startsWith('image/')) {
+            setError('Please upload an image file');
+            return;
+        }
+
+        setUploading(true);
+        setError('');
+        try {
+            const url = await api.uploadImage(file);
+            if (url) {
+                setAvatarUrl(url);
+            } else {
+                throw new Error('Upload failed');
+            }
+        } catch (error) {
+            setError('Failed to upload image');
+        } finally {
+            setUploading(false);
+        }
+    };
+
     const handleClose = () => {
         setName('');
         setEmail('');
         setPassword('');
+        setAvatarUrl('');
         setError('');
         setGeneratedCredentials(null);
         onClose();
@@ -102,6 +132,40 @@ export default function AddMemberModal({ isOpen, onClose, khataId, onMemberAdded
 
                 {!generatedCredentials ? (
                     <form onSubmit={handleSubmit} className="space-y-4">
+                        {/* Photo Upload */}
+                        <div className="flex flex-col items-center gap-2 mb-4">
+                            <div className="relative group">
+                                <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center overflow-hidden border-2 border-slate-200 dark:border-slate-700">
+                                    {avatarUrl ? (
+                                        <img src={avatarUrl} alt="Preview" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <UserPlusIcon className="w-10 h-10 text-slate-400" />
+                                    )}
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="absolute bottom-0 right-0 p-1.5 bg-primary text-white rounded-full hover:bg-primary/90 transition-colors shadow-sm"
+                                    disabled={uploading}
+                                >
+                                    <CameraIcon className="w-3.5 h-3.5" />
+                                </button>
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    onChange={handleImageUpload}
+                                    className="hidden"
+                                    accept="image/*"
+                                />
+                                {uploading && (
+                                    <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center">
+                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                    </div>
+                                )}
+                            </div>
+                            <span className="text-xs text-muted-foreground">Add Profile Photo (Optional)</span>
+                        </div>
+
                         <div>
                             <label htmlFor="memberName" className="block text-sm font-medium text-foreground mb-1">
                                 Name <span className="text-red-500">*</span>
