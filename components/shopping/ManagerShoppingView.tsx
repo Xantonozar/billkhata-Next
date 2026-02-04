@@ -151,7 +151,7 @@ const ManagerShoppingView: React.FC<ManagerShoppingViewProps> = ({ selectedPerio
                                     >
                                         <Plus className="w-5 h-5 mr-1.5 sm:mr-2 hidden sm:block" />
                                         <span className="sm:hidden font-bold mr-1">+</span>
-                                        {*<span className="hidden sm:inline">Add</span>*}
+                                        {/*<span className="hidden sm:inline">Add</span>*/}
                                         <span className="ml-0.5">Add Expense</span>
                                     </button>
                                     <button
@@ -161,7 +161,7 @@ const ManagerShoppingView: React.FC<ManagerShoppingViewProps> = ({ selectedPerio
                                     >
                                         <Banknote className="w-5 h-5 mr-1.5 sm:mr-2 hidden sm:block" />
                                         <span className="sm:hidden font-bold mr-1">+</span>
-                                        {*<span className="hidden sm:inline">Add</span>*}
+                                        {/*<span className="hidden sm:inline">Add</span>*/}
                                         <span className="ml-0.5">Add Deposit</span>
                                     </button>
                                 </div>
