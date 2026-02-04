@@ -146,19 +146,23 @@ const ManagerShoppingView: React.FC<ManagerShoppingViewProps> = ({ selectedPerio
                                 <div className="flex items-center gap-2">
                                     <button
                                         onClick={() => setShowAddExpense(true)}
-                                        className={`flex items-center justify-center px-4 py-2 rounded-md font-medium transition-colors ${!isActivePeriod ? 'bg-slate-300 text-slate-500 cursor-not-allowed' : 'bg-primary-600 hover:bg-primary-700 text-white shadow-lg hover:shadow-xl'}`}
+                                        className={`flex items-center justify-center px-3 sm:px-4 py-2 rounded-md font-medium transition-colors ${!isActivePeriod ? 'bg-slate-300 text-slate-500 cursor-not-allowed' : 'bg-primary-600 hover:bg-primary-700 text-white shadow-lg hover:shadow-xl'}`}
                                         disabled={!isActivePeriod}
                                     >
-                                        <Plus className="w-5 h-5 mr-2" />
-                                        Add Expense
+                                        <Plus className="w-5 h-5 mr-1.5 sm:mr-2 hidden sm:block" />
+                                        <span className="sm:hidden font-bold mr-1">+</span>
+                                        <span className="hidden sm:inline">Add</span>
+                                        <span className="ml-0.5">Expense</span>
                                     </button>
                                     <button
                                         onClick={() => setShowAddDeposit(true)}
-                                        className={`flex items-center justify-center px-4 py-2 rounded-md font-medium border transition-colors ${!isActivePeriod ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed' : 'border-primary-200 text-primary-700 hover:bg-primary-50 hover:text-primary-800'}`}
+                                        className={`flex items-center justify-center px-3 sm:px-4 py-2 rounded-md font-medium border transition-colors ${!isActivePeriod ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed' : 'border-primary-200 text-primary-700 hover:bg-primary-50 hover:text-primary-800'}`}
                                         disabled={!isActivePeriod}
                                     >
-                                        <Banknote className="w-5 h-5 mr-2" />
-                                        Add Deposit
+                                        <Banknote className="w-5 h-5 mr-1.5 sm:mr-2 hidden sm:block" />
+                                        <span className="sm:hidden font-bold mr-1">+</span>
+                                        <span className="hidden sm:inline">Add</span>
+                                        <span className="ml-0.5">Deposit</span>
                                     </button>
                                 </div>
                             </div>
