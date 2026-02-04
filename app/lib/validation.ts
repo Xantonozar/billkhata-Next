@@ -41,7 +41,7 @@ export const SignupSchema = z.object({
         .trim(),
     email: EmailSchema,
     password: PasswordSchema,
-    role: z.enum(['Manager', 'Member'])
+    role: z.enum(['Manager', 'MasterManager', 'Member'])
 });
 
 export const ProfileUpdateSchema = z.object({

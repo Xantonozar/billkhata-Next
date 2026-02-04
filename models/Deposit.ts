@@ -17,8 +17,7 @@ const depositSchema = new mongoose.Schema({
     },
     amount: {
         type: Number,
-        required: true,
-        min: 0
+        required: true
     },
     paymentMethod: {
         type: String,
@@ -36,6 +35,10 @@ const depositSchema = new mongoose.Schema({
         default: ''
     },
     screenshotUrl: {
+        type: String,
+        default: ''
+    },
+    notes: {
         type: String,
         default: ''
     },
@@ -67,6 +70,11 @@ depositSchema.index({ khataId: 1, userId: 1 });
 depositSchema.index({ khataId: 1, calculationPeriodId: 1, createdAt: -1 });
 depositSchema.index({ khataId: 1, createdAt: -1, status: 1 });
 
-const Deposit = mongoose.models.Deposit || mongoose.model('Deposit', depositSchema);
+// Delete the cached model to force using the updated schema
+if (mongoose.models.Deposit) {
+    delete mongoose.models.Deposit;
+}
+
+const Deposit = mongoose.model('Deposit', depositSchema);
 
 export default Deposit;

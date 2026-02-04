@@ -69,19 +69,25 @@ const MealQuantitySelector: React.FC<{
     onChange: (value: number) => void;
     disabled: boolean;
 }> = ({ meal, label, icon, value, onChange, disabled }) => (
-    <div className="flex items-center justify-between py-1">
-        <label className="font-medium text-foreground text-sm sm:text-base">{icon} {label}</label>
+    <div className="flex items-center justify-between py-3 px-4 rounded-xl bg-slate-50/50 dark:bg-slate-800/30 border border-slate-200/50 dark:border-slate-700/50 hover:border-primary-200 dark:hover:border-primary-800/50 transition-all">
+        <label className="font-semibold text-foreground text-base sm:text-lg flex items-center gap-2">
+            <span className="text-2xl">{icon}</span>
+            <span className="hidden sm:inline">{label}</span>
+            <span className="sm:hidden">{label.substring(0, 3)}</span>
+        </label>
         <div className="flex items-center gap-3 sm:gap-4">
             <button
-                onClick={() => onChange(Math.max(0, value - 0.5))}
-                disabled={disabled}
-                className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-muted hover:bg-muted/80 font-bold text-lg sm:text-xl disabled:opacity-50 flex items-center justify-center transition-colors"
+                onClick={() => onChange(Math.max(0, value - 0.25))}
+                disabled={disabled || value === 0}
+                className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-800 hover:from-slate-200 hover:to-slate-300 dark:hover:from-slate-600 dark:hover:to-slate-700 font-bold text-xl sm:text-2xl disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-all active:scale-95 shadow-md hover:shadow-lg text-slate-700 dark:text-slate-200"
+                aria-label={`Decrease ${label}`}
             >−</button>
-            <span className="w-8 sm:w-12 text-center font-bold text-lg sm:text-xl text-foreground">{value}</span>
+            <span className="w-12 sm:w-16 text-center font-bold text-xl sm:text-2xl text-foreground tabular-nums">{value}</span>
             <button
-                onClick={() => onChange(value + 0.5)}
+                onClick={() => onChange(value + 0.25)}
                 disabled={disabled}
-                className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-muted hover:bg-muted/80 font-bold text-lg sm:text-xl disabled:opacity-50 flex items-center justify-center transition-colors"
+                className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 font-bold text-xl sm:text-2xl disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-all active:scale-95 shadow-md hover:shadow-lg shadow-primary-500/20 text-white"
+                aria-label={`Increase ${label}`}
             >+</button>
         </div>
     </div>
@@ -235,28 +241,66 @@ const ManagerEditModal: React.FC<{
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 animate-fade-in p-4">
-            <div className="bg-card rounded-xl shadow-2xl p-6 w-full max-w-sm max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                <div className="flex justify-between items-center">
-                    <h3 className="text-xl font-bold text-card-foreground">Edit Meal - {member.name}</h3>
-                    <button onClick={onClose} className="p-1 rounded-full hover:bg-muted"><XIcon className="w-5 h-5" /></button>
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 animate-fade-in p-0 sm:p-4" onClick={onClose}>
+            <div className="bg-card rounded-t-3xl sm:rounded-2xl shadow-2xl w-full sm:max-w-lg max-h-[90vh] overflow-y-auto border-t-4 sm:border-t-0 border-primary-500" onClick={e => e.stopPropagation()}>
+                {/* Header with Gradient Accent */}
+                <div className="sticky top-0 bg-gradient-to-r from-primary-50 to-primary-100 dark:from-primary-900/30 dark:to-primary-800/30 border-b border-primary-200 dark:border-primary-800 px-6 py-5 backdrop-blur-sm">
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <h3 className="text-xl sm:text-2xl font-bold text-card-foreground">Edit Meal</h3>
+                            <p className="text-sm text-muted-foreground mt-1">Adjusting meals for <span className="font-semibold text-primary-600 dark:text-primary-400">{member.name}</span></p>
+                        </div>
+                        <button
+                            onClick={onClose}
+                            className="p-2 rounded-full hover:bg-white dark:hover:bg-slate-800 transition-colors"
+                            aria-label="Close"
+                        >
+                            <XIcon className="w-6 h-6 text-muted-foreground" />
+                        </button>
+                    </div>
                 </div>
-                <div className="border-t my-4 border-border"></div>
 
-                <div className="space-y-4">
-                    {isFinalized && <p className="p-2 text-sm text-yellow-800 bg-yellow-100 dark:text-yellow-200 dark:bg-yellow-900/50 rounded-md text-center">⚠️ Already finalized. Changes will update records.</p>}
-                    <MealQuantitySelector meal="breakfast" icon="🌅" label="Breakfast" value={meals.breakfast} onChange={(v) => setMeals(p => ({ ...p, breakfast: v }))} disabled={false} />
-                    <MealQuantitySelector meal="lunch" icon="🌞" label="Lunch" value={meals.lunch} onChange={(v) => setMeals(p => ({ ...p, lunch: v }))} disabled={false} />
-                    <MealQuantitySelector meal="dinner" icon="🌙" label="Dinner" value={meals.dinner} onChange={(v) => setMeals(p => ({ ...p, dinner: v }))} disabled={false} />
+                {/* Content */}
+                <div className="p-6">
+                    {isFinalized && (
+                        <div className="mb-6 p-4 bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20 border-2 border-yellow-200 dark:border-yellow-800 rounded-xl">
+                            <div className="flex items-center gap-3">
+                                <span className="text-2xl">⚠️</span>
+                                <div>
+                                    <p className="text-sm font-bold text-yellow-900 dark:text-yellow-200">Already Finalized</p>
+                                    <p className="text-xs text-yellow-800 dark:text-yellow-300">Changes will update historical records</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="space-y-4">
+                        <MealQuantitySelector meal="breakfast" icon="🌅" label="Breakfast" value={meals.breakfast} onChange={(v) => setMeals(p => ({ ...p, breakfast: v }))} disabled={false} />
+                        <MealQuantitySelector meal="lunch" icon="🌞" label="Lunch" value={meals.lunch} onChange={(v) => setMeals(p => ({ ...p, lunch: v }))} disabled={false} />
+                        <MealQuantitySelector meal="dinner" icon="🌙" label="Dinner" value={meals.dinner} onChange={(v) => setMeals(p => ({ ...p, dinner: v }))} disabled={false} />
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-3 mt-8">
+                        <button
+                            onClick={onClose}
+                            className="flex-1 py-3.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold rounded-xl transition-all active:scale-95"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleSubmit}
+                            className="flex-1 py-3.5 bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 text-white font-bold rounded-xl shadow-lg shadow-primary-500/30 hover:shadow-primary-500/50 transition-all active:scale-95"
+                        >
+                            Save Changes
+                        </button>
+                    </div>
+
+                    {/* Lazy load history in modal */}
+                    <div className="mt-6">
+                        <LazyHistoryList khataId={khataId} userId={member.id} title={`${member.name}'s History`} />
+                    </div>
                 </div>
-
-                <div className="flex gap-3 mt-6">
-                    <button onClick={onClose} className="flex-1 py-2.5 bg-muted font-semibold rounded-lg hover:bg-muted/80 transition-colors">Cancel</button>
-                    <button onClick={handleSubmit} className="flex-1 py-2.5 bg-primary text-white font-semibold rounded-lg hover:bg-primary-600 transition-colors">Save Changes</button>
-                </div>
-
-                {/* Lazy load history in modal */}
-                <LazyHistoryList khataId={khataId} userId={member.id} title={`${member.name}'s History`} />
             </div>
         </div>
     );
@@ -273,58 +317,93 @@ const MemberMealView: React.FC<{
     userName: string;
 }> = ({ isFinalized, meals, setMeals, onSaveChanges, saving, khataId, userId, userName }) => {
     const totalQty = meals.breakfast + meals.lunch + meals.dinner;
+    const totalCost = totalQty * COST_PER_QUANTITY;
 
     return (
         <div className="space-y-6">
-            {/* Meal Input Card */}
-            <div className="bg-card rounded-xl shadow-md p-6">
-                <h3 className="text-lg font-semibold mb-4">Today's Meal Count</h3>
-                {isFinalized ? (
-                    <div className="space-y-3">
-                        <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg mb-4">
-                            <p className="text-sm font-semibold text-yellow-800 dark:text-yellow-200">🔒 Finalized by Manager - No changes allowed</p>
+            {/* Meal Input Card with Gradient Header */}
+            <div className="bg-card rounded-2xl shadow-lg border border-border/50 overflow-hidden">
+                {/* Gradient Header */}
+                <div className="bg-gradient-to-br from-primary-500 via-primary-600 to-primary-700 p-6 text-white relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent"></div>
+                    <div className="relative z-10">
+                        <div className="flex items-center justify-between mb-2">
+                            <h3 className="text-xl sm:text-2xl font-bold">Today's Meal Count</h3>
+                            <div className="px-3 py-1.5 bg-white/20 backdrop-blur-sm rounded-full text-sm font-semibold">
+                                {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                            </div>
                         </div>
-                        <div className="space-y-2 text-foreground">
-                            <p className="flex justify-between"><span>🌅 Breakfast:</span> <span className="font-bold">{meals.breakfast}</span></p>
-                            <p className="flex justify-between"><span>🌞 Lunch:</span> <span className="font-bold">{meals.lunch}</span></p>
-                            <p className="flex justify-between"><span>🌙 Dinner:</span> <span className="font-bold">{meals.dinner}</span></p>
-                        </div>
+                        <p className="text-primary-100 text-sm sm:text-base">Track your meals for today</p>
                     </div>
-                ) : (
-                    <div className="space-y-3">
-                        <MealQuantitySelector meal="breakfast" icon="🌅" label="Breakfast" value={meals.breakfast} onChange={(v) => setMeals(prev => ({ ...prev, breakfast: v }))} disabled={saving} />
-                        <MealQuantitySelector meal="lunch" icon="🌞" label="Lunch" value={meals.lunch} onChange={(v) => setMeals(prev => ({ ...prev, lunch: v }))} disabled={saving} />
-                        <MealQuantitySelector meal="dinner" icon="🌙" label="Dinner" value={meals.dinner} onChange={(v) => setMeals(prev => ({ ...prev, dinner: v }))} disabled={saving} />
-                    </div>
-                )}
+                </div>
 
-                {/* Inline Save Section */}
-                <div className="mt-6 pt-4 border-t border-border">
-                    <div className="flex items-center justify-between gap-4">
-                        <div className="flex flex-col">
-                            <span className="text-sm text-muted-foreground">
-                                <span className="sm:hidden">Meals</span>
-                                <span className="hidden sm:inline">Total Meals</span>
-                            </span>
-                            <span className="text-2xl font-bold text-primary-600 dark:text-primary-400">{totalQty}</span>
+                {/* Meal Selectors */}
+                <div className="p-6">
+                    {isFinalized ? (
+                        <div className="space-y-4">
+                            <div className="p-4 bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20 border-2 border-yellow-200 dark:border-yellow-800 rounded-xl">
+                                <div className="flex items-center gap-3 mb-2">
+                                    <span className="text-2xl">🔒</span>
+                                    <p className="text-sm sm:text-base font-bold text-yellow-900 dark:text-yellow-200">Finalized by Manager</p>
+                                </div>
+                                <p className="text-xs sm:text-sm text-yellow-800 dark:text-yellow-300 ml-11">No changes allowed for today's meals</p>
+                            </div>
+                            <div className="space-y-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4">
+                                <div className="flex justify-between items-center py-2 border-b border-slate-200 dark:border-slate-700">
+                                    <span className="flex items-center gap-2 text-base font-medium"><span className="text-xl">🌅</span> Breakfast</span>
+                                    <span className="font-bold text-lg">{meals.breakfast}</span>
+                                </div>
+                                <div className="flex justify-between items-center py-2 border-b border-slate-200 dark:border-slate-700">
+                                    <span className="flex items-center gap-2 text-base font-medium"><span className="text-xl">🌞</span> Lunch</span>
+                                    <span className="font-bold text-lg">{meals.lunch}</span>
+                                </div>
+                                <div className="flex justify-between items-center py-2">
+                                    <span className="flex items-center gap-2 text-base font-medium"><span className="text-xl">🌙</span> Dinner</span>
+                                    <span className="font-bold text-lg">{meals.dinner}</span>
+                                </div>
+                            </div>
                         </div>
+                    ) : (
+                        <div className="space-y-4">
+                            <MealQuantitySelector meal="breakfast" icon="🌅" label="Breakfast" value={meals.breakfast} onChange={(v) => setMeals(prev => ({ ...prev, breakfast: v }))} disabled={saving} />
+                            <MealQuantitySelector meal="lunch" icon="🌞" label="Lunch" value={meals.lunch} onChange={(v) => setMeals(prev => ({ ...prev, lunch: v }))} disabled={saving} />
+                            <MealQuantitySelector meal="dinner" icon="🌙" label="Dinner" value={meals.dinner} onChange={(v) => setMeals(prev => ({ ...prev, dinner: v }))} disabled={saving} />
+                        </div>
+                    )}
+
+                    {/* Summary Section */}
+                    <div className="mt-6 pt-6 border-t-2 border-dashed border-slate-200 dark:border-slate-700">
+                        <div className="grid grid-cols-2 gap-4 mb-4">
+                            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-xl p-4 border border-blue-100 dark:border-blue-800">
+                                <span className="text-xs font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wide block mb-1">Total Meals</span>
+                                <span className="text-3xl font-bold text-blue-600 dark:text-blue-400 tabular-nums">{totalQty}</span>
+                            </div>
+                            <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl p-4 border border-green-100 dark:border-green-800">
+                                <span className="text-xs font-semibold text-green-700 dark:text-green-300 uppercase tracking-wide block mb-1">Est. Cost</span>
+                                <span className="text-3xl font-bold text-green-600 dark:text-green-400 tabular-nums">৳{totalCost.toFixed(0)}</span>
+                            </div>
+                        </div>
+
+                        {/* Floating Action Button Style Save */}
                         <button
                             onClick={onSaveChanges}
                             disabled={isFinalized || saving}
-                            className={`px-8 py-3 bg-gradient-to-r from-primary-600 to-primary-500 text-white font-bold rounded-xl shadow-lg shadow-primary-500/30 active:scale-95 transition-all flex items-center gap-2 ${saving || isFinalized ? 'opacity-70 cursor-not-allowed' : 'hover:shadow-primary-500/50'}`}
+                            className={`w-full py-4 sm:py-5 bg-gradient-to-r from-primary-600 via-primary-500 to-primary-600 text-white font-bold rounded-xl sm:rounded-2xl shadow-xl shadow-primary-500/30 transition-all flex items-center justify-center gap-3 text-base sm:text-lg ${saving || isFinalized
+                                ? 'opacity-50 cursor-not-allowed'
+                                : 'hover:shadow-2xl hover:shadow-primary-500/40 hover:scale-[1.02] active:scale-[0.98]'
+                                }`}
                         >
                             {saving ? (
                                 <>
-                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                    <span>Saving...</span>
+                                    <div className="w-6 h-6 border-3 border-white border-t-transparent rounded-full animate-spin" />
+                                    <span>Saving Changes...</span>
                                 </>
                             ) : (
                                 <>
-                                    <span>
-                                        <span className="sm:hidden">Save</span>
-                                        <span className="hidden sm:inline">Save Changes</span>
-                                    </span>
-                                    <ChevronRightIcon className="w-5 h-5" />
+                                    <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    <span>Save Today's Meals</span>
                                 </>
                             )}
                         </button>
@@ -346,66 +425,159 @@ const ManagerMealView: React.FC<{
     khataId: string;
 }> = ({ isFinalized, onFinalize, setIsEditingMember, memberList, khataId }) => {
     const totalQuantities = memberList.reduce((acc, m) => acc + m.meals.breakfast + m.meals.lunch + m.meals.dinner, 0);
+    const totalBreakfast = memberList.reduce((acc, m) => acc + m.meals.breakfast, 0);
+    const totalLunch = memberList.reduce((acc, m) => acc + m.meals.lunch, 0);
+    const totalDinner = memberList.reduce((acc, m) => acc + m.meals.dinner, 0);
+    const estimatedCost = totalQuantities * COST_PER_QUANTITY;
 
     return (
         <div className="space-y-6">
-            <div className="bg-card rounded-xl shadow-md p-6">
-                <h3 className="text-lg font-semibold mb-2">📅 Today - {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</h3>
-                <div className="border-t border-border my-3"></div>
-                <p className={`font-semibold ${isFinalized ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'}`}>
-                    {isFinalized ? '✅ Status: Finalized' : '⏰ Status: Not Finalized'}
-                </p>
+            {/* Enhanced Status Card with Statistics */}
+            <div className="bg-card rounded-2xl shadow-xl border border-border/50 overflow-hidden">
+                {/* Gradient Header */}
+                <div className="bg-gradient-to-br from-primary-500 via-primary-600 to-primary-700 p-6 sm:p-8 text-white relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent"></div>
+                    <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/5 rounded-full blur-3xl"></div>
+                    <div className="relative z-10">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                            <div>
+                                <div className="flex items-center gap-3 mb-2">
+                                    <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                                    </svg>
+                                    <h3 className="text-2xl sm:text-3xl font-bold">
+                                        {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                                    </h3>
+                                </div>
+                                <p className="text-primary-100 text-sm sm:text-base">Meal management dashboard</p>
+                            </div>
+                            <div className={`px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2 backdrop-blur-sm ${isFinalized
+                                ? 'bg-green-400/20 text-white border-2 border-green-300/30'
+                                : 'bg-yellow-400/20 text-white border-2 border-yellow-300/30'
+                                }`}>
+                                <span className={`w-2.5 h-2.5 rounded-full ${isFinalized ? 'bg-green-300' : 'bg-yellow-300 animate-pulse'}`}></span>
+                                {isFinalized ? 'Finalized' : 'Accepting Meals'}
+                            </div>
+                        </div>
+
+                        {/* Statistics Mini Cards */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-white/20">
+                                <div className="text-white/70 text-xs font-semibold uppercase tracking-wide mb-1">Total Meals</div>
+                                <div className="text-2xl sm:text-3xl font-bold tabular-nums">{totalQuantities}</div>
+                            </div>
+                            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-white/20">
+                                <div className="text-white/70 text-xs font-semibold uppercase tracking-wide mb-1 flex items-center gap-1">
+                                    <span className="text-base">🌅</span> Breakfast
+                                </div>
+                                <div className="text-2xl sm:text-3xl font-bold tabular-nums">{totalBreakfast}</div>
+                            </div>
+                            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-white/20">
+                                <div className="text-white/70 text-xs font-semibold uppercase tracking-wide mb-1 flex items-center gap-1">
+                                    <span className="text-base">🌞</span> Lunch
+                                </div>
+                                <div className="text-2xl sm:text-3xl font-bold tabular-nums">{totalLunch}</div>
+                            </div>
+                            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-white/20">
+                                <div className="text-white/70 text-xs font-semibold uppercase tracking-wide mb-1 flex items-center gap-1">
+                                    <span className="text-base">🌙</span> Dinner
+                                </div>
+                                <div className="text-2xl sm:text-3xl font-bold tabular-nums">{totalDinner}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Action Section */}
                 {!isFinalized && (
-                    <>
-                        <button onClick={onFinalize} className="mt-3 w-full py-2.5 bg-primary text-green-900 dark:text-green-200 font-semibold rounded-lg hover:bg-primary-600">📋 Finalize Today's Meals</button>
-                        <p className="text-xs text-muted-foreground mt-1 text-center">(After this, members can't change)</p>
-                    </>
+                    <div className="p-6 bg-gradient-to-br from-slate-50 to-white dark:from-slate-800/50 dark:to-slate-900/30 border-t border-border/50">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                            <div>
+                                <p className="text-sm font-semibold text-muted-foreground mb-1">Ready to finalize?</p>
+                                <p className="text-xs text-muted-foreground">This will lock meal counts for all members</p>
+                            </div>
+                            <button
+                                onClick={onFinalize}
+                                className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 text-white font-bold rounded-xl shadow-lg shadow-primary-500/20 hover:shadow-primary-500/40 transition-all active:scale-95 flex items-center justify-center gap-2"
+                            >
+                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                                </svg>
+                                <span>Finalize Today's Meals</span>
+                            </button>
+                        </div>
+                    </div>
                 )}
             </div>
 
-            <div className="bg-card rounded-xl shadow-md p-6">
-                <h3 className="text-lg font-semibold mb-2">📊 Today's Meal List</h3>
-                <div className="border-t border-border my-3"></div>
-                <div className="space-y-3">
+            {/* Member Meal Cards */}
+            <div>
+                <div className="flex items-center justify-between mb-5">
+                    <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
+                        <span className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 text-white rounded-xl flex items-center justify-center text-lg shadow-lg shadow-primary-500/20">
+                            👥
+                        </span>
+                        Member Overview
+                    </h3>
+                    <div className="px-3 py-1.5 bg-muted rounded-lg text-xs font-semibold text-muted-foreground">
+                        {memberList.length} {memberList.length === 1 ? 'member' : 'members'}
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {memberList.map(member => {
                         const total = member.meals.breakfast + member.meals.lunch + member.meals.dinner;
                         return (
-                            <div key={member.id} className="p-3 sm:p-4 bg-muted rounded-lg">
-                                <div className="flex justify-between items-start mb-2">
-                                    <p className="font-bold text-foreground text-base sm:text-lg">{member.name}</p>
+                            <div
+                                key={member.id}
+                                className="group relative bg-gradient-to-br from-card to-slate-50 dark:to-slate-900/50 hover:from-white hover:to-slate-50 dark:hover:from-slate-800 dark:hover:to-slate-800/80 rounded-2xl border-2 border-slate-200/60 dark:border-slate-700/60 hover:border-primary-300 dark:hover:border-primary-700 p-5 sm:p-6 transition-all duration-300 hover:shadow-xl hover:shadow-primary-500/10 hover:-translate-y-1"
+                            >
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className="flex-1">
+                                        <h4 className="font-bold text-base sm:text-lg text-foreground group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors mb-1">
+                                            {member.name}
+                                        </h4>
+                                        {total > 0 ? (
+                                            <p className="text-xs sm:text-sm font-semibold flex items-center gap-1.5">
+                                                <span className="text-green-600 dark:text-green-400">{total} meals</span>
+                                                <span className="text-muted-foreground">•</span>
+                                                <span className="text-muted-foreground">৳{(total * COST_PER_QUANTITY).toFixed(0)}</span>
+                                            </p>
+                                        ) : (
+                                            <p className="text-xs sm:text-sm font-medium text-slate-400">No meals added</p>
+                                        )}
+                                    </div>
                                     <button
                                         onClick={() => setIsEditingMember(member.name)}
-                                        className="text-xs sm:text-sm font-semibold text-primary hover:underline px-2 py-1 bg-background rounded shadow-sm"
+                                        className="px-3 py-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-white bg-slate-100 dark:bg-slate-800 hover:bg-primary-600 dark:hover:bg-primary-600 rounded-lg transition-all shadow-sm hover:shadow-md flex items-center gap-1.5"
                                     >
+                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                        </svg>
                                         Edit
                                     </button>
                                 </div>
-                                <div className="text-xs sm:text-sm mt-1 text-muted-foreground grid grid-cols-3 gap-2">
-                                    <div className="bg-background p-2 rounded text-center">
-                                        <div className="font-bold">{member.meals.breakfast}</div>
-                                        <div className="text-[10px] uppercase text-muted-foreground">Brk</div>
+
+                                <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                                    <div className="flex flex-col items-center bg-white dark:bg-slate-900/70 p-3 rounded-xl border border-slate-200 dark:border-slate-800 group-hover:border-orange-200 dark:group-hover:border-orange-900/50 transition-colors">
+                                        <span className="text-xl sm:text-2xl mb-1 transition-all group-hover:scale-110">🌅</span>
+                                        <span className="text-lg sm:text-xl font-bold text-slate-700 dark:text-slate-200 tabular-nums">{member.meals.breakfast}</span>
+                                        <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-0.5">Brkfst</span>
                                     </div>
-                                    <div className="bg-background p-2 rounded text-center">
-                                        <div className="font-bold">{member.meals.lunch}</div>
-                                        <div className="text-[10px] uppercase text-muted-foreground">Lun</div>
+                                    <div className="flex flex-col items-center bg-white dark:bg-slate-900/70 p-3 rounded-xl border border-slate-200 dark:border-slate-800 group-hover:border-yellow-200 dark:group-hover:border-yellow-900/50 transition-colors">
+                                        <span className="text-xl sm:text-2xl mb-1 transition-all group-hover:scale-110">🌞</span>
+                                        <span className="text-lg sm:text-xl font-bold text-slate-700 dark:text-slate-200 tabular-nums">{member.meals.lunch}</span>
+                                        <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-0.5">Lunch</span>
                                     </div>
-                                    <div className="bg-background p-2 rounded text-center">
-                                        <div className="font-bold">{member.meals.dinner}</div>
-                                        <div className="text-[10px] uppercase text-muted-foreground">Din</div>
+                                    <div className="flex flex-col items-center bg-white dark:bg-slate-900/70 p-3 rounded-xl border border-slate-200 dark:border-slate-800 group-hover:border-blue-200 dark:group-hover:border-blue-900/50 transition-colors">
+                                        <span className="text-xl sm:text-2xl mb-1 transition-all group-hover:scale-110">🌙</span>
+                                        <span className="text-lg sm:text-xl font-bold text-slate-700 dark:text-slate-200 tabular-nums">{member.meals.dinner}</span>
+                                        <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-0.5">Dinner</span>
                                     </div>
-                                </div>
-                                <div className="border-t border-border my-2"></div>
-                                <div className="flex justify-between items-center">
-                                    <p className="text-sm font-semibold text-muted-foreground">Total Quantities</p>
-                                    <p className="font-bold text-lg text-primary-600 dark:text-primary-400">{total}</p>
                                 </div>
                             </div>
                         );
                     })}
-                </div>
-                <div className="border-t border-border my-3"></div>
-                <div className="text-center font-semibold">
-                    <p>Total Today: {totalQuantities} quantities</p>
                 </div>
             </div>
 
@@ -445,12 +617,12 @@ export default function MealManagementPage() {
                 const [meals, finalizationStatus, members] = await Promise.all([
                     api.getMeals(user.khataId, todayStr, endOfDayStr),
                     api.getFinalizationStatus(user.khataId, todayStr),
-                    user.role === Role.Manager ? api.getMembersForRoom(user.khataId) : Promise.resolve([])
+                    (user.role === Role.Manager || user.role === Role.MasterManager) ? api.getMembersForRoom(user.khataId) : Promise.resolve([])
                 ]);
 
                 setIsFinalized(finalizationStatus.isFinalized);
 
-                if (user.role === Role.Manager) {
+                if (user.role === Role.Manager || user.role === Role.MasterManager) {
                     const mealList = members.map(member => {
                         const memberMeal = meals.find(m => {
                             const mealUserId = typeof m.userId === 'object' ? m.userId._id : m.userId;
@@ -582,13 +754,22 @@ export default function MealManagementPage() {
     return (
         <>
             <AppLayout>
-                <div className="space-y-6 animate-fade-in">
-                    <div className="flex items-center gap-3 sm:gap-4">
-                        <MealIcon className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
-                        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Meal Management</h1>
+                <div className="space-y-6">
+                    {/* Enhanced Page Header */}
+                    <div className="relative overflow-hidden bg-gradient-to-br from-primary-500/10 via-primary-400/5 to-transparent dark:from-primary-900/20 dark:via-primary-800/10 rounded-2xl p-6 sm:p-8 border border-primary-200/30 dark:border-primary-800/30">
+                        <div className="absolute inset-0 bg-gradient-to-r from-white/40 to-transparent dark:from-white/5 dark:to-transparent"></div>
+                        <div className="relative z-10 flex items-center gap-4">
+                            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center shadow-lg shadow-primary-500/30 animate-pulse">
+                                <MealIcon className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+                            </div>
+                            <div>
+                                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground">Meal Management</h1>
+                                <p className="text-sm sm:text-base text-muted-foreground mt-1">Track and manage daily meal counts</p>
+                            </div>
+                        </div>
                     </div>
 
-                    {user.role === Role.Manager ? (
+                    {(user.role === Role.Manager || user.role === Role.MasterManager) ? (
                         <ManagerMealView
                             isFinalized={isFinalized}
                             onFinalize={handleFinalize}
@@ -611,7 +792,7 @@ export default function MealManagementPage() {
                 </div>
             </AppLayout>
 
-            {user.role === Role.Manager && isEditingMember && (
+            {(user.role === Role.Manager || user.role === Role.MasterManager) && isEditingMember && (
                 <ManagerEditModal
                     member={managerMealList.find(m => m.name === isEditingMember)!}
                     onClose={() => setIsEditingMember(null)}

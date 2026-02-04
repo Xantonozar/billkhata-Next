@@ -37,7 +37,7 @@ export default function PendingApprovalsPage() {
     const [receiptModalUrl, setReceiptModalUrl] = useState<string | null>(null);
 
     const fetchData = async () => {
-        if (user?.khataId && user.role === Role.Manager) {
+        if (user?.khataId && (user.role === Role.Manager || user.role === Role.MasterManager)) {
             setLoading(true);
             try {
                 // Fetch all data in parallel for faster loading
@@ -98,10 +98,10 @@ export default function PendingApprovalsPage() {
     };
 
     const handleDenyMember = async (userId: string) => {
-        addToast({ 
-            type: 'info', 
-            title: 'Feature Not Available', 
-            message: 'Denying member requests is not currently supported. You can approve requests or contact support for assistance.' 
+        addToast({
+            type: 'info',
+            title: 'Feature Not Available',
+            message: 'Denying member requests is not currently supported. You can approve requests or contact support for assistance.'
         });
     };
 
@@ -208,7 +208,7 @@ export default function PendingApprovalsPage() {
         }
     };
 
-    if (user?.role !== Role.Manager) {
+    if (user?.role !== Role.Manager && user?.role !== Role.MasterManager) {
         return (
             <AppLayout>
                 <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-6 animate-fade-in">

@@ -34,7 +34,7 @@ export default function DutyPage() {
                     </div>
                 </div>
 
-                {user.role === Role.Manager ? <ManagerDutyView /> : <MemberDutyView />}
+                {(user.role === Role.Manager || user.role === Role.MasterManager) ? <ManagerDutyView /> : <MemberDutyView />}
             </div>
         </AppLayout>
     );

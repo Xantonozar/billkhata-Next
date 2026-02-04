@@ -21,7 +21,7 @@ export async function POST(
             return NextResponse.json({ error: 'User not in a room' }, { status: 400 });
         }
 
-        if (user.role !== 'Manager') {
+        if (user.role !== 'Manager' && user.role !== 'MasterManager') {
             return NextResponse.json({ error: 'Only managers can end calculation periods' }, { status: 403 });
         }
 

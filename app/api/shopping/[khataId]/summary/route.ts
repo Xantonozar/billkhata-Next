@@ -40,28 +40,23 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ khat
             });
         }
 
-        // If no period, return zeros
-        if (!targetPeriod) {
-            return NextResponse.json({
-                fundStatus: {
-                    totalDeposits: 0,
-                    totalShopping: 0,
-                    totalBillPayments: 0,
-                    balance: 0,
-                    totalMeals: 0,
-                    rate: 0
-                },
-                memberSummary: {
-                    totalDeposits: 0,
-                    totalExpenses: 0,
-                    totalBillPayments: 0,
-                    mealCost: 0,
-                    refundable: 0
-                }
-            });
-        }
+
 
         // Run all aggregations in parallel (filtered by target period)
+        // IMPORTANT: We now strictly filter by period ID only
+        // Do NOT include unallocated items (calculationPeriodId: null) as they belong to old periods
+        let periodQuery: any = {};
+
+        if (targetPeriod) {
+            // Strict filtering: ONLY this period's data
+            periodQuery = { calculationPeriodId: targetPeriod._id };
+        } else {
+            // If no active period, return zeros (no data to show)
+            // This prevents showing old unallocated data in new periods
+            periodQuery = { calculationPeriodId: 'no-active-period' }; // Match nothing
+        }
+
+
         const [
             depositStats,
             expenseStats,
@@ -73,7 +68,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ khat
         ] = await Promise.all([
             // 1. Total Deposits (Approved only, current period)
             Deposit.aggregate([
-                { $match: { khataId, status: 'Approved', calculationPeriodId: targetPeriod._id } },
+                { $match: { khataId, status: 'Approved', ...periodQuery } },
                 { $group: { _id: null, total: { $sum: '$amount' } } }
             ]),
             // 2. Total Shopping (Approved only, excluding bill payments, current period)
@@ -82,7 +77,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ khat
                     $match: {
                         khataId,
                         status: 'Approved',
-                        calculationPeriodId: targetPeriod._id,
+                        ...periodQuery,
                         $or: [
                             { category: 'Shopping' },
                             { category: { $exists: false } }  // Old expenses without category
@@ -93,17 +88,17 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ khat
             ]),
             // 3. Total Bill Payments (Approved only, current period)
             Expense.aggregate([
-                { $match: { khataId, status: 'Approved', category: 'BillPayment', calculationPeriodId: targetPeriod._id } },
+                { $match: { khataId, status: 'Approved', category: 'BillPayment', ...periodQuery } },
                 { $group: { _id: null, total: { $sum: '$amount' } } }
             ]),
             // 4. Total meals for all members (current period)
             Meal.aggregate([
-                { $match: { khataId, calculationPeriodId: targetPeriod._id } },
+                { $match: { khataId, ...periodQuery } },
                 { $group: { _id: null, total: { $sum: '$totalMeals' } } }
             ]),
             // 5. Member specific deposits (current period)
             Deposit.aggregate([
-                { $match: { khataId, userId: user._id, status: 'Approved', calculationPeriodId: targetPeriod._id } },
+                { $match: { khataId, userId: user._id, status: 'Approved', ...periodQuery } },
                 { $group: { _id: null, total: { $sum: '$amount' } } }
             ]),
             // 6. Member specific expenses (excluding bill payments, current period)
@@ -113,7 +108,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ khat
                         khataId,
                         userId: user._id,
                         status: 'Approved',
-                        calculationPeriodId: targetPeriod._id,
+                        ...periodQuery,
                         $or: [
                             { category: 'Shopping' },
                             { category: { $exists: false } }  // Old expenses without category
@@ -124,7 +119,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ khat
             ]),
             // 7. Member's total meals (current period)
             Meal.aggregate([
-                { $match: { khataId, userId: user._id, calculationPeriodId: targetPeriod._id } },
+                { $match: { khataId, userId: user._id, ...periodQuery } },
                 { $group: { _id: null, total: { $sum: '$totalMeals' } } }
             ])
         ]);
@@ -151,7 +146,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ khat
 
         // 8. Member's Bill Payments (current period)
         const memberBillPaymentStats = await Expense.aggregate([
-            { $match: { khataId, userId: user._id, status: 'Approved', category: 'BillPayment', calculationPeriodId: targetPeriod._id } },
+            { $match: { khataId, userId: user._id, status: 'Approved', category: 'BillPayment', ...periodQuery } },
             { $group: { _id: null, total: { $sum: '$amount' } } }
         ]);
         const memberTotalBillPayments = memberBillPaymentStats.length > 0 ? memberBillPaymentStats[0].total : 0;

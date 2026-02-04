@@ -25,7 +25,7 @@ const CalculationPeriodControls: React.FC<CalculationPeriodControlsProps> = ({
     const [showEndModal, setShowEndModal] = useState(false);
 
     // Only managers can see these controls
-    if (user?.role !== Role.Manager) {
+    if (user?.role !== Role.Manager && user?.role !== Role.MasterManager) {
         return null;
     }
 

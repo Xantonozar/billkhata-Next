@@ -18,7 +18,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ user
 
         // Users can only check their own balance, or managers can check anyone's
         // Convert both to strings for comparison
-        if (user._id.toString() !== userId && user.role !== 'Manager') {
+        if (user._id.toString() !== userId && user.role !== 'Manager' && user.role !== 'MasterManager') {
             return NextResponse.json({ message: 'Not authorized' }, { status: 403 });
         }
 

@@ -23,7 +23,7 @@ const userSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['Manager', 'Member'],
+        enum: ['Manager', 'MasterManager', 'Member'],
         required: true
     },
     roomStatus: {
@@ -48,6 +48,10 @@ const userSchema = new mongoose.Schema({
         default: null
     },
     isVerified: {
+        type: Boolean,
+        default: false
+    },
+    isDummyAccount: {
         type: Boolean,
         default: false
     },

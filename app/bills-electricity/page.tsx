@@ -278,7 +278,7 @@ export default function RentBillsPage() {
                             <div className="scale-75 sm:scale-100 -ml-1 sm:ml-0">{ICON}</div>
                             <h1 className="text-xl sm:text-3xl font-bold text-slate-900 dark:text-white font-sans">{CATEGORY} <span className="hidden sm:inline">Bills</span></h1>
                         </div>
-                        {user.role === Role.Manager && (
+                        {user.role === Role.Manager || user.role === Role.MasterManager && (
                             <button onClick={() => setIsAddModalOpen(true)} className="flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-gradient-success text-white font-semibold rounded-md hover:shadow-lg text-sm sm:text-base"><PlusIcon className="w-4 h-4 sm:w-5 sm:h-5" />Add<span className="hidden sm:inline"> Bill</span></button>
                         )}
                     </div>
@@ -292,10 +292,10 @@ export default function RentBillsPage() {
                     {!selectedMonthBill ? (
                         <div className="text-center py-12 bg-white dark:bg-slate-800 rounded-lg shadow-sm">
                             <h3 className="text-lg font-medium font-sans text-slate-900 dark:text-white">No {CATEGORY} bill for {selectedMonth}.</h3>
-                            {user.role === Role.Manager && <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Click "Add Bill" to create one.</p>}
+                            {(user.role === Role.Manager || user.role === Role.MasterManager) && <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Click "Add Bill" to create one.</p>}
                         </div>
                     ) : (
-                        user.role === Role.Manager ? renderManagerView(selectedMonthBill) : renderMemberView(selectedMonthBill)
+                        (user.role === Role.Manager || user.role === Role.MasterManager) ? renderManagerView(selectedMonthBill) : renderMemberView(selectedMonthBill)
                     )}
                 </div>
             </AppLayout>

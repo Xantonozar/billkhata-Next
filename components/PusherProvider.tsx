@@ -46,7 +46,7 @@ export const PusherProvider: React.FC<PusherProviderProps> = ({
         channelsRef.current.add(`user-${user.id}`);
 
         // If manager, also subscribe to room channel
-        if (user.role === Role.Manager && user.khataId) {
+        if ((user.role === Role.Manager || user.role === Role.MasterManager) && user.khataId) {
             const roomChannel = pusher.subscribe(`room-${user.khataId}`);
             channelsRef.current.add(`room-${user.khataId}`);
 

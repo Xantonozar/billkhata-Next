@@ -106,7 +106,7 @@ export default function BillsOverviewPage() {
         // Bills are already filtered by backend for the selected month
         const currentMonthBills = bills;
 
-        if (user?.role === Role.Manager) {
+        if (user?.role === Role.Manager || user?.role === Role.MasterManager) {
             const totalAmount = currentMonthBills.reduce((acc, bill) => acc + bill.totalAmount, 0);
             const paidAmount = currentMonthBills.reduce((acc, bill) => {
                 const billPaid = bill.shares.filter(s => s.status === 'Paid').reduce((sum, s) => sum + s.amount, 0);
@@ -163,7 +163,7 @@ export default function BillsOverviewPage() {
                             </select>
                         </div>
                     </div>
-                    {user.role === Role.Manager && (
+                    {(user.role === Role.Manager || user.role === Role.MasterManager) && (
                         <button
                             onClick={() => router.push('/bills/create')}
                             className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 dark:from-indigo-600 dark:to-purple-600 dark:hover:from-indigo-500 dark:hover:to-purple-500 earthy-green:from-[#a3c24d] earthy-green:to-[#8fb339] earthy-green:hover:from-[#8fb339] earthy-green:hover:to-[#6d8b2a] text-white font-semibold rounded-2xl shadow-lg shadow-violet-200 dark:shadow-none earthy-green:shadow-[#b7ce63]/50 transition-all active:scale-95"

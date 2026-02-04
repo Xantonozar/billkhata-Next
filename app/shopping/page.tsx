@@ -32,7 +32,9 @@ export default function ShoppingPage() {
         const fetchActivePeriod = async () => {
             const period = await api.getActiveCalculationPeriod();
             setActivePeriod(period);
-            if (period && !selectedPeriodId) {
+            // Always update selected period to the active one when it changes
+            // This ensures auto-switch after ending/starting periods
+            if (period) {
                 setSelectedPeriodId(period._id);
             }
         };
@@ -43,6 +45,7 @@ export default function ShoppingPage() {
     }, [user, refreshKey]);
 
     const handlePeriodChanged = () => {
+        // Trigger refetch of active period and auto-select it
         setRefreshKey(prev => prev + 1);
     };
 
@@ -75,7 +78,7 @@ export default function ShoppingPage() {
                 {!activePeriod && (
                     <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
                         <p className="text-sm font-semibold text-yellow-800 dark:text-yellow-200">
-                            ⚠️ No active calculation period. {user.role === Role.Manager ? 'Click "Start Calculation" to begin.' : 'Ask the manager to start a new calculation period.'}
+                            ⚠️ No active calculation period. {(user.role === Role.Manager || user.role === Role.MasterManager) ? 'Click "Start Calculation" to begin.' : 'Ask the manager to start a new calculation period.'}
                         </p>
                     </div>
                 )}
@@ -88,7 +91,7 @@ export default function ShoppingPage() {
                     </div>
                 )}
 
-                {user.role === Role.Manager ? (
+                {(user.role === Role.Manager || user.role === Role.MasterManager) ? (
                     <ManagerShoppingView
                         selectedPeriodId={selectedPeriodId}
                         isActivePeriod={isViewingActivePeriod}

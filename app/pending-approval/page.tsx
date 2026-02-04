@@ -70,7 +70,7 @@ export default function PendingApprovalPage() {
             const updatedUser = { ...user, roomStatus: RoomStatus.NoRoom };
             setUser(updatedUser);
             addToast({ type: 'warning', title: 'Request Withdrawn', message: 'You have withdrawn your request to join the room.' });
-            router.push(user.role === 'Manager' ? '/create-room' : '/join-room');
+            router.push(user.role === 'Manager' || user.role === 'MasterManager' ? '/create-room' : '/join-room');
         }
     };
 

@@ -266,10 +266,10 @@ export default function MenuPage() {
                                 return (
                                     <div
                                         key={item.day}
-                                        onClick={() => user?.role === Role.Manager && setEditingDay(item.day)}
+                                        onClick={() => (user?.role === Role.Manager || user?.role === Role.MasterManager) && setEditingDay(item.day)}
                                         className={`group relative bg-card rounded-2xl shadow-sm border transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col h-full overflow-hidden
                                         ${isToday ? 'border-primary-500/30 ring-1 ring-primary-500/20' : 'border-slate-100 dark:border-slate-800'}
-                                        ${user?.role === Role.Manager ? 'cursor-pointer' : ''}`}
+                                        ${(user?.role === Role.Manager || user?.role === Role.MasterManager) ? 'cursor-pointer' : ''}`}
                                     >
 
                                         {/* Day Header */}
@@ -280,7 +280,7 @@ export default function MenuPage() {
                                                 </h3>
                                                 {isToday && <span className="text-[10px] uppercase font-bold text-primary-500 tracking-wider">Today</span>}
                                             </div>
-                                            {user?.role === Role.Manager && (
+                                            {(user?.role === Role.Manager || user?.role === Role.MasterManager) && (
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
@@ -340,7 +340,7 @@ export default function MenuPage() {
                             })}
                         </div>
 
-                        {user?.role === Role.Manager && (
+                        {(user?.role === Role.Manager || user?.role === Role.MasterManager) && (
                             <div className="flex justify-end pt-4 border-t border-slate-200 dark:border-slate-800">
                                 <button
                                     onClick={() => setEditingDay('Permanent')}

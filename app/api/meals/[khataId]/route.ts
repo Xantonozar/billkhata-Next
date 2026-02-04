@@ -93,13 +93,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ kha
         let targetUserName = user.name;
 
         if (userId && userId !== user._id.toString()) {
-            if (user.role !== 'Manager') {
+            if (user.role !== 'Manager' && user.role !== 'MasterManager') {
                 return NextResponse.json({ message: 'Only managers can update other members\' meals' }, { status: 403 });
             }
             targetUserId = userId;
             if (userName) targetUserName = userName;
         } else {
-            if (finalization && user.role !== 'Manager') {
+            if (finalization && user.role !== 'Manager' && user.role !== 'MasterManager') {
                 return NextResponse.json({
                     message: 'This date has been finalized by the manager. You cannot update your meals.',
                     isFinalized: true
@@ -160,7 +160,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ kha
         try {
             const { pushToRoom, pushToUser } = await import('@/lib/pusher');
 
-            if (user.role === 'Manager' && targetUserId.toString() !== user._id.toString()) {
+            if ((user.role === 'Manager' || user.role === 'MasterManager') && targetUserId.toString() !== user._id.toString()) {
                 // Manager updated a member's meal -> Notify Member
                 await pushToUser(targetUserId.toString(), 'meal-updated', {
                     type: 'meal-updated',

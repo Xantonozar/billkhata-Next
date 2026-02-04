@@ -601,7 +601,7 @@ export default function SettingsPage() {
                                                 >
                                                     <MailIcon className="w-3 h-3" />
                                                     Unverified - Click to verify
-                                                </Link>                                            )}
+                                                </Link>)}
                                         </div>
                                         {(user.whatsapp || user.facebook) && (
                                             <div className="pt-2 space-y-1 text-sm text-muted-foreground">
@@ -683,7 +683,7 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Reminders Section (Managers Only) */}
-                {user.role === 'Manager' && (
+                {(user.role === 'Manager' || user.role === 'MasterManager') && (
                     <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
                         <div className="p-4 sm:p-6 border-b border-border">
                             <h2 className="text-lg font-semibold flex items-center gap-2 text-card-foreground">

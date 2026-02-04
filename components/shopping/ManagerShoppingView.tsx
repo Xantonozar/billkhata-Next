@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { api } from '@/services/api';
-import { FundAdjustmentModal } from './Modals';
+import { FundAdjustmentModal, AddManagerShoppingModal, AddDepositModal } from './Modals';
 import { Plus, Banknote } from 'lucide-react';
 
 interface ManagerShoppingViewProps {
@@ -179,7 +179,7 @@ const ManagerShoppingView: React.FC<ManagerShoppingViewProps> = ({ selectedPerio
                                     <p className="text-sm text-muted-foreground">Current Rate</p><p className="font-bold text-lg text-card-foreground">৳{fundStatus.rate.toFixed(2)}</p>
                                 </div>
                                 <div className="p-3 bg-blue-50 dark:bg-blue-500/10 rounded-md flex justify-between sm:block">
-                                    <p className="text-sm text-blue-600 dark:text-blue-300">Total Meals</p><p className="font-bold text-lg text-blue-600 dark:text-blue-300">{fundStatus.totalMeals.toFixed(0)}</p>
+                                    <p className="text-sm text-blue-600 dark:text-blue-300">Total Meals</p><p className="font-bold text-lg text-blue-600 dark:text-blue-300">{fundStatus.totalMeals.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
                                 </div>
                             </div>
                         </div>
@@ -234,6 +234,7 @@ const ManagerShoppingView: React.FC<ManagerShoppingViewProps> = ({ selectedPerio
                                     <tr className="text-xs font-semibold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
                                         <th className="py-2 px-2">Member</th>
                                         <th className="py-2 px-2 text-right">Deposits</th>
+                                        <th className="py-2 px-2 text-right">Meals</th>
                                         <th className="py-2 px-2 text-right">Meal Cost</th>
                                         <th className="py-2 px-2 text-right">Bills</th>
                                         <th className="py-2 px-2 text-right">Balance</th>
@@ -244,23 +245,24 @@ const ManagerShoppingView: React.FC<ManagerShoppingViewProps> = ({ selectedPerio
                                     {memberBalances.filter(m => m.userId !== user?.id).map((m) => (
                                         <tr key={m.userId} className="border-b border-slate-100 dark:border-slate-800 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-700/30">
                                             <td className="py-3 px-2 font-medium text-slate-900 dark:text-white">{m.name}</td>
-                                            <td className="py-3 px-2 text-right text-slate-600 dark:text-slate-400">৳{m.totalDeposits.toFixed(0)}</td>
-                                            <td className="py-3 px-2 text-right text-slate-600 dark:text-slate-400">৳{m.mealCost.toFixed(0)}</td>
-                                            <td className="py-3 px-2 text-right text-orange-600 dark:text-orange-400">৳{m.totalBillPayments.toFixed(0)}</td>
+                                            <td className="py-3 px-2 text-right text-slate-600 dark:text-slate-400">৳{m.totalDeposits.toFixed(2)}</td>
+                                            <td className="py-3 px-2 text-right text-blue-600 dark:text-blue-400 font-medium">{m.totalMeals.toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
+                                            <td className="py-3 px-2 text-right text-slate-600 dark:text-slate-400">৳{m.mealCost.toFixed(2)}</td>
+                                            <td className="py-3 px-2 text-right text-orange-600 dark:text-orange-400">৳{m.totalBillPayments.toFixed(2)}</td>
                                             <td className={`py-3 px-2 text-right font-bold ${m.balance >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-500'}`}>
                                                 {m.balance >= 0 ? '+' : ''}৳{m.balance.toFixed(2)}
                                             </td>
                                             <td className="py-3 px-2 text-center">
-                                                {/* <button
+                                                <button
                                                     onClick={() => setAdjustUser({ id: m.userId, name: m.name })}
                                                     className="px-3 py-1 bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300 rounded-md text-xs font-semibold hover:bg-primary-200 transition-colors"
                                                 >
-                                                    Adjust
-                                                </button> */}
+                                                    Edit Fund
+                                                </button>
                                             </td>
                                         </tr>
                                     ))}
-                                    {memberBalances.length === 0 && <tr><td colSpan={6} className="py-8 text-center text-slate-500">No members found.</td></tr>}
+                                    {memberBalances.length === 0 && <tr><td colSpan={7} className="py-8 text-center text-slate-500">No members found.</td></tr>}
                                 </tbody>
                             </table>
                         </div>
@@ -295,7 +297,9 @@ const ManagerShoppingView: React.FC<ManagerShoppingViewProps> = ({ selectedPerio
                                                 <td className="py-3 text-slate-600">{new Date(d.createdAt).toLocaleDateString()}</td>
                                                 <td className="py-3 font-medium">{d.userName}</td>
                                                 <td className="py-3 text-slate-500 text-xs">{d.paymentMethod}</td>
-                                                <td className="py-3 text-right font-bold text-green-600">+৳{d.amount.toFixed(2)}</td>
+                                                <td className={`py-3 text-right font-bold ${d.amount >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                                                    {d.amount > 0 ? '+' : ''}৳{d.amount.toFixed(2)}
+                                                </td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -335,6 +339,29 @@ const ManagerShoppingView: React.FC<ManagerShoppingViewProps> = ({ selectedPerio
                 />,
                 document.body
             )}
+
+
+            {
+                showAddExpense && createPortal(
+                    <AddManagerShoppingModal
+                        onClose={() => setShowAddExpense(false)}
+                        onSubmit={fetchData}
+                        members={memberBalances.map(m => ({ userId: m.userId, name: m.name }))}
+                    />,
+                    document.body
+                )
+            }
+
+            {
+                showAddDeposit && createPortal(
+                    <AddDepositModal
+                        onClose={() => setShowAddDeposit(false)}
+                        onSubmit={fetchData}
+                        members={memberBalances.map(m => ({ userId: m.userId, name: m.name }))}
+                    />,
+                    document.body
+                )
+            }
         </>
     );
 };

@@ -58,10 +58,33 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ kha
         if (!user) return NextResponse.json({ message: 'Not authorized' }, { status: 401 });
 
         const { khataId } = await params;
-        const { amount, items, notes, receiptUrl } = await req.json();
+        const { amount, items, itemsList, notes, receiptUrl, userId, status } = await req.json();
 
         if (user.khataId !== khataId) {
             return NextResponse.json({ message: 'Access denied' }, { status: 403 });
+        }
+
+        let finalUserId = user._id;
+        let finalUserName = user.name;
+        let finalStatus = 'Pending';
+        let approvedBy = undefined;
+        let approvedAt = undefined;
+
+        // Manager Override Logic
+        if ((user.role === 'Manager' || user.role === 'MasterManager')) {
+            if (status === 'Approved') {
+                finalStatus = 'Approved';
+                approvedBy = user._id;
+                approvedAt = new Date();
+            }
+            if (userId && userId !== user._id) {
+                const User = await import('@/models/User').then(mod => mod.default);
+                const targetUser = await User.findById(userId).select('name');
+                if (targetUser) {
+                    finalUserId = userId;
+                    finalUserName = targetUser.name;
+                }
+            }
         }
 
         // Find active calculation period
@@ -73,13 +96,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ kha
 
         const expense = await Expense.create({
             khataId,
-            userId: user._id,
-            userName: user.name,
+            userId: finalUserId,
+            userName: finalUserName,
             amount,
-            items,
+            items: items || itemsList || '', // Handle both field names
             notes: notes || '',
             receiptUrl: receiptUrl || '',
-            status: 'Pending',
+            status: finalStatus,
+            approvedBy,
+            approvedAt,
             calculationPeriodId: activePeriod ? activePeriod._id : undefined
         });
 

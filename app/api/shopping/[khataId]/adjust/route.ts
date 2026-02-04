@@ -1,8 +1,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import Deposit from '@/models/Deposit';
-import Expense from '@/models/Expense';
 import Notification from '@/models/Notification';
+import CalculationPeriod from '@/models/CalculationPeriod';
 import connectDB from '@/lib/db';
 import { getSession } from '@/lib/auth';
 import pusherServer, { pushToUser } from '@/lib/pusher';
@@ -11,7 +11,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ kha
     try {
         await connectDB();
         const session = await getSession(req);
-        if (!session || session.role !== 'Manager') {
+        if (!session || (session.role !== 'Manager' && session.role !== 'MasterManager')) {
             return NextResponse.json({ message: 'Not authorized' }, { status: 403 });
         }
 
@@ -23,49 +23,41 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ kha
         const body = await req.json();
         const { userId, type, amount, reason } = body;
 
-        if (!userId || !type || !amount) {
+        if (!userId || !type || amount === undefined) {
             return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
         }
 
-        let result;
-        let notificationMessage = '';
+        // Get active calculation period
+        const activePeriod = await CalculationPeriod.findOne({ khataId, status: 'Active' });
+        const calculationPeriodId = activePeriod ? activePeriod._id : null;
 
-        if (type === 'ADD') {
-            // Create APPROVED Deposit
-            result = await Deposit.create({
-                khataId,
-                userId,
-                amount,
-                paymentMethod: 'Manager Adjustment',
-                transactionId: 'MANUAL',
-                status: 'Approved',
-                userName: 'Manager Adjustment', // Ideally fetch user name but for now this is placeholder
-                notes: reason || 'Fund added by manager'
-            });
-            notificationMessage = `Manager added ৳${amount} to your fund. Reason: ${reason || 'Adjustment'}`;
+        // Calculate final amount (Positive for ADD, Negative for DEDUCT)
+        const finalAmount = type === 'ADD' ? Math.abs(amount) : -Math.abs(amount);
+        const actionText = type === 'ADD' ? 'added' : 'deducted';
+        const notes = reason || (type === 'ADD' ? 'Fund added by manager' : 'Fund deducted by manager');
 
-        } else if (type === 'DEDUCT') {
-            // Create APPROVED Expense
-            result = await Expense.create({
-                khataId,
-                userId, // Attributed to the user
-                amount,
-                items: reason || 'Fund Deduction',
-                category: 'Adjustment', // New category
-                status: 'Approved',
-                userName: 'Manager Adjustment',
-                notes: 'Fund deducted by manager'
-            });
-            notificationMessage = `Manager deducted ৳${amount} from your fund. Reason: ${reason || 'Adjustment'}`;
-        } else {
-            return NextResponse.json({ message: 'Invalid type' }, { status: 400 });
-        }
+        // Create APPROVED Deposit (Adjustment)
+        const result = await Deposit.create({
+            khataId,
+            userId,
+            amount: finalAmount,
+            paymentMethod: 'Manager Adjustment',
+            transactionId: 'MANUAL',
+            status: 'Approved',
+            userName: 'Manager Adjustment',
+            notes,
+            calculationPeriodId,
+            approvedBy: session._id,
+            approvedAt: new Date()
+        });
+
+        const notificationMessage = `Manager ${actionText} ৳${Math.abs(amount)} ${type === 'ADD' ? 'to' : 'from'} your fund. Reason: ${reason || 'Adjustment'}`;
 
         // Create Notification
         await Notification.create({
             khataId,
             userId,
-            type: type === 'ADD' ? 'deposit_approved' : 'expense_approved', // Reusing existing types or could be 'info'
+            type: 'deposit', // Always deposit type
             title: 'Fund Adjustment',
             message: notificationMessage,
             link: '/shopping',
@@ -74,7 +66,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ kha
 
         // Trigger real-time event to the specific user
         await pushToUser(userId, 'notification', {
-            type: 'allow', // generic type
+            type: 'allow',
             message: notificationMessage
         });
 
@@ -85,8 +77,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ kha
 
         return NextResponse.json({ success: true, result });
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('Fund adjustment error:', error);
-        return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
+        return NextResponse.json({ message: error.message || 'Internal server error' }, { status: 500 });
     }
 }

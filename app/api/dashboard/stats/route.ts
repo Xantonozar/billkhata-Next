@@ -107,7 +107,7 @@ export async function GET(req: NextRequest) {
             }
         };
 
-        if (user.role === Role.Manager) {
+        if (user.role === Role.Manager || user.role === Role.MasterManager) {
             // --- MANAGER STATS ---
             const [
                 bills,
@@ -119,7 +119,7 @@ export async function GET(req: NextRequest) {
                 approvedExpenses
             ] = await Promise.all([
                 Bill.find(currentMonthBillQuery).lean(),
-                User.countDocuments({ khataId: user.khataId, roomStatus: RoomStatus.Approved, role: { $ne: Role.Manager } }),
+                User.countDocuments({ khataId: user.khataId, roomStatus: RoomStatus.Approved, role: { $nin: [Role.Manager, Role.MasterManager] } }),
                 Deposit.find({ ...periodQuery, status: 'Pending' }).lean(),
                 Expense.find({ ...periodQuery, status: 'Pending' }).lean(),
                 User.countDocuments({ khataId: user.khataId, roomStatus: RoomStatus.Pending }),

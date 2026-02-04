@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'User not in a room' }, { status: 400 });
         }
 
-        if (user.role !== 'Manager') {
+        if (user.role !== 'Manager' && user.role !== 'MasterManager') {
             return NextResponse.json({ error: 'Only managers can start calculation periods' }, { status: 403 });
         }
 
@@ -75,6 +75,7 @@ export async function POST(req: NextRequest) {
         }
 
         // Create new calculation period
+
         const newPeriod = new CalculationPeriod({
             khataId: user.khataId,
             name,
@@ -84,6 +85,28 @@ export async function POST(req: NextRequest) {
         });
 
         await newPeriod.save();
+
+        // Auto-assign any unallocated data (Deposits, Expenses, Meals) to this new period
+        // This ensures items added before the period started are not lost
+        const Deposit = await import('@/models/Deposit').then(mod => mod.default);
+        const Expense = await import('@/models/Expense').then(mod => mod.default);
+        const Meal = await import('@/models/Meal').then(mod => mod.default);
+
+        await Promise.all([
+            Deposit.updateMany(
+                { khataId: user.khataId, calculationPeriodId: null },
+                { $set: { calculationPeriodId: newPeriod._id } }
+            ),
+            Expense.updateMany(
+                { khataId: user.khataId, calculationPeriodId: null },
+                { $set: { calculationPeriodId: newPeriod._id } }
+            ),
+            Meal.updateMany(
+                { khataId: user.khataId, calculationPeriodId: null },
+                { $set: { calculationPeriodId: newPeriod._id } }
+            )
+        ]);
+
         await newPeriod.populate('startedBy', 'name');
 
         return NextResponse.json(newPeriod, { status: 201 });

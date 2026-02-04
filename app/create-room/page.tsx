@@ -17,16 +17,21 @@ export default function CreateRoomPage() {
     const { addToast } = useNotifications();
     const router = useRouter();
 
+    const [updatedUser, setUpdatedUser] = useState<any>(null);
+
     const handleCreateRoom = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
 
         try {
             const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-            const success = await api.createRoom(roomName, code);
+            const result = await api.createRoom(roomName, code);
 
-            if (success) {
+            if (result.success) {
                 setGeneratedCode(code);
+                if (result.user) {
+                    setUpdatedUser(result.user);
+                }
                 addToast({ type: 'success', title: 'Success!', message: 'Room created successfully.' });
             } else {
                 addToast({ type: 'error', title: 'Error', message: 'Failed to create room. Please try again.' });
@@ -48,10 +53,13 @@ export default function CreateRoomPage() {
     };
 
     const finishOnboarding = async () => {
-        if (user) {
-            const updatedUser = await api.getCurrentUser();
-            if (updatedUser) {
-                setUser(updatedUser);
+        if (updatedUser) {
+            setUser(updatedUser);
+            router.push('/dashboard');
+        } else if (user) {
+            const fetchedUser = await api.getCurrentUser();
+            if (fetchedUser) {
+                setUser(fetchedUser);
                 router.push('/dashboard');
             }
         }

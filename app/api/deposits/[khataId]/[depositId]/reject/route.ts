@@ -9,7 +9,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ khat
         const user = await getSession(req);
         if (!user) return NextResponse.json({ message: 'Not authorized' }, { status: 401 });
 
-        if (user.role !== 'Manager') {
+        if (user.role !== 'Manager' && user.role !== 'MasterManager') {
             return NextResponse.json({ message: 'Not authorized as Manager' }, { status: 403 });
         }
 

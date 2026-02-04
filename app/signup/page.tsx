@@ -94,8 +94,8 @@ export default function SignUpPage() {
 
                     <div className="space-y-3">
                         <label className="text-sm font-medium text-foreground ml-1">I want to:</label>
-                        <div className="grid grid-cols-2 gap-4">
-                            {[Role.Manager, Role.Member].map((r) => (
+                        <div className="grid grid-cols-1 gap-4">
+                            {[Role.Manager, Role.MasterManager, Role.Member].map((r) => (
                                 <label
                                     key={r}
                                     className={`relative flex flex-col items-center justify-center p-4 rounded-xl cursor-pointer border transition-all duration-200 group ${role === r
@@ -114,8 +114,12 @@ export default function SignUpPage() {
                                     <span className={`font-semibold text-base transition-colors ${role === r ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'}`}>
                                         {r}
                                     </span>
-                                    <span className="text-xs text-muted-foreground mt-1">
-                                        {r === Role.Manager ? 'Create & Manage Room' : 'Join Existing Room'}
+                                    <span className="text-xs text-muted-foreground mt-1 text-center">
+                                        {r === Role.Manager
+                                            ? 'Create & Manage Room'
+                                            : r === Role.MasterManager
+                                                ? 'Create & Manage Room + Add Members Directly'
+                                                : 'Join Existing Room'}
                                     </span>
                                 </label>
                             ))}

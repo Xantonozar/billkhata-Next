@@ -189,10 +189,10 @@ export const getRefreshTokenFromCookies = (req: NextRequest): string | null => {
 // ============================================
 
 /**
- * Check if user has manager role
+ * Check if user has manager role (Manager or MasterManager)
  */
 export const isManager = (user: any): boolean => {
-    return user?.role === 'Manager';
+    return user?.role === 'Manager' || user?.role === 'MasterManager';
 };
 
 /**

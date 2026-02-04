@@ -13,6 +13,7 @@ const pusherServer = new Pusher({
 export type PusherEventType =
     | 'member-approved'
     | 'member-rejected'
+    | 'member-added'
     | 'bill-approved'
     | 'bill-rejected'
     | 'deposit-approved'

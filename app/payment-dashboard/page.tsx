@@ -215,7 +215,7 @@ export default function PaymentDashboardPage() {
 
     }, [bills, members, punctualityRange, loading]);
 
-    if (user?.role !== Role.Manager) {
+    if (user?.role !== Role.Manager && user?.role !== Role.MasterManager) {
         return (
             <AppLayout>
                 <div className="text-center p-8">

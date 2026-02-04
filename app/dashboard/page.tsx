@@ -509,7 +509,7 @@ const MemberDashboard: React.FC<{ initialData?: any, loading?: boolean, user?: a
                 />
                 <StatCard
                     title="Meals"
-                    value={`${totalMealCount.toFixed(1)}`}
+                    value={`${totalMealCount.toFixed(2)}`}
                     subtitle="This month"
                     icon={<MealIcon />}
                     colorTheme="amber"
@@ -674,7 +674,7 @@ export default function DashboardPage() {
             if (!user) {
                 router.push('/login');
             } else if (user.roomStatus === RoomStatus.NoRoom) {
-                if (user.role === Role.Manager) {
+                if (user.role === Role.Manager || user.role === Role.MasterManager) {
                     router.push('/create-room');
                 } else {
                     router.push('/join-room');
@@ -695,7 +695,7 @@ export default function DashboardPage() {
 
     return (
         <AppLayout>
-            {user.role === Role.Manager ?
+            {(user.role === Role.Manager || user.role === Role.MasterManager) ?
                 <ManagerDashboard initialData={stats} loading={statsLoading} user={user} /> :
                 <MemberDashboard initialData={stats} loading={statsLoading} user={user} />
             }

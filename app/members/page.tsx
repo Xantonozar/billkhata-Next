@@ -14,6 +14,8 @@ import { useNotifications } from '@/contexts/NotificationContext';
 import AppLayout from '@/components/AppLayout';
 import ToastContainer from '@/components/ToastContainer';
 import { MemberSkeleton } from '@/components/skeletons/MemberSkeleton';
+import AddMemberModal from '@/components/members/AddMemberModal';
+import EditMemberModal from '@/components/members/EditMemberModal';
 
 interface Member extends User {
     phone?: string;
@@ -250,9 +252,9 @@ const MemberHistoryModal: React.FC<{ member: Member | null, onClose: () => void 
     );
 };
 
-const MemberCard: React.FC<{ member: Member, onHistoryClick: () => void }> = ({ member, onHistoryClick }) => {
+const MemberCard: React.FC<{ member: Member, onHistoryClick: () => void, onEditClick?: () => void, showEdit?: boolean }> = ({ member, onHistoryClick, onEditClick, showEdit }) => {
     const { user } = useAuth();
-    const isManager = member.role === Role.Manager;
+    const isManager = member.role === Role.Manager || member.role === Role.MasterManager;
 
     const handleWhatsApp = () => {
         if (member.whatsapp) {
@@ -304,8 +306,21 @@ const MemberCard: React.FC<{ member: Member, onHistoryClick: () => void }> = ({ 
             </div>
             <div className="border-t my-3 border-border"></div>
             <div className="flex flex-wrap gap-2 text-sm font-semibold">
-                {user?.role === Role.Manager && member.id !== user.id ? (
-                    <button onClick={onHistoryClick} className="text-primary hover:underline">View Profile</button>
+                {(user?.role === Role.Manager || user?.role === Role.MasterManager) && member.id !== user.id ? (
+                    <>
+                        <button onClick={onHistoryClick} className="text-primary hover:underline">View Profile</button>
+                        {showEdit && onEditClick && (
+                            <button
+                                onClick={onEditClick}
+                                className="text-orange-600 dark:text-orange-400 hover:underline flex items-center gap-1"
+                            >
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                                Edit
+                            </button>
+                        )}
+                    </>
                 ) : (
                     <>
                         {member.whatsapp && (
@@ -337,6 +352,19 @@ export default function RoomMembersPage() {
     const [showLeaveModal, setShowLeaveModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [actionLoading, setActionLoading] = useState(false);
+    const [showAddMemberModal, setShowAddMemberModal] = useState(false);
+    const [showEditMemberModal, setShowEditMemberModal] = useState(false);
+    const [editingMember, setEditingMember] = useState<Member | null>(null);
+
+    const fetchMembers = async () => {
+        if (!user?.khataId) return;
+        try {
+            const membersData = await api.getMembersForRoom(user.khataId);
+            setMembers(membersData);
+        } catch (error) {
+            console.error('Error fetching members:', error);
+        }
+    };
 
     useEffect(() => {
         const fetchData = async () => {
@@ -350,12 +378,12 @@ export default function RoomMembersPage() {
                 const [membersData, roomData, pendingData] = await Promise.all([
                     api.getMembersForRoom(user.khataId),
                     api.getRoomDetails(user.khataId),
-                    user.role === Role.Manager ? api.getPendingApprovals(user.khataId) : Promise.resolve([])
+                    user.role === Role.Manager || user.role === Role.MasterManager ? api.getPendingApprovals(user.khataId) : Promise.resolve([])
                 ]);
 
                 setMembers(membersData);
                 setRoomDetails(roomData);
-                if (user.role === Role.Manager) {
+                if (user.role === Role.Manager || user.role === Role.MasterManager) {
                     setPendingRequests(pendingData);
                 }
             } catch (error) {
@@ -458,6 +486,25 @@ export default function RoomMembersPage() {
         }
     };
 
+    const handleEditMember = (member: Member) => {
+        setEditingMember(member);
+        setShowEditMemberModal(true);
+    };
+
+    const handleSaveMember = async (userId: string, data: any) => {
+        try {
+            await api.updateMemberById(userId, data);
+            addToast({ type: 'success', title: 'Success', message: 'Member updated successfully!' });
+
+            // Refresh members list
+            await fetchMembers();
+            setShowEditMemberModal(false);
+            setEditingMember(null);
+        } catch (error: any) {
+            throw error; // Re-throw to let modal handle it
+        }
+    };
+
     if (loading) {
         return (
             <AppLayout>
@@ -484,26 +531,39 @@ export default function RoomMembersPage() {
                                 </p>
                             </div>
 
-                            {user?.role === Role.Manager && (
-                                <div className="w-full md:w-auto bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg border border-gray-200 dark:border-gray-600 flex flex-col sm:flex-row items-center gap-3">
-                                    <div className="flex flex-col">
-                                        <span className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider font-semibold">Room Code</span>
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-mono text-2xl font-bold text-primary-600 dark:text-primary-400 tracking-widest">
-                                                {roomDetails?.khataId || user?.khataId}
-                                            </span>
-                                            <button
-                                                onClick={handleCopyRoomCode}
-                                                className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md transition-colors text-gray-500 dark:text-gray-400"
-                                                title="Copy Code"
-                                            >
-                                                {copied ? <CheckCircleIcon className="w-5 h-5 text-green-500" /> : <ClipboardIcon className="w-5 h-5" />}
-                                            </button>
+                            {(user?.role === Role.Manager || user?.role === Role.MasterManager) && (
+                                <div className="flex flex-col md:flex-row gap-3">
+                                    <div className="w-full md:w-auto bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg border border-gray-200 dark:border-gray-600 flex flex-col sm:flex-row items-center gap-3">
+                                        <div className="flex flex-col">
+                                            <span className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider font-semibold">Room Code</span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-mono text-2xl font-bold text-primary-600 dark:text-primary-400 tracking-widest">
+                                                    {roomDetails?.khataId || user?.khataId}
+                                                </span>
+                                                <button
+                                                    onClick={handleCopyRoomCode}
+                                                    className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md transition-colors text-gray-500 dark:text-gray-400"
+                                                    title="Copy Code"
+                                                >
+                                                    {copied ? <CheckCircleIcon className="w-5 h-5 text-green-500" /> : <ClipboardIcon className="w-5 h-5" />}
+                                                </button>
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    <div className="w-px h-10 bg-gray-300 dark:bg-gray-600 hidden sm:block"></div>
-                                    <div className="w-full sm:w-auto h-px bg-gray-300 dark:bg-gray-600 sm:hidden"></div>
+                                        <div className="w-px h-10 bg-gray-300 dark:bg-gray-600 hidden sm:block"></div>
+                                        <div className="w-full sm:w-auto h-px bg-gray-300 dark:bg-gray-600 sm:hidden"></div>
+                                    </div>
+                                    {user?.role === Role.MasterManager && (
+                                        <button
+                                            onClick={() => setShowAddMemberModal(true)}
+                                            className="px-4 py-3 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 whitespace-nowrap"
+                                        >
+                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                            </svg>
+                                            Add Member
+                                        </button>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -514,7 +574,7 @@ export default function RoomMembersPage() {
                             <UsersIcon className="w-16 h-16 mx-auto text-gray-400 mb-4" />
                             <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">No members yet</h3>
                             <p className="text-gray-500 dark:text-gray-400">
-                                {user?.role === Role.Manager
+                                {user?.role === Role.Manager || user?.role === Role.MasterManager
                                     ? 'Share your room code to invite members'
                                     : 'Waiting for members to join'}
                             </p>
@@ -522,12 +582,18 @@ export default function RoomMembersPage() {
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                             {members.map(member => (
-                                <MemberCard key={member.id} member={member} onHistoryClick={() => setViewingMember(member)} />
+                                <MemberCard
+                                    key={member.id}
+                                    member={member}
+                                    onHistoryClick={() => setViewingMember(member)}
+                                    onEditClick={() => handleEditMember(member)}
+                                    showEdit={user?.role === Role.MasterManager && member.id !== user.id}
+                                />
                             ))}
                         </div>
                     )}
 
-                    {user?.role === Role.Manager && pendingRequests.length > 0 && (
+                    {(user?.role === Role.Manager || user?.role === Role.MasterManager) && pendingRequests.length > 0 && (
                         <div>
                             <h2 className="text-xl font-bold mb-3 text-gray-800 dark:text-white">🔔 Pending Join Requests ({pendingRequests.length})</h2>
                             <div className="space-y-4">
@@ -554,11 +620,11 @@ export default function RoomMembersPage() {
                     <div className="bg-card rounded-xl shadow-md p-6 border-2 border-red-200 dark:border-red-900/50">
                         <h3 className="text-lg font-bold text-red-600 dark:text-red-400 mb-2">⚠️ Danger Zone</h3>
                         <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                            {user?.role === Role.Manager
+                            {(user?.role === Role.Manager || user?.role === Role.MasterManager)
                                 ? 'Deleting this room will permanently remove all data including bills, meals, deposits, and expenses.'
                                 : 'Leaving this room will remove you from the member list. You can join again later.'}
                         </p>
-                        {user?.role === Role.Manager ? (
+                        {(user?.role === Role.Manager || user?.role === Role.MasterManager) ? (
                             <button
                                 onClick={() => setShowDeleteModal(true)}
                                 className="px-4 py-2 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition-colors"
@@ -578,6 +644,24 @@ export default function RoomMembersPage() {
             </AppLayout>
 
             <MemberHistoryModal member={viewingMember} onClose={() => setViewingMember(null)} />
+
+            <AddMemberModal
+                isOpen={showAddMemberModal}
+                onClose={() => setShowAddMemberModal(false)}
+                khataId={user?.khataId || ''}
+                onMemberAdded={fetchMembers}
+            />
+
+            <EditMemberModal
+                isOpen={showEditMemberModal}
+                member={editingMember}
+                onClose={() => {
+                    setShowEditMemberModal(false);
+                    setEditingMember(null);
+                }}
+                onSave={handleSaveMember}
+                currentUserId={user?.id || ''}
+            />
 
             {/* Confirmation Modals */}
             <ConfirmModal

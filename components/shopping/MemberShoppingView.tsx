@@ -242,11 +242,11 @@ const MemberShoppingView: React.FC<MemberShoppingViewProps> = ({ selectedPeriodI
                                 myDeposits.slice(0, 3).map(d => (
                                     <div key={d._id} className="flex justify-between items-center text-sm p-2 bg-slate-50 dark:bg-slate-700/50 rounded-md">
                                         <span className="text-slate-700 dark:text-slate-300">{new Date(d.createdAt).toLocaleDateString()} - {d.paymentMethod}</span>
-                                        <span className="font-semibold flex items-center gap-1 text-slate-800 dark:text-white">
-                                            ৳{d.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                        <span className={`font-semibold flex items-center gap-1 ${d.amount >= 0 ? 'text-slate-800 dark:text-white' : 'text-red-500'}`}>
+                                            {d.amount > 0 ? '+' : ''}৳{d.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                             {d.status === 'Approved' &&
                                                 // Assuming CheckCircleIcon is available, else simple check mark
-                                                <CheckCircleIcon className="w-4 h-4 text-green-500" />
+                                                <CheckCircleIcon className={`w-4 h-4 ${d.amount >= 0 ? 'text-green-500' : 'text-red-500'}`} />
                                             }
                                             {d.status === 'Pending' && <span className="text-yellow-500 text-xs">⏳ Pending</span>}
                                             {d.status === 'Rejected' && <span className="text-red-500 text-xs">❌ Rejected</span>}

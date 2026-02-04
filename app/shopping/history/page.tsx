@@ -14,13 +14,28 @@ export default function ShoppingHistoryPage() {
     const [deposits, setDeposits] = useState<any[]>([]);
     const [expenses, setExpenses] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [selectedPeriodId, setSelectedPeriodId] = useState<string | null>(null);
 
+    // Fetch active calculation period first
     useEffect(() => {
         if (user?.khataId) {
+            fetch(`/api/calculation-periods?khataId=${user.khataId}&status=Active`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        setSelectedPeriodId(data[0]._id);
+                    }
+                })
+                .catch(err => console.error('Error fetching active period:', err));
+        }
+    }, [user?.khataId]);
+
+    useEffect(() => {
+        if (user?.khataId && selectedPeriodId !== null) {
             setLoading(true);
             Promise.all([
-                api.getDeposits(user.khataId),
-                api.getExpenses(user.khataId)
+                api.getDeposits(user.khataId, { calculationPeriodId: selectedPeriodId || undefined }),
+                api.getExpenses(user.khataId, { calculationPeriodId: selectedPeriodId || undefined })
             ]).then(([depositsData, expensesData]) => {
                 // Filter for my items
                 const myDeposits = depositsData.filter((d: any) => (d.userId?._id || d.userId) === user.id);
@@ -36,7 +51,7 @@ export default function ShoppingHistoryPage() {
                 setLoading(false);
             });
         }
-    }, [user?.khataId, user?.id]);
+    }, [user?.khataId, user?.id, selectedPeriodId]);
 
     if (!user) return null;
 

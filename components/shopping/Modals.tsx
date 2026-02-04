@@ -123,9 +123,14 @@ export const EditRosterModal: React.FC<EditRosterModalProps> = ({ onClose, roste
     );
 };
 
-export const AddDepositModal: React.FC<{ onClose: () => void, onSubmit: () => void }> = ({ onClose, onSubmit }) => {
+export const AddDepositModal: React.FC<{
+    onClose: () => void;
+    onSubmit: () => void;
+    members?: { userId: string; name: string }[];
+}> = ({ onClose, onSubmit, members }) => {
     const { user } = useAuth();
     const { addToast } = useNotifications();
+    const [selectedUserId, setSelectedUserId] = useState(user?.id || '');
     const [amount, setAmount] = useState('1500');
     const [method, setMethod] = useState('bKash');
     const [transactionId, setTransactionId] = useState('');
@@ -133,6 +138,13 @@ export const AddDepositModal: React.FC<{ onClose: () => void, onSubmit: () => vo
     const [isUploading, setIsUploading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+    // If members are provided (manager mode), default to empty selection or keep user's own id if they are in the list
+    // But usually we want "Select Member".
+    // If user is manager and wants to deposit for themselves, they can select themselves.
+    // However, if members prop is NOT provided (member mode), selectedUserId should be user.id.
+
+    const isManagerMode = members && members.length > 0;
 
     const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -162,16 +174,22 @@ export const AddDepositModal: React.FC<{ onClose: () => void, onSubmit: () => vo
             return;
         }
 
+        if (isManagerMode && !selectedUserId) {
+            addToast({ type: 'error', title: 'Error', message: 'Please select a member' });
+            return;
+        }
+
         setIsSubmitting(true);
         try {
             await api.createDeposit(user.khataId, {
                 amount: parseFloat(amount),
                 paymentMethod: method,
                 transactionId,
-                screenshotUrl
+                screenshotUrl,
+                userId: isManagerMode ? selectedUserId : undefined
             });
 
-            addToast({ type: 'success', title: 'Deposit Submitted', message: 'Your deposit is now pending manager approval.' });
+            addToast({ type: 'success', title: 'Deposit Submitted', message: isManagerMode ? 'Deposit added and approved.' : 'Your deposit is now pending manager approval.' });
             onSubmit();
             onClose();
         } catch (error: any) {
@@ -186,11 +204,30 @@ export const AddDepositModal: React.FC<{ onClose: () => void, onSubmit: () => vo
             <div className="flex min-h-full items-center justify-center p-4 text-center">
                 <div className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white dark:bg-slate-800 p-6 text-left align-middle shadow-xl transition-all border border-slate-100 dark:border-slate-700" onClick={(e) => e.stopPropagation()}>
                     <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-xl font-bold text-slate-900 dark:text-white">Deposit to Meal Fund</h3>
+                        <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                            {isManagerMode ? 'Add Member Deposit' : 'Deposit to Meal Fund'}
+                        </h3>
                         <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"><XIcon className="w-5 h-5 text-slate-500" /></button>
                     </div>
 
                     <form className="space-y-5" onSubmit={handleSubmit}>
+                        {isManagerMode && (
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Depositor</label>
+                                <select
+                                    value={selectedUserId}
+                                    onChange={(e) => setSelectedUserId(e.target.value)}
+                                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border-2 border-slate-200 dark:border-slate-600 rounded-xl focus:outline-none focus:border-primary-500 focus:bg-white dark:focus:bg-slate-700 transition-all text-slate-900 dark:text-white font-medium"
+                                    required
+                                >
+                                    <option value="">Select Member</option>
+                                    {members?.map(m => (
+                                        <option key={m.userId} value={m.userId}>{m.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Amount</label>
                             <div className="relative">
@@ -230,7 +267,7 @@ export const AddDepositModal: React.FC<{ onClose: () => void, onSubmit: () => vo
                             disabled={isSubmitting}
                             className="w-full py-3.5 bg-gradient-to-r from-primary-600 to-primary-500 text-white font-bold rounded-xl shadow-lg shadow-primary-500/20 hover:shadow-primary-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 mt-2"
                         >
-                            {isSubmitting ? 'Processing...' : 'Submit Deposit'}
+                            {isSubmitting ? 'Processing...' : (isManagerMode ? 'Add Deposit' : 'Submit Deposit')}
                         </button>
                     </form>
                 </div>
@@ -441,3 +478,130 @@ export const FundAdjustmentModal: React.FC<{
     );
 };
 
+
+export const AddManagerShoppingModal: React.FC<{
+    onClose: () => void;
+    onSubmit: () => void;
+    members: { userId: string; name: string }[];
+}> = ({ onClose, onSubmit, members }) => {
+    const { user } = useAuth();
+    const { addToast } = useNotifications();
+    const [selectedUserId, setSelectedUserId] = useState(user?.id || '');
+    const [amount, setAmount] = useState('');
+    const [items, setItems] = useState('');
+    const [notes, setNotes] = useState('');
+    const [receiptUrl, setReceiptUrl] = useState('');
+    const [isUploading, setIsUploading] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+    const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            setIsUploading(true);
+            try {
+                const url = await api.uploadImage(file);
+                if (url) {
+                    setReceiptUrl(url);
+                    addToast({ type: 'success', title: 'Uploaded', message: 'Receipt uploaded successfully' });
+                } else {
+                    addToast({ type: 'error', title: 'Error', message: 'Failed to upload receipt' });
+                }
+            } catch (error) {
+                addToast({ type: 'error', title: 'Error', message: 'Upload failed' });
+            } finally {
+                setIsUploading(false);
+            }
+        }
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (!user?.khataId) {
+            addToast({ type: 'error', title: 'Error', message: 'User not found' });
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            await api.createExpense(user.khataId, {
+                amount: parseFloat(amount),
+                items,
+                notes: notes ? `Added by Manager: ${notes}` : 'Added by Manager',
+                receiptUrl,
+                userId: selectedUserId,
+                status: 'Approved'
+            });
+
+            addToast({ type: 'success', title: 'Shopping Record Added', message: 'Expense saved and approved successfully.' });
+            onSubmit();
+            onClose();
+        } catch (error: any) {
+            addToast({ type: 'error', title: 'Error', message: error.response?.data?.message || 'Failed to save expense' });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm" onClick={onClose}>
+            <div className="flex min-h-full items-center justify-center p-4 text-center">
+                <div className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white dark:bg-slate-800 p-6 text-left align-middle shadow-xl transition-all border border-slate-100 dark:border-slate-700" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-xl font-bold text-slate-900 dark:text-white">Add Manager Shopping Record</h3>
+                        <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"><XIcon className="w-5 h-5 text-slate-500" /></button>
+                    </div>
+                    <form className="space-y-5" onSubmit={handleSubmit}>
+                        <div>
+                            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Who did the shopping?</label>
+                            <select
+                                value={selectedUserId}
+                                onChange={(e) => setSelectedUserId(e.target.value)}
+                                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border-2 border-slate-200 dark:border-slate-600 rounded-xl focus:outline-none focus:border-primary-500 focus:bg-white dark:focus:bg-slate-700 transition-all text-slate-900 dark:text-white font-medium"
+                                required
+                            >
+                                <option value="">Select Member</option>
+                                {members.map(m => (
+                                    <option key={m.userId} value={m.userId}>{m.name}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Amount</label>
+                            <div className="relative">
+                                <span className="absolute inset-y-0 left-3 flex items-center text-slate-500 font-bold">৳</span>
+                                <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full pl-8 pr-4 py-3 bg-slate-50 dark:bg-slate-700/50 border-2 border-slate-200 dark:border-slate-600 rounded-xl focus:outline-none focus:border-primary-500 focus:bg-white dark:focus:bg-slate-700 transition-all text-slate-900 dark:text-white font-semibold text-lg" required />
+                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Items Purchased</label>
+                            <textarea value={items} onChange={e => setItems(e.target.value)} rows={3} placeholder="e.g., Rice (5kg), Vegetables, Oil (1L)" className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border-2 border-slate-200 dark:border-slate-600 rounded-xl focus:outline-none focus:border-primary-500 focus:bg-white dark:focus:bg-slate-700 transition-all text-slate-900 dark:text-white" required />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Notes <span className="text-slate-400 font-normal">(Optional)</span></label>
+                            <input type="text" value={notes} onChange={(e) => setNotes(e.target.value)} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border-2 border-slate-200 dark:border-slate-600 rounded-xl focus:outline-none focus:border-primary-500 focus:bg-white dark:focus:bg-slate-700 transition-all text-slate-900 dark:text-white" />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Receipt <span className="text-slate-400 font-normal">(Optional)</span></label>
+                            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleUpload} />
+                            <div className="flex gap-2">
+                                <button type="button" onClick={() => fileInputRef.current?.click()} className={`w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium rounded-xl border-2 border-dashed transition-all ${receiptUrl ? 'bg-green-50 border-green-300 text-green-700 dark:bg-green-900/10 dark:border-green-700 dark:text-green-400' : 'bg-slate-50 border-slate-300 text-slate-600 hover:bg-slate-100 dark:bg-slate-700/30 dark:border-slate-600 dark:text-slate-400'}`}>
+                                    {isUploading ? <span className="animate-pulse">Uploading...</span> : (receiptUrl ? <><CheckCircleIcon className="w-5 h-5" /> Receipt Attached</> : <><CameraIcon className="w-5 h-5" /> Upload Receipt</>)}
+                                </button>
+                            </div>
+                        </div>
+                        <button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="w-full py-3.5 bg-gradient-to-r from-primary-600 to-primary-500 text-white font-bold rounded-xl shadow-lg shadow-primary-500/20 hover:shadow-primary-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 mt-2"
+                        >
+                            {isSubmitting ? 'Processing...' : 'Save & Approve Record'}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    );
+};

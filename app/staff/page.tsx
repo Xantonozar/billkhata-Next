@@ -142,7 +142,7 @@ export default function StaffPage() {
                             Contacts for Maid, Cook, Electrician, etc.
                         </p>
                     </div>
-                    {user?.role === Role.Manager && (
+                    {(user?.role === Role.Manager || user?.role === Role.MasterManager) && (
                         <button
                             onClick={() => handleOpenModal()}
                             className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-colors shadow-sm"
@@ -158,7 +158,7 @@ export default function StaffPage() {
                         <BriefcaseIcon className="w-16 h-16 mx-auto text-slate-300 mb-4" />
                         <h3 className="text-lg font-semibold text-card-foreground">No services added yet</h3>
                         <p className="text-slate-500">
-                            {user?.role === Role.Manager ? "Add your maid, cook, or utility contacts here." : "Ask your manager to add service contacts."}
+                            {(user?.role === Role.Manager || user?.role === Role.MasterManager) ? "Add your maid, cook, or utility contacts here." : "Ask your manager to add service contacts."}
                         </p>
                     </div>
                 ) : (
@@ -181,7 +181,7 @@ export default function StaffPage() {
                                             </span>
                                         </div>
                                     </div>
-                                    {user?.role === Role.Manager && (
+                                    {(user?.role === Role.Manager || user?.role === Role.MasterManager) && (
                                         <div className="flex gap-1">
                                             <button onClick={() => handleOpenModal(person)} className="p-1.5 text-slate-400 hover:text-blue-500 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20">
                                                 <PencilIcon className="w-4 h-4" />

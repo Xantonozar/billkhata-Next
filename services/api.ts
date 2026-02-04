@@ -198,13 +198,13 @@ const api = {
     },
 
     // Room management
-    createRoom: async (name: string, khataId: string): Promise<boolean> => {
+    createRoom: async (name: string, khataId: string): Promise<{ success: boolean; user?: User }> => {
         try {
-            await axiosInstance.post('/rooms/create', { name, khataId });
-            return true;
+            const response = await axiosInstance.post('/rooms/create', { name, khataId });
+            return { success: true, user: response.data.user };
         } catch (error: any) {
             console.error('Create room error:', error.response?.data?.message || error.message);
-            return false;
+            return { success: false };
         }
     },
 
@@ -318,6 +318,10 @@ const api = {
             console.error('Update bill share status error:', error);
             return null;
         }
+    },
+
+    markBillPaid: async (khataId: string, billId: string, userId: string, paidFromMealFund: boolean = false): Promise<Bill | null> => {
+        return api.updateBillShareStatus(billId, userId, 'Paid', paidFromMealFund);
     },
 
     deleteBill: async (billId: string): Promise<boolean> => {
@@ -582,6 +586,7 @@ const api = {
         paymentMethod: string;
         transactionId?: string;
         screenshotUrl?: string;
+        userId?: string;
     }): Promise<any> => {
         try {
             const response = await axiosInstance.post(`/deposits/${khataId}`, depositData);
@@ -628,6 +633,8 @@ const api = {
         items: string;
         notes?: string;
         receiptUrl?: string;
+        userId?: string;
+        status?: string;
     }): Promise<any> => {
         try {
             const response = await axiosInstance.post(`/expenses/${khataId}`, expenseData);
@@ -862,6 +869,17 @@ const api = {
             return response.data;
         } catch (error: any) {
             const message = error.response?.data?.error || 'Failed to update profile';
+            throw new Error(message);
+        }
+    },
+
+    // Admin: Update member (Master Manager only)
+    updateMemberById: async (userId: string, data: { name?: string; email?: string; phone?: string; whatsapp?: string; facebook?: string; role?: Role; avatarUrl?: string }): Promise<any> => {
+        try {
+            const response = await axiosInstance.put(`/admin/members/${userId}`, data);
+            return response.data;
+        } catch (error: any) {
+            const message = error.response?.data?.error || 'Failed to update member';
             throw new Error(message);
         }
     }

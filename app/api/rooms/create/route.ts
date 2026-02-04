@@ -50,11 +50,11 @@ export async function POST(req: NextRequest) {
             members: []
         });
 
-        // Update user
-        await User.findByIdAndUpdate(user._id, {
+        // Update user and get new state
+        const updatedUser = await User.findByIdAndUpdate(user._id, {
             khataId,
             roomStatus: 'Approved'
-        });
+        }, { new: true }).select('-password');
 
         // Invalidate user cache so next request gets fresh data
         globalCache.delete(`user:${user._id}`);
@@ -65,6 +65,18 @@ export async function POST(req: NextRequest) {
                 id: room._id,
                 name: room.name,
                 khataId: room.khataId
+            },
+            user: {
+                id: updatedUser?._id,
+                name: updatedUser?.name,
+                email: updatedUser?.email,
+                role: updatedUser?.role,
+                roomStatus: updatedUser?.roomStatus,
+                khataId: updatedUser?.khataId,
+                avatarUrl: updatedUser?.avatarUrl,
+                whatsapp: updatedUser?.whatsapp,
+                facebook: updatedUser?.facebook,
+                isVerified: updatedUser?.isVerified === true
             }
         }, { status: 201 });
 

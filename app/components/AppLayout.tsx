@@ -97,7 +97,7 @@ const SidebarContent: React.FC<{ pendingCount: number }> = ({ pendingCount }) =>
             </div>
             <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
                 <NavLink href="/dashboard" icon={<DashboardIcon />}>Dashboard</NavLink>
-                {user?.role === Role.Manager && (
+                {(user?.role === Role.Manager || user?.role === Role.MasterManager) && (
                     <NavLink href="/pending-approvals" icon={<ClipboardCheckIcon />} badgeCount={pendingCount}>Pending Approvals</NavLink>
                 )}
                 <BillsNavGroup />
@@ -108,7 +108,7 @@ const SidebarContent: React.FC<{ pendingCount: number }> = ({ pendingCount }) =>
                 <NavLink href="/menu" icon={<MenuBookIcon />}>Menu</NavLink>
                 <NavLink href="/members" icon={<UsersIcon />}>Room Members</NavLink>
                 <NavLink href="/history" icon={<ArchiveBoxIcon />}>History</NavLink>
-                {user?.role === Role.Manager && (
+                {(user?.role === Role.Manager || user?.role === Role.MasterManager) && (
                     <NavLink href="/payment-dashboard" icon={<CreditCardIcon />}>Payment Dashboard</NavLink>
                 )}
                 <NavLink href="/reports-analytics" icon={<ChartBarIcon />}>Reports & Analytics</NavLink>
@@ -150,7 +150,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [notificationsOpen, setNotificationsOpen] = useState(false);
     const { unreadCount } = useNotifications();
-    const { count: pendingCount, refetch: refetchPendingCount } = usePendingCount(user?.khataId, user?.role === Role.Manager);
+    const { count: pendingCount, refetch: refetchPendingCount } = usePendingCount(user?.khataId, user?.role === Role.Manager || user?.role === Role.MasterManager);
 
     return (
         <PusherProvider onPendingCountUpdate={refetchPendingCount}>

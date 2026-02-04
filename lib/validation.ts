@@ -41,7 +41,7 @@ export const SignupSchema = z.object({
         .trim(),
     email: EmailSchema,
     password: PasswordSchema,
-    role: z.enum(['Manager', 'Member'])
+    role: z.enum(['Manager', 'MasterManager', 'Member'])
 });
 
 export const ProfileUpdateSchema = z.object({
@@ -102,7 +102,8 @@ export const CreateDepositSchema = z.object({
     screenshotUrl: z.string().optional().nullable().refine(
         (val) => !val || val === '' || z.string().url().safeParse(val).success,
         { message: 'Invalid URL format' }
-    )
+    ),
+    userId: z.string().optional()
 });
 
 // ============================================

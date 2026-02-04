@@ -297,7 +297,7 @@ export default function AllBillsPage() {
     };
 
     const memberFilteredBills = useMemo(() => {
-        if (!user || user.role === Role.Manager) return [];
+        if (!user || user.role === Role.Manager || user.role === Role.MasterManager) return [];
 
         const myBills = bills.map(bill => {
             const myShare = bill.shares.find(s => s.userId === user.id);
@@ -324,9 +324,9 @@ export default function AllBillsPage() {
                 <div className="space-y-4 sm:space-y-6">
                     <div className="flex justify-between items-center">
                         <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white font-sans">
-                            {user.role === Role.Manager ? 'Bills' : 'My Bills'}
+                            {user.role === Role.Manager || user.role === Role.MasterManager ? 'Bills' : 'My Bills'}
                         </h1>
-                        {user.role === Role.Manager && (
+                        {(user.role === Role.Manager || user.role === Role.MasterManager) && (
                             <button
                                 onClick={() => setIsAddModalOpen(true)}
                                 className="flex items-center gap-2 px-3 py-2 sm:px-4 text-white font-semibold rounded-lg bg-gradient-success hover:shadow-lg transition-all active:scale-[0.98]">
@@ -340,7 +340,7 @@ export default function AllBillsPage() {
                             {[1, 2, 3, 4, 5, 6].map(i => <BillCardSkeleton key={i} />)}
                         </div>
                     ) : (
-                        user.role === Role.Manager
+                        user.role === Role.Manager || user.role === Role.MasterManager
                             ? <ManagerAllBillsView bills={bills} />
                             : (
                                 <div className="space-y-4">

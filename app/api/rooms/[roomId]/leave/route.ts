@@ -18,8 +18,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ r
             return NextResponse.json({ message: 'You are not in this room' }, { status: 403 });
         }
 
-        // Managers cannot leave - they must delete the room
-        if (user.role === 'Manager') {
+        // Managers and MasterManagers cannot leave - they must delete the room
+        if (user.role === 'Manager' || user.role === 'MasterManager') {
             return NextResponse.json({ message: 'Managers cannot leave. Use Delete Room instead.' }, { status: 400 });
         }
 
